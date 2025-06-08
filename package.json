@@ -1,0 +1,26 @@
+{
+  "name": "@quizleague",
+  "version": "1.0.0",
+  "description": "Quizleague Website",
+  "type": "module",
+  "workspaces": [
+    "./server",
+    "./client",
+    "./shared"
+  ],
+  "dependencies": {
+    "uuid": "^11.1.0",
+    "@js-joda/core": "^5.6.4",
+    "@js-joda/locale": "^4.15.1",
+    "@js-joda/locale_en-gb": "^4.15.1",
+    "@js-joda/locale_en-us": "^4.15.1",
+    "@js-joda/timezone": "^2.22.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.7.3",
+    "@tsconfig/node22": "^22.0.0",
+    "@types/node": "^22.10.7",
+    "vitest": "^3.0.2",
+    "@vitest/eslint-plugin": "1.1.25"
+  }
+}

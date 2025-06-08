@@ -1,0 +1,15 @@
+{
+  "name": "@quizleague/shared",
+  "version": "1.0.0",
+  "description": "Quizleague website shared stuff",
+  "exports": "./src/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test:unit": "vitest"
+  },
+  "author": "David Good",
+  "license": "ISC",
+  "dependencies": {},
+  "devDependencies": {}
+}

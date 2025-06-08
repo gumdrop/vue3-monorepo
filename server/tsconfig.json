@@ -1,0 +1,18 @@
+{
+  "files": [],
+  "compilerOptions": {
+    "lib": ["ES2022"],
+    "noEmit": false,
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "esModuleInterop": false
+  },
+  "references": [
+    {
+      // "path": "./tsconfig.vitest.json"
+    },
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css?family=Cabin:400,600|Comfortaa:700|Cuprum:700|Hind+Siliguri:600|Quicksand');
+
+.v-tabs__item {
+  text-transform: none !important;
+}
+
+.v-btn__content span {
+  text-transform: none !important;
+}
+button.btn {
+  text-transform: none;
+}
+a.btn {
+  text-transform: none;
+}
+
+.roll-of-honour td {
+  padding-left: 2em !important;
+}
+
+.roll-of-honour th {
+  text-align: left;
+  padding-left: 2em;
+}
+
+.my-event {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 2px;
+  background-color: #1867c0;
+  color: #ffffff;
+  border: 1px solid #1867c0;
+  width: 100%;
+  font-size: 12px;
+  padding: 3px;
+  cursor: pointer;
+  margin-bottom: 1px;
+}
+.my-event span {
+  padding-bottom: 8px;
+  vertical-align: middle;
+}
