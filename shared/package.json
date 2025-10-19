@@ -2,7 +2,7 @@
   "name": "@quizleague/shared",
   "version": "1.0.0",
   "description": "Quizleague website shared stuff",
-  "exports": "./src/index.js",
+  "exports": "./src/index.ts",
   "type": "module",
   "scripts": {
     "build": "tsc",

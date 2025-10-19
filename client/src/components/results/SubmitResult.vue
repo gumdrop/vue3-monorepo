@@ -44,8 +44,9 @@
           <v-card-actions>
             <v-btn v-on:click="confirm = false">
               <v-icon left>mdi-cancel</v-icon>Cancel</v-btn>
-            <v-btn color="primary" v-on:click="submit">
-              v-if="fixtureForSubmission && user"  v-if="fixtureForSubmission && user"      </v-card>
+            <v-btn v-if="fixtureForSubmission && user"  color="primary" v-on:click="submit">Submit</v-btn>
+          </v-card-actions>
+        </v-card>
       </v-dialog>
 
     </v-col>
