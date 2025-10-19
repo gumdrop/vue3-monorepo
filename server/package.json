@@ -8,14 +8,14 @@
     "test:unit": "vitest",
     "build": "esbuild src/index.ts --bundle --outfile=deploy/main.cjs --platform=node",
     "local": "npx tsx ./src/index.ts",
-    "start": "node dist/out.cjs"
+    "start": "node deploy/main.cjs"
   },
   "author": "David Good",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/firestore": "^7.11.0",
+    "@google-cloud/firestore": "^7.11.6",
     "@quizleague/shared": "*",
-    "@sendgrid/mail": "^8.1.4",
+    "@sendgrid/mail": "^8.1.6",
     "express": "^4.21.2",
     "lodash": "4.17.21"
   },
