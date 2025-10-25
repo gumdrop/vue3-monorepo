@@ -23,7 +23,7 @@
             <v-btn variant="text" v-for="item in items" :to="item.to" :key="item.name"
               :active="$route.path.includes(item.to)"><v-icon start>{{
                 item.icon
-                }}</v-icon><span>{{ item.name }}</span></v-btn>
+              }}</v-icon><span>{{ item.name }}</span></v-btn>
           </v-toolbar-items>
         </v-toolbar>
       </template>
@@ -66,7 +66,7 @@
       <v-btn variant="text" target="_blank" href="https://www.facebook.com/ChilternQuizLeague/"
         title="Facebook"><span>Facebook</span><v-icon>mdi-facebook-box</v-icon></v-btn>
       <LoggedOnMenu :user="user" v-if="user"><span style="position:relative;top:2px;">{{ user.siteUser.handle
-          }}</span></LoggedOnMenu>
+      }}</span></LoggedOnMenu>
       <v-btn to="/login" variant="text" v-if="!user" title="Login"><span>Login</span><v-icon>mdi-login</v-icon></v-btn>
     </v-bottom-navigation>
   </v-app>
@@ -79,11 +79,11 @@ import { useSideMenuStore, useUserStore } from "@/stores/app";
 import { ref } from "vue";
 import { useDocument } from "vuefire";
 import { useDisplay } from "vuetify";
-import QlTitle from "./components/common/PageTitle.vue";
-import QlSideMenu from "./components/common/SideMenu.vue";
-import TopTitle from "./components/common/TopTitle.vue";
-import SideMenuItem from "./components/common/SideMenuItem.vue";
-import LoggedOnMenu from "./components/auth/LoggedOnMenu.vue";
+import QlTitle from "./common/PageTitle.vue";
+import QlSideMenu from "./common/SideMenu.vue";
+import TopTitle from "./common/TopTitle.vue";
+import SideMenuItem from "./common/SideMenuItem.vue";
+import LoggedOnMenu from "./auth/LoggedOnMenu.vue";
 
 
 const appData = useDocument(ApplicationContextDAO.get())
