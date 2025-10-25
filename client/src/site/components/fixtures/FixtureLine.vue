@@ -62,7 +62,7 @@
           </div>
           <v-card-actions>
             <v-spacer></v-spacer>
-            <ql-login-button label="Login for chat"></ql-login-button>
+            <!-- <ql-login-button label="Login for chat"></ql-login-button> -->
             <v-tooltip location="top" text="Close">
               <template v-slot:activator="{ props }">
                 <v-btn icon exact flat v-on:click="showReports = false" v-on="props">

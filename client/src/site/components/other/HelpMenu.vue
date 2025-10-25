@@ -16,7 +16,7 @@
 import { useGoTo } from 'vuetify'
 
 import { useUserStore } from '@/stores/app'
-import SideMenu from '@/components/common/SideMenu.vue';
+import SideMenu from '@/site/components/common/SideMenu.vue';
 
 const { user } = useUserStore()
 

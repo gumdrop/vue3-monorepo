@@ -42,7 +42,6 @@
     <v-main>
       <div class="frame-background" v-if="smAndUp">&nbsp;</div>
       <v-container fluid class="px-0 py-0">
-
         <v-row justify-left align-top>
           <v-col width="12">
             <router-view name="title" v-slot="{ Component }">
@@ -66,8 +65,8 @@
       <div>Footer</div>
       <v-btn variant="text" target="_blank" href="https://www.facebook.com/ChilternQuizLeague/"
         title="Facebook"><span>Facebook</span><v-icon>mdi-facebook-box</v-icon></v-btn>
-      <ql-logged-on-menu :user="user" v-if="user"><span style="position:relative;top:2px;">{{ user.siteUser.handle
-          }}</span></ql-logged-on-menu>
+      <LoggedOnMenu :user="user" v-if="user"><span style="position:relative;top:2px;">{{ user.siteUser.handle
+          }}</span></LoggedOnMenu>
       <v-btn to="/login" variant="text" v-if="!user" title="Login"><span>Login</span><v-icon>mdi-login</v-icon></v-btn>
     </v-bottom-navigation>
   </v-app>

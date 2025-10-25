@@ -4,7 +4,6 @@
       color="primary"></v-progress-circular></v-col>
   <v-form v-model="valid" v-if="fixture">
     <v-col>
-
       <SimpleFixtures :fixtures="[fixtureDoc]" inline-details />
       <div v-if="!fixture.result">
         <v-text-field v-model.number="result.homeScore" :rules="[required('Home Score')]" :label="fixture.home.name"
@@ -19,8 +18,9 @@
                   color="light-blue">mdi-eye-outline</v-icon></v-btn></template><span>Preview</span></v-tooltip></template>
       </v-textarea>
       <div v-if="fixtureForSubmission && user">
-        <v-btn v-on:click="() => preSubmit(fixtureForSubmission, user?.siteUser?.user?.id, reportText)" color="primary"
-          :disabled="!valid">Submit<v-icon right>mdi-send</v-icon></v-btn>
+        <v-btn
+          v-on:click="() => { fixtureForSubmission && user?.siteUser?.user?.id && preSubmit(fixtureForSubmission, user?.siteUser?.user?.id, reportText) }"
+          color="primary" :disabled="!valid">Submit<v-icon right>mdi-send</v-icon></v-btn>
       </div>
       <transition name="fade">
         <v-card v-if="preview">
@@ -44,7 +44,7 @@
           <v-card-actions>
             <v-btn v-on:click="confirm = false">
               <v-icon left>mdi-cancel</v-icon>Cancel</v-btn>
-            <v-btn v-if="fixtureForSubmission && user"  color="primary" v-on:click="submit">Submit</v-btn>
+            <v-btn v-if="fixtureForSubmission && user" color="primary" v-on:click="submit">Submit</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>

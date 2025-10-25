@@ -2,10 +2,10 @@
   "name": "quizleague",
   "version": "1.0.0",
   "description": "Quizleague website server",
-  "main": "main.js",
+  "main": "main.cjs",
   "scripts": {
     "test": "test",
-    "start": "node main.js"
+    "start": "node main.cjs"
   },
   "author": "David Good",
   "license": "ISC"

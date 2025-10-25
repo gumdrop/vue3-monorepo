@@ -6,7 +6,7 @@
   </v-container>
 </template>
 <script setup lang="ts">
-import FixturesCard from '@/components/fixtures/FixturesCard.vue';
+import FixturesCard from '@/site/components/fixtures/FixturesCard.vue';
 import { useFixtures } from '@/services/FixturesService';
 import { useLayout } from '@/services/LayoutService';
 import { useResultsStore } from '@/stores/results';

@@ -7,7 +7,7 @@
 import type Fixtures from '@/entity/Fixtures';
 import { usePromise } from '@/utils/PromiseRef';
 import type { DocumentReference } from 'firebase/firestore';
-import FixturesCard from '@/components/home/FixturesCard.vue';
+import FixturesCard from '@/site/components/home/FixturesCard.vue';
 
 const props = defineProps<{
   title: string,

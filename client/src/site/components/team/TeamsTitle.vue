@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import SubTitle from '@/components/common/SubTitle.vue';
+import SubTitle from '@/site/components/common/SubTitle.vue';
 </script>
 
 <template>

@@ -20,7 +20,7 @@
 import VenueDAO from '@/dao/VenueDAO';
 import { useCollection } from 'vuefire';
 import { useDisplay } from 'vuetify';
-import QlNamedText from '@/components/text/QlNamedText.vue'
+import QlNamedText from '@/site/components/text/QlNamedText.vue'
 import QlTextBox from '../text/QlTextBox.vue';
 import { useLayout } from '@/services/LayoutService';
 

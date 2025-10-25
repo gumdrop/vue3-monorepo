@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import QlSubTitle from '@/components/common/SubTitle.vue';
+import QlSubTitle from '@/site/components/common/SubTitle.vue';
 import PageTitle from '../common/PageTitle.vue';
 </script>
 

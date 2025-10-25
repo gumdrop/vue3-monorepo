@@ -1,8 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
-import App from './site/App.vue'
-import router from './site/router'
+import router from './router'
 import { createVuetify } from 'vuetify'
 
 import { VueFire, VueFireAuth } from 'vuefire'
@@ -12,6 +11,7 @@ import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 import '@/assets/main.css'
 import { VueShowdownPlugin } from 'vue-showdown'
+import MaintainApp from './components/App.vue'
 
 const firebaseApp = initializeApp({
   // your application settings object Connection{
@@ -31,7 +31,7 @@ if (window.location.hostname == 'localhost') {
   connectFirestoreEmulator(firestore, 'localhost', 8080)
 }
 
-const app = createApp(App)
+const app = createApp(MaintainApp)
 app.use(VueFire, {
   // imported above but could also just be created here
   firebaseApp,
