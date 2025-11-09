@@ -14,7 +14,7 @@ export const useFixture = () => {
     const fixtureSet: Fixture[] = []
 
     for (const fixs of fixtures) {
-      ;(await fixtureDAO.entities(fixtureDAO.subCollection(`${fixs.key}`))).forEach((f) =>
+      ;(await fixtureDAO.entities(fixtureDAO.subCollection(`${fixs.path}`))).forEach((f) =>
         fixtureSet.push(f),
       )
     }
@@ -38,7 +38,7 @@ export const useFixture = () => {
     return fixtureSet
       .filter((f) => f.home.id == teamId || f.away.id == teamId)
       .slice(0, 1)
-      .map((f) => fixtureDAO.getByPath(f.key))
+      .map((f) => fixtureDAO.getByPath(f.path))
   }
 
   const teamFixtureSet = async (
@@ -54,7 +54,7 @@ export const useFixture = () => {
     return fixtureSet
       .filter((f) => f.home.id == teamId || f.away.id == teamId)
       .slice(0, take)
-      .map((f) => fixtureDAO.getByPath(f.key))
+      .map((f) => fixtureDAO.getByPath(f.path))
   }
 
   const teamFixtures = async (teamId: string, take?: number) => {

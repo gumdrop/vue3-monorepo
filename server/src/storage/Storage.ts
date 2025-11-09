@@ -70,7 +70,7 @@ export async function runQuery<T extends Entity>(query: Query<T>) {
   const retval: T[] = []
 
   for (const doc of docs) {
-    retval.push(await getData<T>(doc.ref))
+    retval.push(await getData<T>(doc.path))
   }
 
   return retval

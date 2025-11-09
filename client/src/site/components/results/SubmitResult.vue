@@ -20,7 +20,7 @@
       <div v-if="fixtureForSubmission && user">
         <v-btn
           v-on:click="() => { fixtureForSubmission && user?.siteUser?.user?.id && preSubmit(fixtureForSubmission, user?.siteUser?.user?.id, reportText) }"
-          color="primary" :disabled="!valid">Submit<v-icon right>mdi-send</v-icon></v-btn>
+          color="primary" :disabled="!valid" append-icon="mdi-send">Submit</v-btn>
       </div>
       <transition name="fade">
         <v-card v-if="preview">
