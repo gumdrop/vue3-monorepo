@@ -42,7 +42,8 @@
             <v-checkbox v-model="editing.retired" label="Retired" />
 
             <v-divider class="my-4" />
-            <FixturesEditor v-if="editing?.path" :competitionPath="editing.path" @created="onFixturesChange" @saved="onFixturesChange" />
+            <FixturesEditor v-if="editing?.path" :competitionPath="editing.path" @created="onFixturesChange"
+              @saved="onFixturesChange" />
           </v-form>
         </v-card-text>
         <v-card-actions>
@@ -66,7 +67,7 @@ const props = defineProps({
   seasonPath: { type: String, required: false }
 })
 
-const emits = defineEmits(['created','saved'])
+const emits = defineEmits(['created', 'saved'])
 
 const comps = ref<any[]>([])
 const dialog = ref(false)

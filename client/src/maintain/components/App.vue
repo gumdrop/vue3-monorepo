@@ -45,11 +45,12 @@
                     <!-- Team fields -->
                     <div v-if="isType('team')">
                       <v-text-field v-model="selectedItem.shortName" label="Short Name" />
-                      <PathField v-model="selectedItem.venue" label="Venue Path" @choose="openPicker('venue','venue')" />
-                      <PathField v-model="selectedItem.text" label="Text Path" @choose="openPicker('text','text')" />
+                      <PathField v-model="selectedItem.venue" label="Venue Path"
+                        @choose="openPicker('venue', 'venue')" />
+                      <PathField v-model="selectedItem.text" label="Text Path" @choose="openPicker('text', 'text')" />
                       <v-text-field v-model="selectedItem.handle" label="Handle" />
                       <UsersEditor :users="selectedItem.users" @update:users="val => selectedItem.users = val"
-                        @add="openPicker('users','user', true)" @remove="removeUser" />
+                        @add="openPicker('users', 'user', true)" @remove="removeUser" />
                       <v-checkbox v-model="selectedItem.retired" label="Retired" />
                     </div>
 
@@ -65,7 +66,7 @@
                         v-if="'loss' in selectedItem" />
                       <v-text-field v-model.number="selectedItem.draw" label="Draw" type="number"
                         v-if="'draw' in selectedItem" />
-                      <PathField v-model="selectedItem.text" label="Text Path" @choose="openPicker('text','text')" />
+                      <PathField v-model="selectedItem.text" label="Text Path" @choose="openPicker('text', 'text')" />
                       <v-checkbox v-model="selectedItem.retired" label="Retired" v-if="'retired' in selectedItem" />
                     </div>
 
@@ -73,8 +74,9 @@
                     <div v-if="isType('season')">
                       <v-text-field v-model.number="selectedItem.startYear" label="Start Year" type="number" />
                       <v-text-field v-model.number="selectedItem.endYear" label="End Year" type="number" />
-                      <PathField v-model="selectedItem.text" label="Text Path" @choose="openPicker('text','text')" />
-                      <CompetitionEditor v-if="selectedItem?.path" :seasonPath="selectedItem.path" @created="reloadList()" @saved="reloadList()" />
+                      <PathField v-model="selectedItem.text" label="Text Path" @choose="openPicker('text', 'text')" />
+                      <CompetitionEditor v-if="selectedItem?.path" :seasonPath="selectedItem.path"
+                        @created="reloadList()" @saved="reloadList()" />
                     </div>
 
                     <!-- Venue fields -->
@@ -102,12 +104,14 @@
                     <!-- ApplicationContext fields -->
                     <div v-if="isType('appcontext')">
                       <v-text-field v-model="selectedItem.leagueName" label="League Name" />
-                      <PathField v-model="selectedItem.textSet" label="TextSet Path" @choose="openPicker('textSet','globaltext')" />
-                      <PathField v-model="selectedItem.currentSeason" label="Current Season Path" @choose="openPicker('currentSeason','season')" />
+                      <PathField v-model="selectedItem.textSet" label="TextSet Path"
+                        @choose="openPicker('textSet', 'globaltext')" />
+                      <PathField v-model="selectedItem.currentSeason" label="Current Season Path"
+                        @choose="openPicker('currentSeason', 'season')" />
                       <v-text-field v-model="selectedItem.senderEmail" label="Sender Email" />
                       <EmailAliasesEditor :aliases="selectedItem.emailAliases"
                         @update:aliases="val => selectedItem.emailAliases = val"
-                        @add="openPicker('emailAliases','user', true)" @remove="removeEmailAlias" />
+                        @add="openPicker('emailAliases', 'user', true)" @remove="removeEmailAlias" />
                       <v-text-field v-model="selectedItem.cloudStoreBucket" label="Cloud Store Bucket" />
                     </div>
                   </v-form>

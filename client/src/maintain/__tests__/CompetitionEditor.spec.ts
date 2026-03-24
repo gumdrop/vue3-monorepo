@@ -4,9 +4,7 @@ import CompetitionEditor from '../components/CompetitionEditor.vue'
 
 // Stub out DAO calls by mocking the module that CompetitionEditor imports
 vi.mock('@/dao/CompetitionDAO', () => {
-  const comps = [
-    { name: 'Existing', path: 'season/2025/competition/existing', retired: false },
-  ]
+  const comps = [{ name: 'Existing', path: 'season/2025/competition/existing', retired: false }]
   return {
     default: {
       subCollection: (p: string) => ({ path: `${p}/competition` }),
@@ -19,7 +17,9 @@ vi.mock('@/dao/CompetitionDAO', () => {
   }
 })
 
-vi.mock('@/services/KeyService', () => ({ useKey: () => ({ encode: (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-') }) }))
+vi.mock('@/services/KeyService', () => ({
+  useKey: () => ({ encode: (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-') }),
+}))
 
 describe('CompetitionEditor', () => {
   let wrapper: any
@@ -45,7 +45,7 @@ describe('CompetitionEditor', () => {
           'v-dialog': true,
           'v-form': true,
           'v-checkbox': true,
-          'PathField': true,
+          PathField: true,
         },
       },
     })
@@ -67,6 +67,10 @@ describe('CompetitionEditor', () => {
     await wrapper.vm.createQuick()
     await wrapper.vm.$nextTick()
     // after create, load() should update comps
-    expect(wrapper.vm.comps.some((c: any) => c.name === 'Cup 2026' || c.path?.includes('cup-2026') || c.name === 'New')).toBe(true)
+    expect(
+      wrapper.vm.comps.some(
+        (c: any) => c.name === 'Cup 2026' || c.path?.includes('cup-2026') || c.name === 'New',
+      ),
+    ).toBe(true)
   })
 })

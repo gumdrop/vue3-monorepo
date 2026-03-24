@@ -11,7 +11,8 @@
           <v-btn size="small" color="primary" @click="createQuick">Create</v-btn>
         </v-col>
         <v-col cols="12" class="mt-2">
-          <v-btn size="small" text @click="createMode = !createMode">{{ createMode ? 'Cancel detailed create' : 'Create with details' }}</v-btn>
+          <v-btn size="small" text @click="createMode = !createMode">{{ createMode ? 'Cancel detailed create' : 'Create
+          with details' }}</v-btn>
         </v-col>
       </v-row>
 
@@ -19,10 +20,13 @@
         <div v-if="createMode" class="mb-4">
           <v-form ref="createForm">
             <v-row>
-              <v-col cols="4"><v-text-field v-model="createData.description" label="Description" density="compact" /></v-col>
-              <v-col cols="3"><v-text-field v-model="createData.date" label="Date" type="date" density="compact" /></v-col>
+              <v-col cols="4"><v-text-field v-model="createData.description" label="Description"
+                  density="compact" /></v-col>
+              <v-col cols="3"><v-text-field v-model="createData.date" label="Date" type="date"
+                  density="compact" /></v-col>
               <v-col cols="3"><v-text-field v-model="createData.start" label="Start" density="compact" /></v-col>
-              <v-col cols="2" class="d-flex align-center"><v-btn small color="primary" @click="createDetailed">Create fixture</v-btn></v-col>
+              <v-col cols="2" class="d-flex align-center"><v-btn small color="primary" @click="createDetailed">Create
+                  fixture</v-btn></v-col>
             </v-row>
           </v-form>
         </div>
