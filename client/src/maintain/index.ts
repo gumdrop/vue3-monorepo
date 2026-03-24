@@ -1,7 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
-import router from './router'
+import router from './router/index'
 import { createVuetify } from 'vuetify'
 
 import { VueFire, VueFireAuth } from 'vuefire'
