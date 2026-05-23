@@ -43,6 +43,7 @@ Style preferences
 When in doubt
 
 - Search the repo for existing patterns before creating new files or patterns.
+- Review `data-model.md` for the repo's entity and data architecture.
 - If a suggestion would restructure many files or add new tools, propose the change in an issue/PR rather than applying it silently.
 
 Contact

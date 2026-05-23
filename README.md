@@ -46,4 +46,4 @@ npm run lint
 
 **Repository guidance**
 
-- This repository includes a Copilot/Copilot-like guidance file at `.github/copilot-instructions.md`. It contains repository-specific tips for making focused, consistent changes across the `client/`, `server/`, and `shared/` packages. Review that file before making wide-reaching edits.
+- This repository includes a guidance file at `project.md`. It contains repository-specific tips for making focused, consistent changes across the `client/`, `server/`, and `shared/` packages. Review that file before making wide-reaching edits.
