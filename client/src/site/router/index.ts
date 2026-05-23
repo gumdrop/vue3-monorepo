@@ -234,57 +234,7 @@ const router = createRouter({
       },
       // beforeEnter: unauthGuard,
     },
-    {
-      path: '/maintain',
-      name: 'maintain',
-      components: {
-        default: () => import('../components/maintain/MaintainMain.vue'),
-      },
-      // beforeEnter: authGuard,
-    },
-    {
-      path: '/maintain/team',
-      name: 'maintain team',
-      components: {
-        default: () => import('../components/maintain/MaintainTeamList.vue'),
-      },
-      // beforeEnter: authGuard,
-    },
-    {
-      path: '/maintain/team/new',
-      name: 'maintain team new',
-      components: {
-        default: () => import('../components/maintain/MaintainTeamEditor.vue'),
-      },
-      // beforeEnter: authGuard,
-    },
-    {
-      path: '/maintain/team/:id',
-      name: 'maintain team edit',
-      components: {
-        default: () => import('../components/maintain/MaintainTeamEditor.vue'),
-      },
-      props: {
-        default: true,
-      },
-      // beforeEnter: authGuard,
-    },
-    {
-      path: '/maintain/competition',
-      name: 'maintain competition',
-      components: {
-        default: () => import('../components/maintain/MaintainCompetitionList.vue'),
-      },
-      // beforeEnter: authGuard,
-    },
-    {
-      path: '/maintain/fixture',
-      name: 'maintain fixture',
-      components: {
-        default: () => import('../components/maintain/MaintainFixtureList.vue'),
-      },
-      // beforeEnter: authGuard,
-    },
+
     {
       path: '/home',
       name: 'home',

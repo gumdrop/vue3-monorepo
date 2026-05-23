@@ -3,7 +3,7 @@ import DAO from './DAO'
 
 class GlobalTextDAO extends DAO<GlobalText> {
   constructor() {
-    super('globatext')
+    super('globaltext')
   }
 }
 

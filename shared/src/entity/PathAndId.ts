@@ -28,7 +28,8 @@ export function toPath<T extends Entity>(child: Pathish<T>, parent?: Pathish<T>)
   function resolvePath(path: Pathish<T>) {
     if (path && path.hasOwnProperty('path')) {
       const p = path as PathAndId<T>
-      return `${p.path}/${p.id}`
+      const cleaned = p.path.replace(/\/$/, '')
+      return cleaned.endsWith(`/${p.id}`) ? cleaned : `${cleaned}/${p.id}`
     } else if (
       (path && path.hasOwnProperty('type') && (path as DocRef).type === 'document') ||
       path.hasOwnProperty('_path')

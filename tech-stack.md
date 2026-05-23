@@ -64,3 +64,13 @@ This repository is a TypeScript monorepo for the QuizLeague website.
 - Keep changes small and package-scoped when possible.
 - Prefer existing services, DAOs, and utilities rather than introducing new architecture patterns.
 - Consult `project.md` and `README.md` for repository-specific guidance.
+
+## Session Decisions (2026-05-23)
+
+- Created `spec/maintenance` directory to collect maintenance specifications and session artifacts.
+- Record session artifacts in `spec/maintenance/spec.md`, append session decisions to `tech-stack.md`, and record any data-model changes in `data-model.md`.
+- Use the repository agent `manage_todo_list` tool to track multi-step tasks and mark progress for sessions and maintenance work.
+- Maintain the principle of small, package-scoped changes for maintenance work; avoid introducing architectural changes during note-taking.
+- **Maintenance App Architecture**: Implemented a secondary entry point for the client package at `/maintain`. This is configured in `client/vite.config.ts` as a separate rollup input and has its own Vue 3 app instance and router configuration in `client/src/maintain/`. It relies on shared DAOs and entities but is functionally independent of the main site app.
+
+(Recorded by assistant during an interactive session.)

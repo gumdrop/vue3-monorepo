@@ -372,3 +372,16 @@ League table rows are embedded entities held in the `rows` property of a `League
 | `leaguePoints`       | `integer`         | Yes      | League points earned.        |
 | `matchPointsFor`     | `integer`         | Yes      | Match points for.            |
 | `matchPointsAgainst` | `integer`         | Yes      | Match points against.        |
+
+## Session Data Model Notes (2026-05-23)
+
+- No data-model schema changes were made during this interactive session.
+- **Entity Hierarchy Confirmation**: Verified the following nested collection structure during maintenance app implementation:
+  - `season/{seasonId}/competition`
+  - `season/{seasonId}/competition/{competitionId}/fixtures`
+  - `season/{seasonId}/competition/{competitionId}/fixtures/{fixturesId}/fixture`
+  - `season/{seasonId}/competition/{competitionId}/fixtures/{fixturesId}/fixture/{fixtureId}/report`
+  - `season/{seasonId}/competition/{competitionId}/leaguetable`
+- This hierarchy is now documented in `AGENTS.md` and `spec/maintenance/spec.md`.
+
+(Recorded by assistant during an interactive session.)
