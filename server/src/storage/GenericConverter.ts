@@ -37,7 +37,8 @@ export class GenericConverter<T extends Entity> implements FirestoreDataConverte
       return copy
     }
 
-    return { ...convert(data), path } as T
+    const id = path.substring(path.lastIndexOf('/') + 1)
+    return { ...convert(data), path, id } as T
   }
 }
 

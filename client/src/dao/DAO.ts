@@ -3,6 +3,7 @@ import { toPath, type Pathish } from '@quizleague/shared'
 import {
   collection,
   CollectionReference,
+  deleteDoc,
   doc,
   DocumentReference,
   getDoc,
@@ -85,6 +86,10 @@ abstract class DAO<T extends Entity> {
 
   update = (path: string, fields: object) => {
     return updateDoc(this.getByPath(path), fields)
+  }
+
+  remove = (path: string) => {
+    return deleteDoc(this.getByPath(path))
   }
 }
 

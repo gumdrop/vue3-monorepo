@@ -2,6 +2,7 @@ import Express, { Request, Response } from 'express'
 import Path from 'node:path'
 import configureSite from './endpoint/SiteEndpoints'
 import configureCalendar from './endpoint/CalendarEndpoints'
+import configureMaintain from './endpoint/MaintainEndpoints'
 
 export const isLocal = () => true && process.env['FIRESTORE_EMULATOR_HOST']
 export const emulatorAddr = () => process.env['FIRESTORE_EMULATOR_HOST']
@@ -35,6 +36,7 @@ const port = process.env['PORT'] || '8000'
 
 configureSite(app)
 configureCalendar(app)
+configureMaintain(app)
 
 app.use('/', indexMapping).listen(port)
 
