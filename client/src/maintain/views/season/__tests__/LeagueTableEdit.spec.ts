@@ -88,6 +88,36 @@ describe('LeagueTableEdit', () => {
     } as LeagueTable)
   })
 
+  it('adds a row and saves a new league table with a description-derived id', async () => {
+    mocks.route.params = {
+      seasonId: 'season-1',
+      competitionId: 'competition-1',
+      id: 'new',
+    }
+    const wrapper = await mountLeagueTableEdit()
+
+    await wrapper.get('input[aria-label="Description"]').setValue('Main Table')
+    await wrapper.find('[data-test="add-row-button"]').trigger('click')
+    await wrapper
+      .find<HTMLSelectElement>('[data-test="league-table-team-select"]')
+      .setValue('alpha')
+    await wrapper.find('[data-test="save-league-table-button"]').trigger('click')
+
+    expect(mocks.leagueTableDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'main-table',
+        path: 'season/season-1/competition/competition-1/leaguetable/main-table',
+        description: 'Main Table',
+        rows: [
+          expect.objectContaining({
+            team: { id: 'alpha', path: 'team/alpha' },
+          }),
+        ],
+      }),
+    )
+    expect(mocks.routerPush).toHaveBeenCalledWith('/season/season-1/competition/competition-1')
+  })
+
   it('shows only unallocated teams plus the current row team in row dropdowns', async () => {
     const wrapper = await mountLeagueTableEdit()
 

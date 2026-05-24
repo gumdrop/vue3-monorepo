@@ -11,22 +11,49 @@ describe('Maintenance Router', () => {
 
   it('contains season route', () => {
     const routes = router.getRoutes()
-    const seasonRoute = routes.find(r => r.name === 'season')
+    const seasonRoute = routes.find((r) => r.name === 'season')
     expect(seasonRoute).toBeDefined()
     expect(seasonRoute?.path).toBe('/season')
   })
 
   it('contains team route', () => {
     const routes = router.getRoutes()
-    const teamRoute = routes.find(r => r.name === 'team')
+    const teamRoute = routes.find((r) => r.name === 'team')
     expect(teamRoute).toBeDefined()
     expect(teamRoute?.path).toBe('/team')
   })
 
   it('contains nested competition route', () => {
     const routes = router.getRoutes()
-    const compRoute = routes.find(r => r.name === 'competition-edit')
+    const compRoute = routes.find((r) => r.name === 'competition-edit')
     expect(compRoute).toBeDefined()
     expect(compRoute?.path).toBe('/season/:seasonId/competition/:id')
+  })
+
+  it('contains every maintenance view route', () => {
+    const routePathsByName = new Map(router.getRoutes().map((route) => [route.name, route.path]))
+    const expectedRoutes = [
+      ['home', '/'],
+      ['season', '/season'],
+      ['season-edit', '/season/:id'],
+      ['competition-edit', '/season/:seasonId/competition/:id'],
+      ['fixtures-edit', '/season/:seasonId/competition/:competitionId/fixtures/:id'],
+      ['leaguetable-edit', '/season/:seasonId/competition/:competitionId/leaguetable/:id'],
+      ['team', '/team'],
+      ['team-edit', '/team/:id'],
+      ['venue', '/venue'],
+      ['venue-edit', '/venue/:id'],
+      ['user', '/user'],
+      ['user-edit', '/user/:id'],
+      ['siteuser', '/siteuser'],
+      ['siteuser-edit', '/siteuser/:id'],
+      ['globaltext', '/globaltext'],
+      ['globaltext-edit', '/globaltext/:id'],
+      ['applicationcontext', '/applicationcontext'],
+    ]
+
+    expectedRoutes.forEach(([name, path]) => {
+      expect(routePathsByName.get(name)).toBe(path)
+    })
   })
 })
