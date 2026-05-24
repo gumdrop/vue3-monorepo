@@ -9,8 +9,11 @@
           <v-text-field v-model="leagueTable.description" label="Description"></v-text-field>
 
           <v-row class="mb-3">
-            <v-col cols="12" class="d-flex justify-end">
-              <v-btn color="primary" small @click="addRow">Add Row</v-btn>
+            <v-col cols="12" class="d-flex justify-end ga-2">
+              <v-btn color="secondary" small @click="recalculatePositions" :disabled="!leagueTable.rows.length">
+                Recalculate Positions
+              </v-btn>
+              <v-btn color="primary" small @click="addRow" :disabled="!unallocatedTeams.length">Add Row</v-btn>
             </v-col>
           </v-row>
           <v-table>
@@ -31,8 +34,9 @@
             <tbody>
               <tr v-for="(row, index) in leagueTable.rows" :key="row.team.id || index">
                 <td>
-                  <v-select :items="teams" item-title="name" item-value="id" v-model="row.team.id" label="Team" dense
-                    hide-details @change="setRowTeam(row, $event)" />
+                  <v-select :items="availableTeamsForRow(index)" item-title="name" item-value="id"
+                    v-model="row.team.id" label="Team" dense hide-details
+                    @update:model-value="setRowTeam(row, $event)" />
                 </td>
                 <td>
                   <v-text-field v-model="row.position" label="Position" dense hide-details />
@@ -87,6 +91,7 @@ import type LeagueTable from '@/entity/LeagueTable'
 import type { LeagueTableRow } from '@/entity/LeagueTable'
 import type Team from '@/entity/Team'
 import { useValidations } from '@/site/components/Validation'
+import { recalculateTables } from '@quizleague/shared'
 
 const route = useRoute()
 const router = useRouter()
@@ -99,6 +104,12 @@ const valid = ref(false)
 const isNew = computed(() => route.params.id === 'new')
 const seasonId = computed(() => route.params.seasonId as string)
 const competitionId = computed(() => route.params.competitionId as string)
+const compPath = computed(() => `season/${seasonId.value}/competition/${competitionId.value}`)
+const allocatedTeamIds = computed(() => {
+  const rows = leagueTable.value?.rows || []
+  return new Set(rows.map((row) => row.team?.id).filter((id) => id))
+})
+const unallocatedTeams = computed(() => teams.value.filter((team) => !allocatedTeamIds.value.has(team.id)))
 
 const createEmptyRow = (): LeagueTableRow => ({
   team: { id: '', path: '' },
@@ -114,17 +125,16 @@ const createEmptyRow = (): LeagueTableRow => ({
 
 onMounted(async () => {
   teams.value = (await TeamDAO.list()) || []
-  const compPath = `season/${seasonId.value}/competition/${competitionId.value}`
   if (isNew.value) {
     leagueTable.value = {
       id: '',
-      path: `${compPath}/leaguetable`,
+      path: `${compPath.value}/leaguetable`,
       description: '',
       rows: []
     } as LeagueTable
   } else {
     const id = route.params.id as string
-    const path = `${compPath}/leaguetable/${id}`
+    const path = `${compPath.value}/leaguetable/${id}`
     leagueTable.value = (await LeagueTableDAO.getDataByPath(path)) as LeagueTable | null
   }
 })
@@ -132,6 +142,17 @@ onMounted(async () => {
 const setRowTeam = (row: LeagueTableRow, id: string) => {
   const team = teams.value.find((t) => t.id === id)
   row.team = team ? { id: team.id, path: team.path } : { id, path: '' }
+}
+
+const availableTeamsForRow = (rowIndex: number) => {
+  const rows = leagueTable.value?.rows || []
+  const allocatedToOtherRows = new Set(
+    rows
+      .filter((_, index) => index !== rowIndex)
+      .map((row) => row.team?.id)
+      .filter((id) => id),
+  )
+  return teams.value.filter((team) => !allocatedToOtherRows.has(team.id))
 }
 
 const addRow = () => {
@@ -142,15 +163,44 @@ const removeRow = (index: number) => {
   leagueTable.value?.rows.splice(index, 1)
 }
 
+const slug = (value: string) => value.trim().toLowerCase().replace(/\s+/g, '-')
+
+const tableId = (table: LeagueTable) => {
+  const routeId = route.params.id as string
+  return isNew.value ? slug(table.description || '') : table.id || routeId
+}
+
+const normaliseRow = (row: LeagueTableRow): LeagueTableRow => {
+  const teamId = row.team?.id || ''
+  return {
+    ...row,
+    team: {
+      id: teamId,
+      path: row.team?.path || (teamId ? `team/${teamId}` : ''),
+    },
+  }
+}
+
+const tableForSave = (table: LeagueTable): LeagueTable => {
+  const id = tableId(table)
+  return {
+    ...table,
+    id,
+    path: `${compPath.value}/leaguetable/${id}`,
+    rows: table.rows.map(normaliseRow),
+  }
+}
+
+const recalculatePositions = () => {
+  if (!leagueTable.value) return
+
+  const [recalculated] = recalculateTables([tableForSave(leagueTable.value)], [])
+  leagueTable.value.rows = recalculated.rows
+}
+
 const save = async () => {
   if (leagueTable.value) {
-    if (isNew.value) {
-      const id = (leagueTable.value.description || '').toLowerCase().replace(/\s+/g, '-')
-      const path = `season/${seasonId.value}/competition/${competitionId.value}/leaguetable/${id}`
-      await LeagueTableDAO.save({ ...leagueTable.value, id, path })
-    } else {
-      await LeagueTableDAO.save(leagueTable.value)
-    }
+    await LeagueTableDAO.save(tableForSave(leagueTable.value))
     back()
   }
 }

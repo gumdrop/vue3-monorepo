@@ -38,6 +38,20 @@ npm run build
 npm run test:unit
 ```
 
+### Run the Firestore Emulator
+
+```sh
+npm run emulators:start
+```
+
+The emulator imports and exports the reusable local data set in `emulator-data/`.
+To reset the emulator to the seeded Chiltern Quiz League data model sample, run:
+
+```sh
+npm run seed:emulator
+npm run emulators:export
+```
+
 ### Lint with [ESLint](https://eslint.org/)
 
 ```sh

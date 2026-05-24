@@ -24,7 +24,9 @@ const firebaseApp = initializeApp({
 const firestore = getFirestore(firebaseApp)
 
 if (window.location.hostname == 'localhost') {
-  connectFirestoreEmulator(firestore, 'localhost', 8080)
+  const emulatorHost = import.meta.env.VITE_FIRESTORE_EMULATOR_HOST ?? '127.0.0.1'
+  const emulatorPort = Number(import.meta.env.VITE_FIRESTORE_EMULATOR_PORT ?? '18080')
+  connectFirestoreEmulator(firestore, emulatorHost, emulatorPort)
 }
 
 const app = createApp(App)
