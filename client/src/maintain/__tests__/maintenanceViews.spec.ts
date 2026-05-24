@@ -708,11 +708,79 @@ describe('maintenance edit views', () => {
     )
   })
 
+  it('loads and saves linked competition text', async () => {
+    mocks.route.params = { seasonId: '2026-2027', id: 'league' }
+    mocks.competitionDAO.getDataByPath.mockResolvedValue({
+      id: 'league',
+      path: 'season/2026-2027/competition/league',
+      name: 'League',
+      _name: 'league',
+      duration: 1,
+      text: { id: 'league-text', path: 'text/league-text' },
+    })
+    mocks.textDAO.getData.mockResolvedValue({
+      id: 'league-text',
+      path: 'text/league-text',
+      text: 'League notes',
+      mimeType: 'text/html',
+    })
+    const wrapper = await mountMaintenance(CompetitionEdit)
+
+    expect(mocks.textDAO.getData).toHaveBeenCalledWith({
+      id: 'league-text',
+      path: 'text/league-text',
+    })
+
+    await clickButton(wrapper, 'Save Text')
+
+    expect(mocks.textDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'league-text',
+        path: 'text/league-text',
+        text: 'League notes',
+      }),
+    )
+  })
+
+  it('adds text to an existing competition', async () => {
+    mocks.route.params = { seasonId: '2026-2027', id: 'league' }
+    mocks.competitionDAO.getDataByPath.mockResolvedValue({
+      id: 'league',
+      path: 'season/2026-2027/competition/league',
+      name: 'League',
+      _name: 'league',
+      duration: 1,
+      text: undefined,
+    })
+    const wrapper = await mountMaintenance(CompetitionEdit)
+
+    await clickButton(wrapper, 'Add Text')
+
+    expect(mocks.textDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: '2026-2027-league-text',
+        path: 'text/2026-2027-league-text',
+        text: '',
+        mimeType: 'text/html',
+      }),
+    )
+    expect(mocks.competitionDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: { id: '2026-2027-league-text', path: 'text/2026-2027-league-text' },
+      }),
+    )
+  })
+
   it('saves a new competition with a generated id and path', async () => {
     mocks.route.params = { seasonId: '2026-2027', id: 'new' }
     const wrapper = await mountMaintenance(CompetitionEdit)
 
     await setField(wrapper, 'Name', 'Knockout Cup')
+    await setField(wrapper, 'Text Name', 'knockout-cup-text')
+    await setField(wrapper, 'Icon', 'mdi-trophy')
+
+    expect(wrapper.get('[data-test="Icon-append-inner-icon"]').text()).toBe('mdi-trophy')
+
     await clickButton(wrapper, 'Save')
 
     expect(mocks.competitionDAO.save).toHaveBeenCalledWith(
@@ -720,6 +788,8 @@ describe('maintenance edit views', () => {
         id: 'knockout-cup',
         path: 'season/2026-2027/competition/knockout-cup',
         name: 'Knockout Cup',
+        textName: 'knockout-cup-text',
+        icon: 'mdi-trophy',
       }),
     )
     expect(mocks.routerPush).toHaveBeenCalledWith('/season/2026-2027')

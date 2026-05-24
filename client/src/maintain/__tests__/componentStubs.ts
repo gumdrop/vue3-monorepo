@@ -21,7 +21,11 @@ export const maintenanceComponentStubs = {
     emits: ['save', 'update:modelValue'],
     setup(props, { emit }) {
       return () =>
-        h('button', { 'data-test': 'text-edit-save', onClick: () => emit('save', props.modelValue) }, 'Save Text')
+        h(
+          'button',
+          { 'data-test': 'text-edit-save', onClick: () => emit('save', props.modelValue) },
+          'Save Text',
+        )
     },
   }),
   EntitySelect: defineComponent({
@@ -32,7 +36,14 @@ export const maintenanceComponentStubs = {
     emits: ['update:modelValue'],
     setup(props, { emit }) {
       return () =>
-        h('button', { 'data-test': 'entity-select', onClick: () => emit('update:modelValue', props.modelValue) }, props.label)
+        h(
+          'button',
+          {
+            'data-test': 'entity-select',
+            onClick: () => emit('update:modelValue', props.modelValue),
+          },
+          props.label,
+        )
     },
   }),
   VAlert: passthrough(),
@@ -109,7 +120,8 @@ export const maintenanceComponentStubs = {
             'aria-label': props.label,
             checked: props.modelValue,
             type: 'checkbox',
-            onChange: (event: Event) => emit('update:modelValue', (event.target as HTMLInputElement).checked),
+            onChange: (event: Event) =>
+              emit('update:modelValue', (event.target as HTMLInputElement).checked),
           }),
         ])
     },
@@ -177,7 +189,11 @@ export const maintenanceComponentStubs = {
             [
               h('option', { value: '' }, ''),
               ...props.items.map((item) =>
-                h('option', { value: itemValue(item, props.itemValue) }, itemValue(item, props.itemTitle)),
+                h(
+                  'option',
+                  { value: itemValue(item, props.itemValue) },
+                  itemValue(item, props.itemTitle),
+                ),
               ),
             ],
           ),
@@ -204,8 +220,10 @@ export const maintenanceComponentStubs = {
     emits: ['update:modelValue'],
     inheritAttrs: false,
     setup(props, { attrs, emit }) {
-      const optionValue = (item: SelectItem | string) => (typeof item === 'string' ? item : itemValue(item, props.itemValue))
-      const optionTitle = (item: SelectItem | string) => (typeof item === 'string' ? item : itemValue(item, props.itemTitle))
+      const optionValue = (item: SelectItem | string) =>
+        typeof item === 'string' ? item : itemValue(item, props.itemValue)
+      const optionTitle = (item: SelectItem | string) =>
+        typeof item === 'string' ? item : itemValue(item, props.itemTitle)
       return () =>
         h('label', [
           props.label ? h('span', props.label) : null,
@@ -214,11 +232,14 @@ export const maintenanceComponentStubs = {
             {
               'data-test': attrs['data-test'],
               value: props.modelValue ?? '',
-              onChange: (event: Event) => emit('update:modelValue', (event.target as HTMLSelectElement).value),
+              onChange: (event: Event) =>
+                emit('update:modelValue', (event.target as HTMLSelectElement).value),
             },
             [
               h('option', { value: '' }, ''),
-              ...props.items.map((item) => h('option', { value: optionValue(item) }, optionTitle(item))),
+              ...props.items.map((item) =>
+                h('option', { value: optionValue(item) }, optionTitle(item)),
+              ),
             ],
           ),
         ])
@@ -229,18 +250,25 @@ export const maintenanceComponentStubs = {
       modelValue: [String, Number],
       label: String,
       type: String,
+      appendInnerIcon: String,
     },
     emits: ['update:modelValue'],
     inheritAttrs: false,
     setup(props, { attrs, emit }) {
       return () =>
-        h('input', {
-          ...attrs,
-          'aria-label': props.label,
-          type: props.type || 'text',
-          value: props.modelValue ?? '',
-          onInput: (event: Event) => emit('update:modelValue', (event.target as HTMLInputElement).value),
-        })
+        h('label', [
+          h('input', {
+            ...attrs,
+            'aria-label': props.label,
+            type: props.type || 'text',
+            value: props.modelValue ?? '',
+            onInput: (event: Event) =>
+              emit('update:modelValue', (event.target as HTMLInputElement).value),
+          }),
+          props.appendInnerIcon
+            ? h('span', { 'data-test': `${props.label}-append-inner-icon` }, props.appendInnerIcon)
+            : null,
+        ])
     },
   }),
   VTextarea: defineComponent({
@@ -256,7 +284,8 @@ export const maintenanceComponentStubs = {
           ...attrs,
           'aria-label': props.label,
           value: props.modelValue ?? '',
-          onInput: (event: Event) => emit('update:modelValue', (event.target as HTMLTextAreaElement).value),
+          onInput: (event: Event) =>
+            emit('update:modelValue', (event.target as HTMLTextAreaElement).value),
         })
     },
   }),
