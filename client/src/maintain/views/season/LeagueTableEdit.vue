@@ -10,10 +10,10 @@
 
           <v-row class="mb-3">
             <v-col cols="12" class="d-flex justify-end ga-2">
-              <v-btn color="secondary" small @click="recalculatePositions" :disabled="!leagueTable.rows.length">
+              <v-btn data-test="recalculate-positions-button" color="secondary" small @click="recalculatePositions" :disabled="!leagueTable.rows.length">
                 Recalculate Positions
               </v-btn>
-              <v-btn color="primary" small @click="addRow" :disabled="!unallocatedTeams.length">Add Row</v-btn>
+              <v-btn data-test="add-row-button" color="primary" small @click="addRow" :disabled="!unallocatedTeams.length">Add Row</v-btn>
             </v-col>
           </v-row>
           <v-table>
@@ -34,7 +34,7 @@
             <tbody>
               <tr v-for="(row, index) in leagueTable.rows" :key="row.team.id || index">
                 <td>
-                  <v-select :items="availableTeamsForRow(index)" item-title="name" item-value="id"
+                  <v-select data-test="league-table-team-select" :items="availableTeamsForRow(index)" item-title="name" item-value="id"
                     v-model="row.team.id" label="Team" dense hide-details
                     @update:model-value="setRowTeam(row, $event)" />
                 </td>
@@ -75,7 +75,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="secondary" @click="back">Cancel</v-btn>
-          <v-btn color="primary" @click="save" :disabled="!valid">Save</v-btn>
+          <v-btn data-test="save-league-table-button" color="primary" @click="save" :disabled="!valid">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-form>
@@ -92,6 +92,13 @@ import type { LeagueTableRow } from '@/entity/LeagueTable'
 import type Team from '@/entity/Team'
 import { useValidations } from '@/site/components/Validation'
 import { recalculateTables } from '@quizleague/shared'
+import {
+  availableTeamsForLeagueTableRow,
+  createEmptyLeagueTableRow,
+  leagueTableForSave,
+  setLeagueTableRowTeam,
+  unallocatedLeagueTableTeams,
+} from './leagueTableEditHelpers'
 
 const route = useRoute()
 const router = useRouter()
@@ -105,23 +112,7 @@ const isNew = computed(() => route.params.id === 'new')
 const seasonId = computed(() => route.params.seasonId as string)
 const competitionId = computed(() => route.params.competitionId as string)
 const compPath = computed(() => `season/${seasonId.value}/competition/${competitionId.value}`)
-const allocatedTeamIds = computed(() => {
-  const rows = leagueTable.value?.rows || []
-  return new Set(rows.map((row) => row.team?.id).filter((id) => id))
-})
-const unallocatedTeams = computed(() => teams.value.filter((team) => !allocatedTeamIds.value.has(team.id)))
-
-const createEmptyRow = (): LeagueTableRow => ({
-  team: { id: '', path: '' },
-  position: '',
-  played: 0,
-  won: 0,
-  lost: 0,
-  drawn: 0,
-  leaguePoints: 0,
-  matchPointsFor: 0,
-  matchPointsAgainst: 0
-})
+const unallocatedTeams = computed(() => unallocatedLeagueTableTeams(teams.value, leagueTable.value))
 
 onMounted(async () => {
   teams.value = (await TeamDAO.list()) || []
@@ -140,55 +131,23 @@ onMounted(async () => {
 })
 
 const setRowTeam = (row: LeagueTableRow, id: string) => {
-  const team = teams.value.find((t) => t.id === id)
-  row.team = team ? { id: team.id, path: team.path } : { id, path: '' }
+  setLeagueTableRowTeam(row, teams.value, id)
 }
 
 const availableTeamsForRow = (rowIndex: number) => {
-  const rows = leagueTable.value?.rows || []
-  const allocatedToOtherRows = new Set(
-    rows
-      .filter((_, index) => index !== rowIndex)
-      .map((row) => row.team?.id)
-      .filter((id) => id),
-  )
-  return teams.value.filter((team) => !allocatedToOtherRows.has(team.id))
+  return availableTeamsForLeagueTableRow(teams.value, leagueTable.value?.rows || [], rowIndex)
 }
 
 const addRow = () => {
-  leagueTable.value?.rows.push(createEmptyRow())
+  leagueTable.value?.rows.push(createEmptyLeagueTableRow())
 }
 
 const removeRow = (index: number) => {
   leagueTable.value?.rows.splice(index, 1)
 }
 
-const slug = (value: string) => value.trim().toLowerCase().replace(/\s+/g, '-')
-
-const tableId = (table: LeagueTable) => {
-  const routeId = route.params.id as string
-  return isNew.value ? slug(table.description || '') : table.id || routeId
-}
-
-const normaliseRow = (row: LeagueTableRow): LeagueTableRow => {
-  const teamId = row.team?.id || ''
-  return {
-    ...row,
-    team: {
-      id: teamId,
-      path: row.team?.path || (teamId ? `team/${teamId}` : ''),
-    },
-  }
-}
-
 const tableForSave = (table: LeagueTable): LeagueTable => {
-  const id = tableId(table)
-  return {
-    ...table,
-    id,
-    path: `${compPath.value}/leaguetable/${id}`,
-    rows: table.rows.map(normaliseRow),
-  }
+  return leagueTableForSave(table, compPath.value, route.params.id as string, isNew.value)
 }
 
 const recalculatePositions = () => {

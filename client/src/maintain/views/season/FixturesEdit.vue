@@ -25,10 +25,10 @@
       <v-card-title>
         Fixtures
         <v-spacer></v-spacer>
-        <v-btn color="primary" @click="addFixture" :disabled="unallocatedTeams.length < 2">Add Fixture</v-btn>
+        <v-btn data-test="add-fixture-button" color="primary" @click="addFixture" :disabled="unallocatedTeams.length < 2">Add Fixture</v-btn>
       </v-card-title>
       <v-list>
-        <v-list-item v-for="fix in fixtureList" :key="fix.id" @click="editFixture(fix)">
+        <v-list-item data-test="fixture-list-item" v-for="fix in fixtureList" :key="fix.id" @click="editFixture(fix)">
           <v-list-item-title>
             {{ nameFor(fix.home?.id) }} vs {{ nameFor(fix.away?.id) }}
           </v-list-item-title>
@@ -43,11 +43,11 @@
       <v-card>
         <v-card-title>{{ fixtureToEdit && fixtureToEdit.id ? 'Edit' : 'Add' }} Fixture</v-card-title>
         <v-card-text>
-          <v-select v-model="fixtureToEdit.homePath" :items="availableTeamsForFixture('home')" item-title="name" item-value="path"
+          <v-select data-test="home-team-select" v-model="fixtureToEdit.homePath" :items="availableTeamsForFixture('home')" item-title="name" item-value="path"
             label="Home Team" @update:model-value="setHomeTeam"></v-select>
-          <v-select v-model="fixtureToEdit.awayPath" :items="availableTeamsForFixture('away')" item-title="name" item-value="path"
+          <v-select data-test="away-team-select" v-model="fixtureToEdit.awayPath" :items="availableTeamsForFixture('away')" item-title="name" item-value="path"
             label="Away Team"></v-select>
-          <v-select v-model="fixtureToEdit.venuePath" :items="venues" item-title="name" item-value="path"
+          <v-select data-test="venue-select" v-model="fixtureToEdit.venuePath" :items="venues" item-title="name" item-value="path"
             label="Venue"></v-select>
 
           <template v-if="fixtureToEdit && fixtureToEdit.id && fixtureToEdit.result">
@@ -75,7 +75,7 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="secondary" @click="showFixtureDialog = false">Cancel</v-btn>
-          <v-btn color="primary" @click="saveFixture" :disabled="!canSaveFixture">Save</v-btn>
+          <v-btn data-test="save-fixture-button" color="primary" @click="saveFixture" :disabled="!canSaveFixture">Save</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -94,6 +94,13 @@ import type Fixtures from '@/entity/Fixtures'
 import type { Fixture } from '@/entity/Fixtures'
 import type Venue from '@/entity/Venue'
 import { useValidations } from '@/site/components/Validation'
+import {
+  applyHomeTeamSelection,
+  availableTeamsForFixtureSlot,
+  canSaveFixtureEdit,
+  type FixtureEdit,
+  unallocatedFixtureTeams,
+} from './fixtureEditHelpers'
 
 const route = useRoute()
 const router = useRouter()
@@ -108,14 +115,7 @@ const valid = ref(false)
 const isNew = computed(() => route.params.id === 'new')
 const seasonId = computed(() => route.params.seasonId as string)
 const competitionId = computed(() => route.params.competitionId as string)
-const allocatedTeamPaths = computed(() => {
-  return new Set(
-    fixtureList.value
-      .flatMap((fixture) => [fixture.home?.path, fixture.away?.path])
-      .filter((path) => path),
-  )
-})
-const unallocatedTeams = computed(() => teams.value.filter((team) => !allocatedTeamPaths.value.has(team.path)))
+const unallocatedTeams = computed(() => unallocatedFixtureTeams(teams.value, fixtureList.value))
 
 onMounted(async () => {
   const compPath = `season/${seasonId.value}/competition/${competitionId.value}`
@@ -152,42 +152,15 @@ const nameFor = (id?: string) => {
 }
 
 const showFixtureDialog = ref(false)
-type FixtureEdit = Partial<Fixture> & { homePath?: string; awayPath?: string; venuePath?: string }
 const fixtureToEdit = ref<FixtureEdit>({} as FixtureEdit)
-const canSaveFixture = computed(() => {
-  return Boolean(
-    fixtureToEdit.value.homePath &&
-    fixtureToEdit.value.awayPath &&
-    fixtureToEdit.value.homePath !== fixtureToEdit.value.awayPath
-  )
-})
-
-const allocatedTeamPathsForOtherFixtures = () => {
-  const fixtureId = fixtureToEdit.value.id
-  return new Set(
-    fixtureList.value
-      .filter((fixture) => fixture.id !== fixtureId)
-      .flatMap((fixture) => [fixture.home?.path, fixture.away?.path])
-      .filter((path) => path),
-  )
-}
+const canSaveFixture = computed(() => canSaveFixtureEdit(fixtureToEdit.value))
 
 const availableTeamsForFixture = (slot: 'home' | 'away') => {
-  const selectedPath = slot === 'home' ? fixtureToEdit.value.homePath : fixtureToEdit.value.awayPath
-  const otherSelectedPath = slot === 'home' ? fixtureToEdit.value.awayPath : fixtureToEdit.value.homePath
-  const allocatedToOtherFixtures = allocatedTeamPathsForOtherFixtures()
-
-  return teams.value.filter((team) => {
-    if (team.path === selectedPath) return true
-    if (team.path === otherSelectedPath) return false
-    return !allocatedToOtherFixtures.has(team.path)
-  })
+  return availableTeamsForFixtureSlot(teams.value, fixtureList.value, fixtureToEdit.value, slot)
 }
 
 const setHomeTeam = (homePath: string | null) => {
-  fixtureToEdit.value.homePath = homePath || ''
-  const team = teams.value.find((t) => t.path === fixtureToEdit.value.homePath)
-  fixtureToEdit.value.venuePath = team?.venue?.path || ''
+  fixtureToEdit.value = applyHomeTeamSelection(fixtureToEdit.value, teams.value, homePath)
 }
 
 const editFixture = (fix: Fixture) => {

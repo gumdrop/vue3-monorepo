@@ -1,0 +1,427 @@
+import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import App from '../App.vue'
+import EntitySelect from '../components/EntitySelect.vue'
+import HomeView from '../views/HomeView.vue'
+import ApplicationContextEdit from '../views/applicationcontext/ApplicationContextEdit.vue'
+import GlobalTextEdit from '../views/globaltext/GlobalTextEdit.vue'
+import GlobalTextList from '../views/globaltext/GlobalTextList.vue'
+import CompetitionEdit from '../views/season/CompetitionEdit.vue'
+import SeasonEdit from '../views/season/SeasonEdit.vue'
+import SeasonList from '../views/season/SeasonList.vue'
+import SiteUserEdit from '../views/siteuser/SiteUserEdit.vue'
+import SiteUserList from '../views/siteuser/SiteUserList.vue'
+import TeamEdit from '../views/team/TeamEdit.vue'
+import TeamList from '../views/team/TeamList.vue'
+import UserEdit from '../views/user/UserEdit.vue'
+import UserList from '../views/user/UserList.vue'
+import VenueEdit from '../views/venue/VenueEdit.vue'
+import VenueList from '../views/venue/VenueList.vue'
+import { maintenanceComponentStubs } from './componentStubs'
+
+const mocks = vi.hoisted(() => ({
+  route: {
+    params: {} as Record<string, string>,
+  },
+  routerPush: vi.fn(),
+  applicationContextDAO: {
+    getAppContext: vi.fn(),
+    save: vi.fn(),
+  },
+  competitionDAO: {
+    entities: vi.fn(),
+    getDataByPath: vi.fn(),
+    nestedCollection: vi.fn((ref: unknown) => ({ parent: ref, name: 'competition' })),
+    save: vi.fn(),
+  },
+  fixturesDAO: {
+    entities: vi.fn(),
+    subCollection: vi.fn((path: string) => `${path}/fixtures`),
+  },
+  globalTextDAO: {
+    getDataById: vi.fn(),
+    list: vi.fn(),
+    save: vi.fn(),
+  },
+  leagueTableDAO: {
+    entities: vi.fn(),
+    subCollection: vi.fn((path: string) => `${path}/leaguetable`),
+  },
+  seasonDAO: {
+    getById: vi.fn((id: string) => ({ id, path: `season/${id}` })),
+    getDataById: vi.fn(),
+    list: vi.fn(),
+    save: vi.fn(),
+  },
+  siteUserDAO: {
+    getDataById: vi.fn(),
+    list: vi.fn(),
+    save: vi.fn(),
+  },
+  teamDAO: {
+    getDataById: vi.fn(),
+    list: vi.fn(),
+    save: vi.fn(),
+  },
+  textDAO: {
+    getData: vi.fn(),
+    getDataByPath: vi.fn(),
+    save: vi.fn(),
+  },
+  userDAO: {
+    getDataById: vi.fn(),
+    list: vi.fn(),
+    save: vi.fn(),
+  },
+  venueDAO: {
+    getDataById: vi.fn(),
+    list: vi.fn(),
+    save: vi.fn(),
+  },
+}))
+
+vi.mock('vue-router', () => ({
+  useRoute: () => mocks.route,
+  useRouter: () => ({ push: mocks.routerPush }),
+}))
+
+vi.mock('@/dao/ApplicationContextDAO', () => ({ default: mocks.applicationContextDAO }))
+vi.mock('@/dao/CompetitionDAO', () => ({ default: mocks.competitionDAO }))
+vi.mock('@/dao/FixturesDAO', () => ({ default: mocks.fixturesDAO }))
+vi.mock('@/dao/GlobalTextDAO', () => ({ default: mocks.globalTextDAO }))
+vi.mock('@/dao/LeagueTableDAO', () => ({ default: mocks.leagueTableDAO }))
+vi.mock('@/dao/SeasonDAO', () => ({ default: mocks.seasonDAO }))
+vi.mock('@/dao/SiteUserDAO', () => ({ default: mocks.siteUserDAO }))
+vi.mock('@/dao/TeamDAO', () => ({ default: mocks.teamDAO }))
+vi.mock('@/dao/TextDAO', () => ({ default: mocks.textDAO }))
+vi.mock('@/dao/UserDAO', () => ({ default: mocks.userDAO }))
+vi.mock('@/dao/VenueDAO', () => ({ default: mocks.venueDAO }))
+
+type Component = Parameters<typeof mount>[0]
+
+const mountMaintenance = async (component: Component) => {
+  const wrapper = mount(component, {
+    global: {
+      stubs: maintenanceComponentStubs,
+    },
+  })
+  await flushPromises()
+  return wrapper
+}
+
+const clickButton = async (wrapper: VueWrapper, text: string) => {
+  const button = wrapper.findAll('button').find((candidate) => candidate.text().includes(text))
+  expect(button, `button with text "${text}"`).toBeDefined()
+  await button!.trigger('click')
+}
+
+const setField = async (wrapper: VueWrapper, label: string, value: string) => {
+  await wrapper.get(`input[aria-label="${label}"]`).setValue(value)
+}
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  mocks.route.params = {}
+  vi.stubGlobal('alert', vi.fn())
+})
+
+describe('maintenance shell components', () => {
+  it('renders the maintenance menu and toggles the drawer', async () => {
+    const wrapper = await mountMaintenance(App)
+
+    expect(wrapper.text()).toContain('Chiltern Quiz League Maintenance')
+    expect(wrapper.text()).toContain('Application Context')
+
+    await clickButton(wrapper, 'Menu')
+
+    expect(wrapper.text()).not.toContain('Application Context')
+  })
+
+  it('renders the maintenance home view', async () => {
+    const wrapper = await mountMaintenance(HomeView)
+
+    expect(wrapper.text()).toContain('Maintenance Home')
+  })
+
+  it('loads entity select options and emits path references', async () => {
+    const dao = {
+      list: vi.fn().mockResolvedValue([
+        { id: 'alpha', path: 'entity/alpha', name: 'Alpha' },
+        { id: 'bravo', path: 'entity/bravo', name: 'Bravo' },
+      ]),
+    }
+    const wrapper = mount(EntitySelect, {
+      props: {
+        dao,
+        label: 'Entity',
+        modelValue: { id: 'alpha', path: 'entity/alpha' },
+      },
+      global: {
+        stubs: {
+          VAutocomplete: maintenanceComponentStubs.VAutocomplete,
+        },
+      },
+    })
+    await flushPromises()
+
+    await wrapper.get('select').setValue('bravo')
+
+    expect(wrapper.emitted('update:modelValue')?.at(-1)).toEqual([{ id: 'bravo', path: 'entity/bravo' }])
+  })
+})
+
+describe('maintenance list views', () => {
+  it('loads teams and routes to add team', async () => {
+    mocks.teamDAO.list.mockResolvedValue([{ id: 'alpha', path: 'team/alpha', name: 'Alpha', shortName: 'ALP' }])
+    const wrapper = await mountMaintenance(TeamList)
+
+    expect(wrapper.text()).toContain('Alpha')
+    await clickButton(wrapper, 'Add Team')
+
+    expect(mocks.routerPush).toHaveBeenCalledWith('/team/new')
+  })
+
+  it('loads venues and routes to add venue', async () => {
+    mocks.venueDAO.list.mockResolvedValue([{ id: 'town-hall', path: 'venue/town-hall', name: 'Town Hall', address: 'High Street' }])
+    const wrapper = await mountMaintenance(VenueList)
+
+    expect(wrapper.text()).toContain('Town Hall')
+    await clickButton(wrapper, 'Add Venue')
+
+    expect(mocks.routerPush).toHaveBeenCalledWith('/venue/new')
+  })
+
+  it('loads users and routes to add user', async () => {
+    mocks.userDAO.list.mockResolvedValue([{ id: 'user-1', path: 'user/user-1', name: 'Alice User', email: 'alice@example.com' }])
+    const wrapper = await mountMaintenance(UserList)
+
+    expect(wrapper.text()).toContain('Alice User')
+    await clickButton(wrapper, 'Add User')
+
+    expect(mocks.routerPush).toHaveBeenCalledWith('/user/new')
+  })
+
+  it('loads site users and routes to add site user', async () => {
+    mocks.siteUserDAO.list.mockResolvedValue([{ id: 'alice', path: 'siteuser/alice', handle: 'alice' }])
+    const wrapper = await mountMaintenance(SiteUserList)
+
+    expect(wrapper.text()).toContain('alice')
+    await clickButton(wrapper, 'Add Site User')
+
+    expect(mocks.routerPush).toHaveBeenCalledWith('/siteuser/new')
+  })
+
+  it('loads global text entries and routes to add global text', async () => {
+    mocks.globalTextDAO.list.mockResolvedValue([{ id: 'rules', path: 'globaltext/rules', name: 'Rules' }])
+    const wrapper = await mountMaintenance(GlobalTextList)
+
+    expect(wrapper.text()).toContain('Rules')
+    await clickButton(wrapper, 'Add Global Text')
+
+    expect(mocks.routerPush).toHaveBeenCalledWith('/globaltext/new')
+  })
+
+  it('loads seasons sorted by start year and routes to add season', async () => {
+    mocks.seasonDAO.list.mockResolvedValue([
+      { id: '2024-2025', path: 'season/2024-2025', startYear: 2024, endYear: 2025 },
+      { id: '2025-2026', path: 'season/2025-2026', startYear: 2025, endYear: 2026 },
+    ])
+    const wrapper = await mountMaintenance(SeasonList)
+
+    expect(wrapper.text().indexOf('2025/2026')).toBeLessThan(wrapper.text().indexOf('2024/2025'))
+    await clickButton(wrapper, 'Add Season')
+
+    expect(mocks.routerPush).toHaveBeenCalledWith('/season/new')
+  })
+})
+
+describe('maintenance edit views', () => {
+  it('saves a new team with a generated id and path', async () => {
+    mocks.route.params = { id: 'new' }
+    const wrapper = await mountMaintenance(TeamEdit)
+
+    await setField(wrapper, 'Name', 'Quiz Masters')
+    await setField(wrapper, 'Short Name', 'QM')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.teamDAO.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'quiz-masters',
+      path: 'team/quiz-masters',
+      name: 'Quiz Masters',
+      shortName: 'QM',
+    }))
+    expect(mocks.routerPush).toHaveBeenCalledWith('/team')
+  })
+
+  it('saves a new venue with a generated id and path', async () => {
+    mocks.route.params = { id: 'new' }
+    const wrapper = await mountMaintenance(VenueEdit)
+
+    await setField(wrapper, 'Name', 'Town Hall')
+    await setField(wrapper, 'Address', 'High Street')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.venueDAO.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'town-hall',
+      path: 'venue/town-hall',
+      name: 'Town Hall',
+      address: 'High Street',
+    }))
+    expect(mocks.routerPush).toHaveBeenCalledWith('/venue')
+  })
+
+  it('saves a new user with an email-derived id and path', async () => {
+    mocks.route.params = { id: 'new' }
+    const wrapper = await mountMaintenance(UserEdit)
+
+    await setField(wrapper, 'Name', 'Alice User')
+    await setField(wrapper, 'Email', 'alice@example.com')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.userDAO.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'alice_example_com',
+      path: 'user/alice_example_com',
+      name: 'Alice User',
+      email: 'alice@example.com',
+    }))
+    expect(mocks.routerPush).toHaveBeenCalledWith('/user')
+  })
+
+  it('saves a new site user with a handle-derived id and path', async () => {
+    mocks.route.params = { id: 'new' }
+    const wrapper = await mountMaintenance(SiteUserEdit)
+
+    await setField(wrapper, 'Handle', 'Alice Admin')
+    await setField(wrapper, 'Email', 'alice@example.com')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.siteUserDAO.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'alice-admin',
+      path: 'siteuser/alice-admin',
+      handle: 'Alice Admin',
+      email: 'alice@example.com',
+    }))
+    expect(mocks.routerPush).toHaveBeenCalledWith('/siteuser')
+  })
+
+  it('saves a new global text entry and its text entity', async () => {
+    mocks.route.params = { id: 'new' }
+    const wrapper = await mountMaintenance(GlobalTextEdit)
+
+    await setField(wrapper, 'Name', 'Rules')
+    await wrapper.get('textarea[aria-label="Text"]').setValue('League rules')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.textDAO.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'rules-text',
+      path: 'text/rules-text',
+      text: 'League rules',
+    }))
+    expect(mocks.globalTextDAO.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'rules',
+      path: 'globaltext/rules',
+      text: { default: { id: 'rules-text', path: 'text/rules-text' } },
+    }))
+    expect(mocks.routerPush).toHaveBeenCalledWith('/globaltext')
+  })
+
+  it('saves a new season with a generated season id and path', async () => {
+    mocks.route.params = { id: 'new' }
+    const wrapper = await mountMaintenance(SeasonEdit)
+
+    await setField(wrapper, 'Start Year', '2026')
+    await setField(wrapper, 'End Year', '2027')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.seasonDAO.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: '2026-2027',
+      path: 'season/2026-2027',
+      startYear: 2026,
+      endYear: 2027,
+    }))
+    expect(mocks.routerPush).toHaveBeenCalledWith('/season')
+  })
+
+  it('adds text to an existing season', async () => {
+    mocks.route.params = { id: '2026-2027' }
+    mocks.seasonDAO.getDataById.mockResolvedValue({
+      id: '2026-2027',
+      path: 'season/2026-2027',
+      startYear: 2026,
+      endYear: 2027,
+      text: undefined,
+    })
+    mocks.competitionDAO.entities.mockResolvedValue([])
+    const wrapper = await mountMaintenance(SeasonEdit)
+
+    await clickButton(wrapper, 'Add Text')
+
+    expect(mocks.textDAO.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: '2026-2027-text',
+      path: 'text/2026-2027-text',
+      text: '',
+    }))
+    expect(mocks.seasonDAO.save).toHaveBeenCalledWith(expect.objectContaining({
+      text: { id: '2026-2027-text', path: 'text/2026-2027-text' },
+    }))
+  })
+
+  it('loads existing competition child collections and routes to child editors', async () => {
+    mocks.route.params = { seasonId: '2026-2027', id: 'league' }
+    mocks.competitionDAO.getDataByPath.mockResolvedValue({
+      id: 'league',
+      path: 'season/2026-2027/competition/league',
+      name: 'League',
+      _name: 'league',
+      duration: 1,
+    })
+    mocks.fixturesDAO.entities.mockResolvedValue([
+      { id: 'round-2', path: 'fixtures/round-2', description: 'Round 2', date: '2026-10-15' },
+      { id: 'round-1', path: 'fixtures/round-1', description: 'Round 1', date: '2026-10-08' },
+    ])
+    mocks.leagueTableDAO.entities.mockResolvedValue([{ id: 'main', path: 'leaguetable/main', description: 'Main' }])
+    const wrapper = await mountMaintenance(CompetitionEdit)
+
+    expect(wrapper.text().indexOf('Round 1')).toBeLessThan(wrapper.text().indexOf('Round 2'))
+
+    await clickButton(wrapper, 'Add Fixtures')
+    expect(mocks.routerPush).toHaveBeenLastCalledWith('/season/2026-2027/competition/league/fixtures/new')
+
+    await clickButton(wrapper, 'Add Table')
+    expect(mocks.routerPush).toHaveBeenLastCalledWith('/season/2026-2027/competition/league/leaguetable/new')
+  })
+
+  it('saves a new competition with a generated id and path', async () => {
+    mocks.route.params = { seasonId: '2026-2027', id: 'new' }
+    const wrapper = await mountMaintenance(CompetitionEdit)
+
+    await setField(wrapper, 'Name', 'Knockout Cup')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.competitionDAO.save).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'knockout-cup',
+      path: 'season/2026-2027/competition/knockout-cup',
+      name: 'Knockout Cup',
+    }))
+    expect(mocks.routerPush).toHaveBeenCalledWith('/season/2026-2027')
+  })
+
+  it('saves the application context and shows confirmation', async () => {
+    mocks.applicationContextDAO.getAppContext.mockResolvedValue({
+      id: 'applicationcontext',
+      path: 'applicationcontext/applicationcontext',
+      leagueName: 'Chiltern Quiz League',
+      senderEmail: 'sender@example.com',
+      cloudStoreBucket: 'bucket',
+    })
+    const wrapper = await mountMaintenance(ApplicationContextEdit)
+
+    await setField(wrapper, 'League Name', 'Updated League')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.applicationContextDAO.save).toHaveBeenCalledWith(expect.objectContaining({
+      leagueName: 'Updated League',
+    }))
+    expect(alert).toHaveBeenCalledWith('Saved')
+  })
+})
