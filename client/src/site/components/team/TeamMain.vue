@@ -1,7 +1,7 @@
 <template>
   <v-container v-if="team && seasonId" :class="gridSize" fluid>
     <v-col>
-      <QlTextBox v-if="team.text.text">
+      <QlTextBox v-if="team.text">
         <QlText :id="team.text.id" />
       </QlTextBox>
     </v-col>
@@ -17,15 +17,15 @@
   </v-container>
 </template>
 <script setup lang="ts">
-import TeamDAO from '@/dao/TeamDAO';
-import { useLayout } from '@/services/LayoutService';
-import { useTeamStore } from '@/stores/teams';
-import { useDocument } from 'vuefire';
-import QlText from '../text/QlText.vue';
-import QlTextBox from '../text/QlTextBox.vue';
-import TeamFixtures from './TeamFixtures.vue';
-import TeamResults from './TeamResults.vue';
-import TeamStandings from './TeamInfo.vue';
+import TeamDAO from '@/dao/TeamDAO'
+import { useLayout } from '@/services/LayoutService'
+import { useTeamStore } from '@/stores/teams'
+import { useDocument } from 'vuefire'
+import QlText from '../text/QlText.vue'
+import QlTextBox from '../text/QlTextBox.vue'
+import TeamFixtures from './TeamFixtures.vue'
+import TeamResults from './TeamResults.vue'
+import TeamStandings from './TeamInfo.vue'
 
 const props = defineProps<{
   id: string

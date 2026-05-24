@@ -71,12 +71,12 @@ export default function useAuth() {
 
   function authGuard() {
     const { user } = useUserStore()
-    return user.value !== undefined
+    return user !== undefined
   }
 
   function unauthGuard() {
     const { user } = useUserStore()
-    return user.value === undefined
+    return user === undefined
   }
 
   return { logout, logonWithGoogle, verifyEmail, authGuard, unauthGuard }

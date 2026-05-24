@@ -64,12 +64,12 @@ abstract class DAO<T extends Entity> {
     return (await getDocs(collection)).docs.map((d) => d.data())
   }
 
-  entityList = async (documents: DocumentReference<T>[] | string[] | undefined) => {
+  entityList = async (documents: Array<DocumentReference<T> | Pathish<T>> | undefined) => {
     if (!documents) return undefined
 
     const entities: T[] = []
     for (const document of documents) {
-      const ref = typeof document === 'string' ? this.getByPath(document) : document
+      const ref = this.getByPath(document as Pathish<T>)
       const entity = await this.getData(ref)
       if (entity) {
         entities.push(entity)

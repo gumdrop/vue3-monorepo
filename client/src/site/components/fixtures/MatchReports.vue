@@ -3,7 +3,7 @@
     <v-col v-for="report in reports" :key="report.id">
       <v-card>
         <v-card-title>
-          <h5>{{ report.team.name }}</h5>
+          <h5>{{ teamLabel(report) }}</h5>
         </v-card-title>
         <v-card-text v-if="report.text">
           <QlText :id="report.text.id" />
@@ -14,13 +14,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import QlText from '../text/QlText.vue';
-import { reportDAO } from '@/dao/FixturesDAO';
-import { useCollection } from 'vuefire';
+import { computed } from 'vue'
+import QlText from '../text/QlText.vue'
+import { reportDAO } from '@/dao/FixturesDAO'
+import { useCollection } from 'vuefire'
+import type { Report } from '@/entity/Fixtures'
 const props = defineProps<{ keyval: string }>()
 
 const reportsDoc = computed(() => reportDAO.subCollection(props.keyval))
 const reports = useCollection(reportsDoc)
 
+const teamLabel = (report: Report) => report.team.id
 </script>

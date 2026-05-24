@@ -4,7 +4,9 @@
     <v-card-text v-if="fixtures">
       <v-container>
         <v-row>
-          <h3 class="headline mb-0">{{ date(fixtures.date, "d MMMM yyyy") }} : {{ fixtures.description }}</h3>
+          <h3 class="headline mb-0">
+            {{ date(fixtures.date, 'd MMMM yyyy') }} : {{ fixtures.description }}
+          </h3>
         </v-row>
         <v-row v-if="fixtureList">
           <SimpleFixtures :fixtures="fixtureList" />
@@ -14,21 +16,23 @@
   </v-card>
 </template>
 <script setup lang="ts">
-import { fixtureDAO } from '@/dao/FixturesDAO';
-import Fixtures from '@/entity/Fixtures';
-import { useDateTime } from '@/services/DateService';
-import { usePromise } from '@/utils/PromiseRef';
-import { DocumentReference } from 'firebase/firestore';
-import { useDocument } from 'vuefire';
-import SimpleFixtures from '../fixtures/SimpleFixtures.vue';
-
+import { fixtureDAO } from '@/dao/FixturesDAO'
+import type Fixtures from '@/entity/Fixtures'
+import { useDateTime } from '@/services/DateService'
+import { usePromise } from '@/utils/PromiseRef'
+import type { DocumentReference } from 'firebase/firestore'
+import { useDocument } from 'vuefire'
+import SimpleFixtures from '../fixtures/SimpleFixtures.vue'
 
 const { date } = useDateTime()
 
-const props = defineProps<{ fixtures: DocumentReference<Fixtures>, title: string }>()
+const props = defineProps<{ fixtures: DocumentReference<Fixtures>; title: string }>()
 
 const fixtures = useDocument(props.fixtures)
 
-const fixtureList = usePromise(fixtureDAO.collectionToDocuments(fixtures?.value?.fixture?.get()))
-
+const fixtureList = usePromise(() =>
+  fixtures.value
+    ? fixtureDAO.collectionToDocuments(fixtureDAO.subCollection(fixtures.value.path))
+    : Promise.resolve(undefined),
+)
 </script>

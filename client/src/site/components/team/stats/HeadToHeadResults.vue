@@ -8,13 +8,13 @@
         </v-row>
       </v-container>
     </v-card-text>
-  </v-card></template>
+  </v-card>
+</template>
 
 <script setup lang="ts">
-import Statistics from '@/entity/Statisitics';
-import { useTeams } from '@/services/TeamService';
-import { usePromise } from '@/utils/PromiseRef';
-
+import type Statistics from '@/entity/Statisitics'
+import { useTeams } from '@/services/TeamService'
+import { usePromise } from '@/utils/PromiseRef'
 
 const props = defineProps<{ stats: Statistics[][] }>()
 
@@ -23,9 +23,9 @@ const { headToHeadResultsData } = useTeams()
 const rows = usePromise(() => headToHeadResultsData(props.stats))
 
 const headers = [
-  { title: "Team", value: "team" },
-  { title: "Won", value: "win", sortable: true },
-  { title: "Lost", value: "lose", sortable: true },
-  { title: "Drawn", value: "draw", sortable: true }]
-
+  { title: 'Team', value: 'team' },
+  { title: 'Won', value: 'win', sortable: true },
+  { title: 'Lost', value: 'lose', sortable: true },
+  { title: 'Drawn', value: 'draw', sortable: true },
+]
 </script>
