@@ -42,10 +42,7 @@
           color="primary"
           variant="text"
           :disabled="!valid || handleTaken"
-          @click="
-            saveUser(user, handle)
-            forward($route.query.forward)
-          "
+          @click="saveUserAndForward(user, handle, $route.query.forward)"
           ><v-icon left>mdi-content-save</v-icon>Save</v-btn
         >
         <v-flex grow
@@ -106,6 +103,15 @@ const forward = (target: unknown) => {
   if (typeof target === 'string' && target) {
     router.push(target)
   }
+}
+
+const saveUserAndForward = (
+  loggedInUser: LoggedInUser | undefined,
+  newHandle: string,
+  target: unknown,
+) => {
+  void saveUser(loggedInUser, newHandle)
+  forward(target)
 }
 
 watch(
