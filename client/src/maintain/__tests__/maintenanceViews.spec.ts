@@ -499,11 +499,15 @@ describe('maintenance edit views', () => {
     mocks.route.params = { id: 'new' }
     const wrapper = await mountMaintenance(VenueEdit)
 
+    expect(wrapper.find('input[aria-label="Post Code"]').exists()).toBe(false)
+
     await setField(wrapper, 'Name', 'Town Hall')
     await setField(wrapper, 'Address', 'High Street')
     await clickButton(wrapper, 'Save')
 
-    expect(mocks.venueDAO.save).toHaveBeenCalledWith(
+    const savedVenue = mocks.venueDAO.save.mock.calls[0][0]
+    expect(savedVenue).not.toHaveProperty('postCode')
+    expect(savedVenue).toEqual(
       expect.objectContaining({
         id: 'town-hall',
         path: 'venue/town-hall',
@@ -526,10 +530,14 @@ describe('maintenance edit views', () => {
     })
     const wrapper = await mountMaintenance(VenueEdit)
 
+    expect(wrapper.find('input[aria-label="Post Code"]').exists()).toBe(false)
+
     await setField(wrapper, 'Address', 'New Road')
     await clickButton(wrapper, 'Save')
 
-    expect(mocks.venueDAO.save).toHaveBeenCalledWith(
+    const savedVenue = mocks.venueDAO.save.mock.calls[0][0]
+    expect(savedVenue).not.toHaveProperty('postCode')
+    expect(savedVenue).toEqual(
       expect.objectContaining({
         id: 'town-hall',
         path: 'venue/town-hall',

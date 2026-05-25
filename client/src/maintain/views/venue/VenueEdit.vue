@@ -8,7 +8,6 @@
         <v-card-text>
           <v-text-field v-model="venue.name" label="Name" :rules="[rules.required('Name')]"></v-text-field>
           <v-text-field v-model="venue.address" label="Address" :rules="[rules.required('Address')]"></v-text-field>
-          <v-text-field v-model="venue.postCode" label="Post Code" :rules="[rules.required('Post Code')]"></v-text-field>
           <v-text-field v-model="venue.phone" label="Phone"></v-text-field>
           <v-text-field v-model="venue.email" label="Email" :rules="[rules.isEmail('Email')]"></v-text-field>
           <v-text-field v-model="venue.website" label="Website"></v-text-field>
@@ -36,7 +35,13 @@ const route = useRoute()
 const router = useRouter()
 const rules = useValidations()
 
-const venue = ref<any | null>(null)
+type EditableVenue = Omit<Venue, 'id' | 'path'> & {
+  id: string
+  path: string
+  postCode?: string
+}
+
+const venue = ref<EditableVenue | null>(null)
 const valid = ref(false)
 
 const isNew = computed(() => route.params.id === 'new')
@@ -48,22 +53,23 @@ onMounted(async () => {
       path: 'venue',
       name: '',
       address: '',
-      postCode: '',
-      retired: false
-    } as any
+      retired: false,
+    }
   } else {
     const id = route.params.id as string
-    venue.value = await VenueDAO.getDataById(id)
+    venue.value = ((await VenueDAO.getDataById(id)) as EditableVenue | undefined) ?? null
   }
 })
 
 const save = async () => {
   if (venue.value) {
     if (isNew.value) {
-        venue.value.id = venue.value.name.toLowerCase().replace(/\s+/g, '-')
-        venue.value.path = `venue/${venue.value.id}`
+      venue.value.id = venue.value.name.toLowerCase().replace(/\s+/g, '-')
+      venue.value.path = `venue/${venue.value.id}`
     }
-    await VenueDAO.save(venue.value)
+    const venueToSave = { ...venue.value }
+    delete venueToSave.postCode
+    await VenueDAO.save(venueToSave)
     router.push('/venue')
   }
 }
