@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { SINGLETON_ID } from '@quizleague/shared'
+import { SINGLETON_ID, toPath } from '@quizleague/shared'
 
 import type Entity from '@/entity/Entity'
 import DAO from '../DAO'
@@ -242,6 +242,43 @@ describe('GenericConverter', () => {
     })
   })
 
+  it('writes entity references as Firestore document references', () => {
+    const converter = new GenericConverter<TestEntity>()
+    const venueRef = mocks.makeDocRef('venue/town-hall')
+
+    const converted = converter.toFirestore({
+      id: 'alpha',
+      name: 'Alpha',
+      path: 'testentity/alpha',
+      text: { id: 'team-alpha', path: 'text/team-alpha' },
+      venue: venueRef,
+      users: [
+        { id: 'alice', path: 'user/alice' },
+        { type: 'document', path: 'user/bob' },
+        legacyRef('user', 'carol'),
+      ],
+      nested: {
+        secretary: { id: 'secretary', path: 'user/secretary' },
+      },
+    } as TestEntity & {
+      text: { id: string; path: string }
+      venue: ReturnType<typeof mocks.makeDocRef>
+      users: unknown[]
+      nested: { secretary: { id: string; path: string } }
+    }) as Record<string, unknown>
+
+    expect(converted.text).toMatchObject({ type: 'document', path: 'text/team-alpha' })
+    expect(converted.venue).toBe(venueRef)
+    expect(converted.users).toMatchObject([
+      { type: 'document', path: 'user/alice' },
+      { type: 'document', path: 'user/bob' },
+      { type: 'document', path: 'user/carol' },
+    ])
+    expect(converted.nested).toMatchObject({
+      secretary: { type: 'document', path: 'user/secretary' },
+    })
+  })
+
   it('hydrates ids, paths, legacy competition wrappers and nested legacy references', () => {
     const converter = new GenericConverter<{
       id: string
@@ -296,6 +333,36 @@ describe('GenericConverter', () => {
 
     expect(converted.text).toBe(textRef)
     expect(converted.users[0]).toBe(userRef)
+  })
+
+  it('hydrates saved path/id reference maps as Firestore document references', () => {
+    const converter = new GenericConverter<{
+      id: string
+      path: string
+      text: { path: string }
+      users: Array<{ path: string }>
+    }>()
+
+    const converted = converter.fromFirestore(
+      snapshot(
+        {
+          id: 'alpha',
+          text: { id: 'team-alpha', path: 'text/team-alpha' },
+          users: [{ id: 'alice', path: 'user/alice' }],
+        },
+        'team/alpha',
+      ) as never,
+    )
+
+    expect(converted.text).toMatchObject({ path: 'text/team-alpha' })
+    expect(converted.users[0]).toMatchObject({ path: 'user/alice' })
+  })
+
+  it('normalizes legacy reference paths without a leading slash', () => {
+    expect(toPath(legacyRef('text', 'front-page'))).toBe('text/front-page')
+    expect(toPath(legacyRef('competition', 'league', 'season/2025'))).toBe(
+      'season/2025/competition/league',
+    )
   })
 })
 

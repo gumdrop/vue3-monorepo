@@ -93,21 +93,21 @@ flowchart TD
 
 ## Type Conventions
 
-| Type            | Meaning                                                                                                        |
-| --------------- | -------------------------------------------------------------------------------------------------------------- |
-| `UUID`          | Canonical identifier for a non-singleton entity, usually the Firestore document ID.                            |
-| `string`        | Plain text string.                                                                                             |
-| `integer`       | Whole number.                                                                                                  |
-| `boolean`       | True or false value.                                                                                           |
-| `LocalDate`     | Date displayed in localised form without timezone information.                                                 |
-| `LocalTime`     | Time-of-day value without date or timezone.                                                                    |
-| `Duration`      | Length of time.                                                                                                |
-| `Timestamp`     | Firestore timestamp or equivalent UTC instant used for freshness metadata, not for visitor-facing local dates. |
-| `Text`          | Top-level structured text document with MIME type and body. Text is never embedded.                            |
-| `Reference<T>`  | Firestore document reference or equivalent typed reference to another entity.                                  |
-| `Map<K, V>`     | Key/value map.                                                                                                 |
-| `array<T>`      | Embedded ordered array of values inside a document.                                                            |
-| `collection<T>` | Nested or top-level collection of entities.                                                                    |
+| Type            | Meaning                                                                                                                                              |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UUID`          | Canonical identifier for a non-singleton entity, usually the Firestore document ID.                                                                  |
+| `string`        | Plain text string.                                                                                                                                   |
+| `integer`       | Whole number.                                                                                                                                        |
+| `boolean`       | True or false value.                                                                                                                                 |
+| `LocalDate`     | Date displayed in localised form without timezone information.                                                                                       |
+| `LocalTime`     | Time-of-day value without date or timezone.                                                                                                          |
+| `Duration`      | Length of time.                                                                                                                                      |
+| `Timestamp`     | Firestore timestamp or equivalent UTC instant used for freshness metadata, not for visitor-facing local dates.                                       |
+| `Text`          | Top-level structured text document with MIME type and body. Text is never embedded.                                                                  |
+| `Reference<T>`  | Firestore document reference to another entity. Legacy map references may still be read and converted, but new saves must write document references. |
+| `Map<K, V>`     | Key/value map.                                                                                                                                       |
+| `array<T>`      | Embedded ordered array of values inside a document.                                                                                                  |
+| `collection<T>` | Nested or top-level collection of entities.                                                                                                          |
 
 ## Public Competition Browse Access
 

@@ -7,14 +7,9 @@ const appContextId = '5659313586569216'
 const seasonId = 'season-2025-2026'
 
 function ref(typeName, id, parentKey = '') {
+  const parent = parentKey ? `${parentKey}/` : ''
   return {
-    id,
-    typeName,
-    key: {
-      parentKey,
-      entityName: typeName,
-      id,
-    },
+    __referencePath: `${parent}${typeName}/${id}`,
   }
 }
 
@@ -195,6 +190,12 @@ function firestoreValue(value) {
     case 'string':
       return { stringValue: value }
     case 'object':
+      if (typeof value.__referencePath === 'string') {
+        return {
+          referenceValue: `projects/${projectId}/databases/(default)/documents/${value.__referencePath}`,
+        }
+      }
+
       return {
         mapValue: {
           fields: Object.fromEntries(

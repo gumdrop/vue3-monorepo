@@ -26,18 +26,20 @@ export interface LegacyRef {
 
 export function toPath<T extends Entity>(child: Pathish<T>, parent?: Pathish<T>): string {
   function resolvePath(path: Pathish<T>) {
-    if (path && path.hasOwnProperty('path')) {
+    if (
+      path &&
+      typeof path === 'object' &&
+      (('type' in path && (path as DocRef).type === 'document') || '_path' in path)
+    ) {
+      return (path as DocRef).path
+    } else if (path && typeof path === 'object' && 'id' in path && 'path' in path) {
       const p = path as PathAndId<T>
       const cleaned = p.path.replace(/\/$/, '')
       return cleaned.endsWith(`/${p.id}`) ? cleaned : `${cleaned}/${p.id}`
-    } else if (
-      (path && path.hasOwnProperty('type') && (path as DocRef).type === 'document') ||
-      path.hasOwnProperty('_path')
-    ) {
-      return (path as DocRef).path
     } else if (isLegacyRef(path)) {
       const ref = path as LegacyRef
-      return `${ref.key.parentKey}/${ref.typeName}/${ref.id}`
+      const parent = ref.key.parentKey ? `${ref.key.parentKey}/` : ''
+      return `${parent}${ref.typeName}/${ref.id}`
     }
     return `${path}`
   }
