@@ -387,6 +387,73 @@ describe('maintenance edit views', () => {
     expect(mocks.routerPush).toHaveBeenCalledWith('/team')
   })
 
+  it('loads and saves linked team text', async () => {
+    mocks.route.params = { id: 'alpha' }
+    mocks.teamDAO.getDataById.mockResolvedValue({
+      id: 'alpha',
+      path: 'team/alpha',
+      name: 'Alpha',
+      shortName: 'ALP',
+      retired: false,
+      users: [],
+      text: { id: 'alpha-text', path: 'text/alpha-text' },
+      venue: { id: 'alpha-venue', path: 'venue/alpha-venue' },
+    })
+    mocks.textDAO.getData.mockResolvedValue({
+      id: 'alpha-text',
+      path: 'text/alpha-text',
+      text: 'Alpha team notes',
+      mimeType: 'text/html',
+    })
+    const wrapper = await mountMaintenance(TeamEdit)
+
+    expect(mocks.textDAO.getData).toHaveBeenCalledWith({
+      id: 'alpha-text',
+      path: 'text/alpha-text',
+    })
+
+    await clickButton(wrapper, 'Save Text')
+
+    expect(mocks.textDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'alpha-text',
+        path: 'text/alpha-text',
+        text: 'Alpha team notes',
+      }),
+    )
+  })
+
+  it('adds text to an existing team', async () => {
+    mocks.route.params = { id: 'alpha' }
+    mocks.teamDAO.getDataById.mockResolvedValue({
+      id: 'alpha',
+      path: 'team/alpha',
+      name: 'Alpha',
+      shortName: 'ALP',
+      retired: false,
+      users: [],
+      text: undefined,
+      venue: { id: 'alpha-venue', path: 'venue/alpha-venue' },
+    })
+    const wrapper = await mountMaintenance(TeamEdit)
+
+    await clickButton(wrapper, 'Add Text')
+
+    expect(mocks.textDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'alpha-text',
+        path: 'text/alpha-text',
+        text: '',
+        mimeType: 'text/html',
+      }),
+    )
+    expect(mocks.teamDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        text: { id: 'alpha-text', path: 'text/alpha-text' },
+      }),
+    )
+  })
+
   it('saves a new venue with a generated id and path', async () => {
     mocks.route.params = { id: 'new' }
     const wrapper = await mountMaintenance(VenueEdit)
