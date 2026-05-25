@@ -99,10 +99,13 @@ vi.mock('@/dao/VenueDAO', () => ({ default: mocks.venueDAO }))
 
 type Component = Parameters<typeof mount>[0]
 
-const mountMaintenance = async (component: Component) => {
+const mountMaintenance = async (
+  component: Component,
+  stubs: typeof maintenanceComponentStubs = maintenanceComponentStubs,
+) => {
   const wrapper = mount(component, {
     global: {
-      stubs: maintenanceComponentStubs,
+      stubs,
     },
   })
   await flushPromises()
@@ -943,6 +946,7 @@ describe('maintenance edit views', () => {
       id: 'applicationcontext',
       path: 'applicationcontext/applicationcontext',
       leagueName: 'Chiltern Quiz League',
+      textSet: { id: 'site', path: 'globaltext/site' },
       senderEmail: 'sender@example.com',
       cloudStoreBucket: 'bucket',
     })
@@ -957,5 +961,34 @@ describe('maintenance edit views', () => {
       }),
     )
     expect(alert).toHaveBeenCalledWith('Saved')
+  })
+
+  it('saves the selected global text instance on the application context', async () => {
+    mocks.applicationContextDAO.getAppContext.mockResolvedValue({
+      id: 'applicationcontext',
+      path: 'applicationcontext/applicationcontext',
+      leagueName: 'Chiltern Quiz League',
+      textSet: { id: 'site', path: 'globaltext/site' },
+      senderEmail: 'sender@example.com',
+      cloudStoreBucket: 'bucket',
+    })
+    mocks.globalTextDAO.list.mockResolvedValue([
+      { id: 'site', path: 'globaltext/site', name: 'Site' },
+      { id: 'draft', path: 'globaltext/draft', name: 'Draft' },
+    ])
+    const wrapper = await mountMaintenance(ApplicationContextEdit, {
+      ...maintenanceComponentStubs,
+      EntitySelect: false,
+    })
+
+    await wrapper.get('select').setValue('draft')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.globalTextDAO.list).toHaveBeenCalled()
+    expect(mocks.applicationContextDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        textSet: { id: 'draft', path: 'globaltext/draft' },
+      }),
+    )
   })
 })
