@@ -2,6 +2,7 @@
   <SubTitle
     v-if="statistics"
     colour="purple-lighten-3"
+    style="color: black !important"
     :title="`Roll Of Honour - ${statistics.competitionName}`"
   />
 </template>
