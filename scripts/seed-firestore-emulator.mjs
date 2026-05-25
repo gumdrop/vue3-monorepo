@@ -324,7 +324,7 @@ const documents = [
     ['user-dan-drayton'],
   ),
   {
-    path: 'globatext/site',
+    path: 'globaltext/site',
     data: {
       id: 'site',
       name: 'site',
@@ -348,7 +348,7 @@ const documents = [
     data: {
       id: appContextId,
       leagueName: 'Chiltern Quiz League',
-      textSet: ref('globatext', 'site'),
+      textSet: ref('globaltext', 'site'),
       currentSeason: ref('season', seasonId),
       senderEmail: 'secretary@chilternquizleague.example',
       emailAliases: [],

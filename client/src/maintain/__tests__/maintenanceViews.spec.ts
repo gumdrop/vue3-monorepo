@@ -634,64 +634,91 @@ describe('maintenance edit views', () => {
     expect(mocks.routerPush).toHaveBeenCalledWith('/siteuser')
   })
 
-  it('saves a new global text entry and its text entity', async () => {
+  it('saves a new global text entry with editable text references', async () => {
     mocks.route.params = { id: 'new' }
     const wrapper = await mountMaintenance(GlobalTextEdit)
 
+    expect(wrapper.find('[data-test="text-edit-save"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="text-editor-dialog"]').exists()).toBe(false)
+
     await setField(wrapper, 'Name', 'Rules')
-    await wrapper.get('textarea[aria-label="Text"]').setValue('League rules')
+    await clickButton(wrapper, 'Add Text Reference')
+    await wrapper.get('input[data-test="global-text-name-0"]').setValue('rules-content')
+    expect(wrapper.find('input[data-test="global-text-id-0"]').exists()).toBe(false)
     await clickButton(wrapper, 'Save')
 
-    expect(mocks.textDAO.save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        id: 'rules-text',
-        path: 'text/rules-text',
-        text: 'League rules',
-      }),
-    )
+    expect(mocks.textDAO.save).not.toHaveBeenCalled()
     expect(mocks.globalTextDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'rules',
         path: 'globaltext/rules',
-        text: { default: { id: 'rules-text', path: 'text/rules-text' } },
+        text: { 'rules-content': { id: 'text-rules-content', path: 'text/text-rules-content' } },
       }),
     )
     expect(mocks.routerPush).toHaveBeenCalledWith('/globaltext')
   })
 
-  it('loads and saves an existing global text entry with its linked text entity', async () => {
+  it('loads global text reference rows and shows the text editor for a selected row', async () => {
     mocks.route.params = { id: 'rules' }
     mocks.globalTextDAO.getDataById.mockResolvedValue({
       id: 'rules',
       path: 'globaltext/rules',
       name: 'Rules',
-      text: { default: { id: 'rules-text', path: 'text/rules-text' } },
+      text: {
+        'front-page': { id: 'front-page-text', path: 'text/front-page-text' },
+        'rules-content': { id: 'rules-text', path: 'text/rules-text' },
+      },
     })
     mocks.textDAO.getData.mockResolvedValue({
       id: 'rules-text',
       path: 'text/rules-text',
       text: 'Old rules',
+      mimeType: 'text/plain',
     })
     const wrapper = await mountMaintenance(GlobalTextEdit)
 
-    expect(wrapper.get<HTMLTextAreaElement>('textarea[aria-label="Text"]').element.value).toBe(
-      'Old rules',
-    )
+    expect(wrapper.find('[data-test="text-edit-save"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="text-editor-dialog"]').exists()).toBe(false)
+    expect(
+      wrapper.get<HTMLInputElement>('input[data-test="global-text-name-0"]').element.value,
+    ).toBe('front-page')
+    expect(wrapper.find('input[data-test="global-text-id-0"]').exists()).toBe(false)
 
-    await wrapper.get('textarea[aria-label="Text"]').setValue('Updated rules')
+    await wrapper.get('input[data-test="global-text-name-1"]').setValue('rules-page')
+    await wrapper.get('button[data-test="edit-text-1"]').trigger('click')
+    await flushPromises()
+
+    expect(mocks.textDAO.getData).toHaveBeenCalledWith({
+      id: 'rules-text',
+      path: 'text/rules-text',
+    })
+    expect(wrapper.find('[data-test="text-edit-save"]').exists()).toBe(true)
+    expect(wrapper.find('[data-test="text-editor-dialog"]').exists()).toBe(true)
+
+    await clickButton(wrapper, 'Save Text')
+    await flushPromises()
+
+    expect(wrapper.find('[data-test="text-edit-save"]').exists()).toBe(false)
+    expect(wrapper.find('[data-test="text-editor-dialog"]').exists()).toBe(false)
+
     await clickButton(wrapper, 'Save')
 
     expect(mocks.textDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'rules-text',
         path: 'text/rules-text',
-        text: 'Updated rules',
+        text: 'Old rules',
+        mimeType: 'text/plain',
       }),
     )
     expect(mocks.globalTextDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'rules',
         path: 'globaltext/rules',
+        text: {
+          'front-page': { id: 'front-page-text', path: 'text/front-page-text' },
+          'rules-page': { id: 'rules-text', path: 'text/rules-text' },
+        },
       }),
     )
     expect(mocks.routerPush).toHaveBeenCalledWith('/globaltext')
