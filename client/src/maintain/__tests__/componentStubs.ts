@@ -189,6 +189,7 @@ export const maintenanceComponentStubs = {
         default: 'value',
       },
       label: String,
+      disabled: Boolean,
     },
     emits: ['update:modelValue'],
     inheritAttrs: false,
@@ -200,6 +201,7 @@ export const maintenanceComponentStubs = {
             'select',
             {
               'data-test': attrs['data-test'],
+              disabled: props.disabled,
               value: (props.modelValue as SelectItem | null)?.[props.itemValue] ?? '',
               onChange: (event: Event) => {
                 const value = (event.target as HTMLSelectElement).value

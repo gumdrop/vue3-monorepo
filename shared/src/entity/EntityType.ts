@@ -4,6 +4,7 @@ export type EntityType =
   | 'chat'
   | 'chatmessage'
   | 'competition'
+  | 'competitionstatistics'
   | 'event'
   | 'fixture'
   | 'fixtures'

@@ -32,6 +32,7 @@ const menuItems = [
   { title: 'Users', to: '/user', icon: 'mdi-account' },
   { title: 'Site Users', to: '/siteuser', icon: 'mdi-account-circle' },
   { title: 'Global Text', to: '/globaltext', icon: 'mdi-text' },
+  { title: 'Competition Statistics', to: '/competitionstatistics', icon: 'mdi-chart-line' },
   { title: 'Application Context', to: '/applicationcontext', icon: 'mdi-cog' },
 ]
 </script>

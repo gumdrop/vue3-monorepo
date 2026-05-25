@@ -4,6 +4,8 @@ import App from '../App.vue'
 import EntitySelect from '../components/EntitySelect.vue'
 import HomeView from '../views/HomeView.vue'
 import ApplicationContextEdit from '../views/applicationcontext/ApplicationContextEdit.vue'
+import CompetitionStatisticsEdit from '../views/competitionstatistics/CompetitionStatisticsEdit.vue'
+import CompetitionStatisticsList from '../views/competitionstatistics/CompetitionStatisticsList.vue'
 import GlobalTextEdit from '../views/globaltext/GlobalTextEdit.vue'
 import GlobalTextList from '../views/globaltext/GlobalTextList.vue'
 import CompetitionEdit from '../views/season/CompetitionEdit.vue'
@@ -20,6 +22,7 @@ import VenueList from '../views/venue/VenueList.vue'
 import { maintenanceComponentStubs } from './componentStubs'
 
 const mocks = vi.hoisted(() => ({
+  makeDocumentRef: (path: string) => ({ type: 'document', path, withConverter: vi.fn() }),
   route: {
     params: {} as Record<string, string>,
   },
@@ -32,7 +35,13 @@ const mocks = vi.hoisted(() => ({
   competitionDAO: {
     entities: vi.fn(),
     getDataByPath: vi.fn(),
+    getByPath: vi.fn((path: string) => ({ type: 'document', path, withConverter: vi.fn() })),
     nestedCollection: vi.fn((ref: unknown) => ({ parent: ref, name: 'competition' })),
+    save: vi.fn(),
+  },
+  competitionStatisticsDAO: {
+    getDataById: vi.fn(),
+    list: vi.fn(),
     save: vi.fn(),
   },
   fixturesDAO: {
@@ -51,6 +60,7 @@ const mocks = vi.hoisted(() => ({
   seasonDAO: {
     getById: vi.fn((id: string) => ({ id, path: `season/${id}` })),
     getDataById: vi.fn(),
+    getByPath: vi.fn((path: string) => ({ type: 'document', path, withConverter: vi.fn() })),
     list: vi.fn(),
     save: vi.fn(),
   },
@@ -61,6 +71,7 @@ const mocks = vi.hoisted(() => ({
   },
   teamDAO: {
     getDataById: vi.fn(),
+    getByPath: vi.fn((path: string) => ({ type: 'document', path, withConverter: vi.fn() })),
     list: vi.fn(),
     save: vi.fn(),
   },
@@ -89,6 +100,7 @@ vi.mock('vue-router', () => ({
 vi.mock('uuid', () => ({ v4: mocks.uuid }))
 vi.mock('@/dao/ApplicationContextDAO', () => ({ default: mocks.applicationContextDAO }))
 vi.mock('@/dao/CompetitionDAO', () => ({ default: mocks.competitionDAO }))
+vi.mock('@/dao/CompetitionStatisticsDAO', () => ({ default: mocks.competitionStatisticsDAO }))
 vi.mock('@/dao/FixturesDAO', () => ({ default: mocks.fixturesDAO }))
 vi.mock('@/dao/GlobalTextDAO', () => ({ default: mocks.globalTextDAO }))
 vi.mock('@/dao/LeagueTableDAO', () => ({ default: mocks.leagueTableDAO }))
@@ -124,16 +136,30 @@ const setField = async (wrapper: VueWrapper, label: string, value: string) => {
   await wrapper.get(`input[aria-label="${label}"]`).setValue(value)
 }
 
+const legacyRef = (typeName: string, id: string, parentKey = '') => ({
+  typeName,
+  id,
+  key: {
+    parentKey,
+    entityName: typeName,
+    id,
+  },
+})
+
 const resetDaoMocks = () => {
   mocks.applicationContextDAO.getAppContext.mockResolvedValue(undefined)
   mocks.applicationContextDAO.save.mockResolvedValue(undefined)
   mocks.competitionDAO.entities.mockResolvedValue([])
   mocks.competitionDAO.getDataByPath.mockResolvedValue(undefined)
+  mocks.competitionDAO.getByPath.mockImplementation((path: string) => mocks.makeDocumentRef(path))
   mocks.competitionDAO.nestedCollection.mockImplementation((ref: unknown) => ({
     parent: ref,
     name: 'competition',
   }))
   mocks.competitionDAO.save.mockResolvedValue(undefined)
+  mocks.competitionStatisticsDAO.getDataById.mockResolvedValue(undefined)
+  mocks.competitionStatisticsDAO.list.mockResolvedValue([])
+  mocks.competitionStatisticsDAO.save.mockResolvedValue(undefined)
   mocks.fixturesDAO.entities.mockResolvedValue([])
   mocks.fixturesDAO.subCollection.mockImplementation((path: string) => `${path}/fixtures`)
   mocks.globalTextDAO.getDataById.mockResolvedValue(undefined)
@@ -143,12 +169,14 @@ const resetDaoMocks = () => {
   mocks.leagueTableDAO.subCollection.mockImplementation((path: string) => `${path}/leaguetable`)
   mocks.seasonDAO.getById.mockImplementation((id: string) => ({ id, path: `season/${id}` }))
   mocks.seasonDAO.getDataById.mockResolvedValue(undefined)
+  mocks.seasonDAO.getByPath.mockImplementation((path: string) => mocks.makeDocumentRef(path))
   mocks.seasonDAO.list.mockResolvedValue([])
   mocks.seasonDAO.save.mockResolvedValue(undefined)
   mocks.siteUserDAO.getDataById.mockResolvedValue(undefined)
   mocks.siteUserDAO.list.mockResolvedValue([])
   mocks.siteUserDAO.save.mockResolvedValue(undefined)
   mocks.teamDAO.getDataById.mockResolvedValue(undefined)
+  mocks.teamDAO.getByPath.mockImplementation((path: string) => mocks.makeDocumentRef(path))
   mocks.teamDAO.list.mockResolvedValue([])
   mocks.teamDAO.save.mockResolvedValue(undefined)
   mocks.textDAO.getData.mockResolvedValue(undefined)
@@ -200,6 +228,7 @@ describe('maintenance shell components', () => {
         '/user',
         '/siteuser',
         '/globaltext',
+        '/competitionstatistics',
         '/applicationcontext',
       ]),
     )
@@ -331,6 +360,24 @@ describe('maintenance list views', () => {
     await clickButton(wrapper, 'Add Global Text')
 
     expect(mocks.routerPush).toHaveBeenCalledWith('/globaltext/new')
+  })
+
+  it('loads competition statistics and routes to add competition statistics', async () => {
+    mocks.competitionStatisticsDAO.list.mockResolvedValue([
+      {
+        id: 'league',
+        path: 'competitionstatistics/league',
+        competitionName: 'League',
+        results: [{ seasonText: '2026/2027', teamText: 'Alpha' }],
+      },
+    ])
+    const wrapper = await mountMaintenance(CompetitionStatisticsList)
+
+    expect(wrapper.text()).toContain('League')
+    expect(wrapper.text()).toContain('1 results')
+    await clickButton(wrapper, 'Add Competition Statistics')
+
+    expect(mocks.routerPush).toHaveBeenCalledWith('/competitionstatistics/new')
   })
 
   it('loads seasons sorted by start year and routes to add season', async () => {
@@ -731,6 +778,180 @@ describe('maintenance edit views', () => {
       }),
     )
     expect(mocks.routerPush).toHaveBeenCalledWith('/globaltext')
+  })
+
+  it('saves new competition statistics with Firestore document references', async () => {
+    mocks.route.params = { id: 'new' }
+    mocks.seasonDAO.list.mockResolvedValue([
+      { id: '2026-2027', path: 'season/2026-2027', startYear: 2026, endYear: 2027 },
+    ])
+    mocks.teamDAO.list.mockResolvedValue([
+      { id: 'alpha', path: 'team/alpha', name: 'Alpha' },
+    ])
+    mocks.competitionDAO.entities.mockResolvedValue([
+      {
+        id: 'league',
+        path: 'season/2026-2027/competition/league',
+        name: 'League',
+      },
+    ])
+    const wrapper = await mountMaintenance(CompetitionStatisticsEdit)
+
+    await setField(wrapper, 'Competition Name', 'League')
+    await clickButton(wrapper, 'Add Result')
+
+    expect(wrapper.text()).not.toContain('Reference')
+    expect(
+      wrapper
+        .findAll('select[data-test], input[data-test]')
+        .map((field) => field.attributes('data-test'))
+        .filter((dataTest) => dataTest?.startsWith('result-')),
+    ).toEqual([
+      'result-season-0',
+      'result-season-text-0',
+      'result-competition-0',
+      'result-team-0',
+      'result-team-text-0',
+    ])
+    expect(mocks.competitionDAO.entities).not.toHaveBeenCalled()
+    expect(wrapper.get('select[data-test="result-competition-0"]').attributes('disabled')).toBe(
+      '',
+    )
+
+    await wrapper.get('select[data-test="result-season-0"]').setValue('season/2026-2027')
+    await flushPromises()
+
+    expect(
+      wrapper.get<HTMLInputElement>('input[data-test="result-season-text-0"]').element.value,
+    ).toBe('2026/2027')
+    expect(mocks.competitionDAO.entities).toHaveBeenCalledWith(
+      expect.objectContaining({
+        parent: expect.objectContaining({ path: 'season/2026-2027' }),
+        name: 'competition',
+      }),
+    )
+    expect(
+      wrapper.get('select[data-test="result-competition-0"]').attributes('disabled'),
+    ).toBeUndefined()
+
+    await wrapper
+      .get('select[data-test="result-competition-0"]')
+      .setValue('season/2026-2027/competition/league')
+    await wrapper.get('select[data-test="result-team-0"]').setValue('team/alpha')
+    expect(wrapper.get<HTMLInputElement>('input[data-test="result-team-text-0"]').element.value).toBe(
+      'Alpha',
+    )
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.competitionDAO.getByPath).toHaveBeenCalledWith(
+      'season/2026-2027/competition/league',
+    )
+    expect(mocks.seasonDAO.getByPath).toHaveBeenCalledWith('season/2026-2027')
+    expect(mocks.teamDAO.getByPath).toHaveBeenCalledWith('team/alpha')
+    expect(mocks.competitionStatisticsDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'uuid-1',
+        path: 'competitionstatistics/uuid-1',
+        competitionName: 'League',
+        results: [
+          expect.objectContaining({
+            competition: expect.objectContaining({
+              type: 'document',
+              path: 'season/2026-2027/competition/league',
+              withConverter: expect.any(Function),
+            }),
+            season: expect.objectContaining({
+              type: 'document',
+              path: 'season/2026-2027',
+              withConverter: expect.any(Function),
+            }),
+            seasonText: '2026/2027',
+            team: expect.objectContaining({
+              type: 'document',
+              path: 'team/alpha',
+              withConverter: expect.any(Function),
+            }),
+            teamText: 'Alpha',
+          }),
+        ],
+      }),
+    )
+    expect(mocks.routerPush).toHaveBeenCalledWith('/competitionstatistics')
+  })
+
+  it('converts loaded legacy competition statistics references to Firestore document references on save', async () => {
+    mocks.route.params = { id: 'league' }
+    mocks.seasonDAO.list.mockResolvedValue([
+      { id: '2026-2027', path: 'season/2026-2027', startYear: 2026, endYear: 2027 },
+    ])
+    mocks.teamDAO.list.mockResolvedValue([
+      { id: 'alpha', path: 'team/alpha', name: 'Alpha' },
+    ])
+    mocks.competitionDAO.entities.mockResolvedValue([
+      {
+        id: 'league',
+        path: 'season/2026-2027/competition/league',
+        name: 'League',
+      },
+    ])
+    mocks.competitionStatisticsDAO.getDataById.mockResolvedValue({
+      id: 'league',
+      path: 'competitionstatistics/league',
+      competitionName: 'League',
+      results: [
+        {
+          competition: legacyRef('competition', 'league', 'season/2026-2027'),
+          season: legacyRef('season', '2026-2027'),
+          seasonText: '2026/2027',
+          team: legacyRef('team', 'alpha'),
+          teamText: 'Alpha',
+        },
+      ],
+    })
+    const wrapper = await mountMaintenance(CompetitionStatisticsEdit)
+
+    expect(wrapper.get<HTMLSelectElement>('select[data-test="result-season-0"]').element.value).toBe(
+      'season/2026-2027',
+    )
+    expect(
+      wrapper.get<HTMLSelectElement>('select[data-test="result-competition-0"]').element.value,
+    ).toBe('season/2026-2027/competition/league')
+    expect(wrapper.get<HTMLSelectElement>('select[data-test="result-team-0"]').element.value).toBe(
+      'team/alpha',
+    )
+
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.competitionDAO.getByPath).toHaveBeenCalledWith(
+      'season/2026-2027/competition/league',
+    )
+    expect(mocks.seasonDAO.getByPath).toHaveBeenCalledWith('season/2026-2027')
+    expect(mocks.teamDAO.getByPath).toHaveBeenCalledWith('team/alpha')
+    expect(mocks.competitionStatisticsDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'league',
+        path: 'competitionstatistics/league',
+        results: [
+          expect.objectContaining({
+            competition: expect.objectContaining({
+              type: 'document',
+              path: 'season/2026-2027/competition/league',
+              withConverter: expect.any(Function),
+            }),
+            season: expect.objectContaining({
+              type: 'document',
+              path: 'season/2026-2027',
+              withConverter: expect.any(Function),
+            }),
+            team: expect.objectContaining({
+              type: 'document',
+              path: 'team/alpha',
+              withConverter: expect.any(Function),
+            }),
+          }),
+        ],
+      }),
+    )
   })
 
   it('saves a new season with a uuid id and path', async () => {

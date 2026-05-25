@@ -96,9 +96,19 @@ const router = createRouter({
       component: () => import('../views/globaltext/GlobalTextList.vue')
     },
     {
-        path: '/globaltext/:id',
-        name: 'globaltext-edit',
-        component: () => import('../views/globaltext/GlobalTextEdit.vue')
+      path: '/globaltext/:id',
+      name: 'globaltext-edit',
+      component: () => import('../views/globaltext/GlobalTextEdit.vue')
+    },
+    {
+      path: '/competitionstatistics',
+      name: 'competitionstatistics',
+      component: () => import('../views/competitionstatistics/CompetitionStatisticsList.vue')
+    },
+    {
+      path: '/competitionstatistics/:id',
+      name: 'competitionstatistics-edit',
+      component: () => import('../views/competitionstatistics/CompetitionStatisticsEdit.vue')
     },
     {
       path: '/applicationcontext',

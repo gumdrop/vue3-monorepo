@@ -41,6 +41,9 @@ flowchart TD
   venue["Venue"]
   userCollection["user collection"]
   user["User"]
+  competitionStatisticsCollection["competitionstatistics collection"]
+  competitionStatistics["CompetitionStatistics"]
+  competitionStatisticsResult["CompetitionStatistics Result"]
 
   firestore --> applicationContext
   firestore --> globalText
@@ -74,6 +77,9 @@ flowchart TD
   venueCollection --> venue
   firestore --> userCollection
   userCollection --> user
+  firestore --> competitionStatisticsCollection
+  competitionStatisticsCollection --> competitionStatistics
+  competitionStatistics --> competitionStatisticsResult
 
   team --> venue
   team --> user
@@ -86,6 +92,9 @@ flowchart TD
   matchReport --> team
   event --> venue
   leagueTableRow --> team
+  competitionStatisticsResult --> competition
+  competitionStatisticsResult --> season
+  competitionStatisticsResult --> team
   applicationContext --> season
   applicationContext --> user
   competition --> globalText
@@ -105,6 +114,7 @@ flowchart TD
 | `Timestamp`     | Firestore timestamp or equivalent UTC instant used for freshness metadata, not for visitor-facing local dates.                                       |
 | `Text`          | Top-level structured text document with MIME type and body. Text is never embedded.                                                                  |
 | `Reference<T>`  | Firestore document reference to another entity. Legacy map references may still be read and converted, but new saves must write document references. |
+| `LegacyRef`     | Legacy map reference shape retained for backwards-compatible reads and converted to document references when resaved.                                |
 | `Map<K, V>`     | Key/value map.                                                                                                                                       |
 | `array<T>`      | Embedded ordered array of values inside a document.                                                                                                  |
 | `collection<T>` | Nested or top-level collection of entities.                                                                                                          |
@@ -287,6 +297,28 @@ This subtype inherits the fields from `Competition` and adds the fields below.
 | `startTime` | `string` | Yes      | Competition start time.                                           |
 | `textName`  | `string` | Yes      | Key for competition-specific text content.                        |
 | `event`     | `Event`  | No       | Optional embedded event represented by the singleton competition. |
+
+## CompetitionStatistics
+
+CompetitionStatistics is a top-level entity that stores historical competition result summaries by competition name. Documents live in the `competitionstatistics` collection.
+
+| Field             | Type                                 | Required | Notes                                                         |
+| ----------------- | ------------------------------------ | -------- | ------------------------------------------------------------- |
+| `id`              | `UUID`                               | Yes      | Canonical competition statistics identifier.                  |
+| `competitionName` | `string`                             | Yes      | Display name for the competition represented by this summary. |
+| `results`         | `array<CompetitionStatisticsResult>` | Yes      | Zero or more embedded historical result rows.                 |
+
+## CompetitionStatistics Result
+
+CompetitionStatistics result rows are embedded values inside a CompetitionStatistics document. They are not standalone documents or top-level entities. Competition, season, and team references are saved as Firestore document references; legacy map references are accepted on load and converted to document references when the document is saved.
+
+| Field         | Type                                    | Required | Notes                                                        |
+| ------------- | --------------------------------------- | -------- | ------------------------------------------------------------ |
+| `competition` | `Reference<Competition> \| LegacyRef`   | No       | Optional competition reference; saved as a document reference. |
+| `season`      | `Reference<Season> \| LegacyRef`        | No       | Optional season reference; saved as a document reference.      |
+| `seasonText`  | `string`                                | Yes      | Season display text.                                         |
+| `team`        | `Reference<Team> \| LegacyRef`          | No       | Optional team reference; saved as a document reference.        |
+| `teamText`    | `string`                                | Yes      | Team display text.                                           |
 
 ## Fixtures
 

@@ -1,7 +1,7 @@
 import type Entity from './Entity'
 import { isLegacyRef } from './utils'
 
-export type Pathish<T extends Entity> = string | PathAndId<T> | DocRef | LegacyRef
+export type Pathish<T extends Entity> = string | PathAndId<T> | DocRef | LegacyRef | FirestoreDocumentRef
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface PathAndId<T extends Entity> {
@@ -12,6 +12,11 @@ export interface PathAndId<T extends Entity> {
 export interface DocRef {
   type?: 'document'
   path: string
+}
+
+export interface FirestoreDocumentRef {
+  path: string
+  withConverter: unknown
 }
 
 export interface LegacyRef {
@@ -29,7 +34,9 @@ export function toPath<T extends Entity>(child: Pathish<T>, parent?: Pathish<T>)
     if (
       path &&
       typeof path === 'object' &&
-      (('type' in path && (path as DocRef).type === 'document') || '_path' in path)
+      (('type' in path && (path as DocRef).type === 'document') ||
+        '_path' in path ||
+        'withConverter' in path)
     ) {
       return (path as DocRef).path
     } else if (path && typeof path === 'object' && 'id' in path && 'path' in path) {

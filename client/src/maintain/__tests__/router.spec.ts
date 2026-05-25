@@ -57,6 +57,8 @@ describe('Maintenance Router', () => {
       ['siteuser-edit', '/siteuser/:id'],
       ['globaltext', '/globaltext'],
       ['globaltext-edit', '/globaltext/:id'],
+      ['competitionstatistics', '/competitionstatistics'],
+      ['competitionstatistics-edit', '/competitionstatistics/:id'],
       ['applicationcontext', '/applicationcontext'],
     ]
 

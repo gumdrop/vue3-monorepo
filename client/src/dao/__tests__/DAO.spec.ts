@@ -4,6 +4,7 @@ import { SINGLETON_ID, toPath } from '@quizleague/shared'
 import type Entity from '@/entity/Entity'
 import DAO from '../DAO'
 import ApplicationContextDAO from '../ApplicationContextDAO'
+import CompetitionStatisticsDAO from '../CompetitionStatisticsDAO'
 import FixturesDAO, { fixtureDAO, reportDAO } from '../FixturesDAO'
 import { GenericConverter } from '../GenericConverter'
 import SiteUserDAO from '../SiteUserDAO'
@@ -455,6 +456,12 @@ describe('specific DAO helpers', () => {
     expect(allTeamStats).toMatchObject({
       base: expect.objectContaining({ path: 'statistics' }),
       constraints: [expect.objectContaining({ field: 'team.id', value: 'team-1' })],
+    })
+  })
+
+  it('creates competition statistics collection references', () => {
+    expect(CompetitionStatisticsDAO.collection()).toMatchObject({
+      path: 'competitionstatistics',
     })
   })
 
