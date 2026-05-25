@@ -28,6 +28,21 @@ const router = createRouter({
           },
         },
         {
+          path: 'rollofhonour/:id',
+          name: 'competition roll of honour',
+          props: {
+            default: true,
+            title: true,
+          },
+          components: {
+            title: () =>
+              import('../components/competition/statistics/CompetitionStatisticsTitle.vue'),
+            default: () =>
+              import('../components/competition/statistics/CompetitionStatisticsPage.vue'),
+            sidenav: () => import('../components/competition/CompetitionsMenu.vue'),
+          },
+        },
+        {
           path: ':path/league',
           name: 'league competition',
           props: true,

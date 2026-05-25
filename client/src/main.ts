@@ -12,6 +12,7 @@ import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 import '@/assets/main.css'
 import { VueShowdownPlugin } from 'vue-showdown'
+import { isLocalHost } from './utils/localHost'
 
 const firebaseApp = initializeApp({
   // your application settings object Connection{
@@ -27,7 +28,7 @@ console.log('got firestore')
 
 const firestore = getFirestore(firebaseApp)
 
-if (window.location.hostname == 'localhost') {
+if (isLocalHost(window.location.hostname)) {
   const emulatorHost = import.meta.env.VITE_FIRESTORE_EMULATOR_HOST ?? '127.0.0.1'
   const emulatorPort = Number(import.meta.env.VITE_FIRESTORE_EMULATOR_PORT ?? '18080')
   connectFirestoreEmulator(firestore, emulatorHost, emulatorPort)

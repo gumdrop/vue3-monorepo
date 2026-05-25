@@ -11,6 +11,7 @@ import { connectFirestoreEmulator, getFirestore } from '@firebase/firestore'
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 import { VueShowdownPlugin } from 'vue-showdown'
+import { isLocalHost } from '@/utils/localHost'
 
 const firebaseApp = initializeApp({
   apiKey: 'AIzaSyBs6LpcOSpLMlKlzw0aPB6Ie-39mqlKrm8',
@@ -23,7 +24,7 @@ const firebaseApp = initializeApp({
 
 const firestore = getFirestore(firebaseApp)
 
-if (window.location.hostname == 'localhost') {
+if (isLocalHost(window.location.hostname)) {
   const emulatorHost = import.meta.env.VITE_FIRESTORE_EMULATOR_HOST ?? '127.0.0.1'
   const emulatorPort = Number(import.meta.env.VITE_FIRESTORE_EMULATOR_PORT ?? '18080')
   connectFirestoreEmulator(firestore, emulatorHost, emulatorPort)
@@ -32,9 +33,7 @@ if (window.location.hostname == 'localhost') {
 const app = createApp(App)
 app.use(VueFire, {
   firebaseApp,
-  modules: [
-    VueFireAuth(),
-  ],
+  modules: [VueFireAuth()],
 })
 
 app.use(createPinia())
