@@ -387,6 +387,39 @@ describe('maintenance edit views', () => {
     expect(mocks.routerPush).toHaveBeenCalledWith('/team')
   })
 
+  it('edits an existing team user list', async () => {
+    mocks.route.params = { id: 'alpha' }
+    mocks.teamDAO.getDataById.mockResolvedValue({
+      id: 'alpha',
+      path: 'team/alpha',
+      name: 'Alpha',
+      shortName: 'ALP',
+      retired: false,
+      users: [{ id: 'alice', path: 'user/alice' }],
+      text: undefined,
+      venue: { id: 'alpha-venue', path: 'venue/alpha-venue' },
+    })
+    mocks.userDAO.list.mockResolvedValue([
+      { id: 'alice', path: 'user/alice', name: 'Alice User', email: 'alice@example.com' },
+      { id: 'bob', path: 'user/bob', name: 'Bob User', email: 'bob@example.com' },
+    ])
+    const wrapper = await mountMaintenance(TeamEdit)
+
+    expect(wrapper.text()).toContain('Alice User')
+    expect(wrapper.get('[data-test="remove-user-alice"]').text()).toContain('Alice User')
+
+    await wrapper.get('select[data-test="team-user-select"]').setValue('bob')
+    await clickButton(wrapper, 'Add User')
+    await wrapper.get('[data-test="remove-user-alice-close"]').trigger('click')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.teamDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        users: [{ id: 'bob', path: 'user/bob' }],
+      }),
+    )
+  })
+
   it('loads and saves linked team text', async () => {
     mocks.route.params = { id: 'alpha' }
     mocks.teamDAO.getDataById.mockResolvedValue({

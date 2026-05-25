@@ -31,6 +31,39 @@
       </v-card>
     </v-form>
 
+    <v-card class="mt-4">
+      <v-card-title>Users</v-card-title>
+      <v-card-text>
+        <v-row>
+          <v-col>
+            <v-select
+              v-model="selectedUserId"
+              :items="availableUsers"
+              item-title="name"
+              item-value="id"
+              label="User"
+              data-test="team-user-select"
+            ></v-select>
+          </v-col>
+          <v-col>
+            <v-btn color="primary" @click="addUser" :disabled="!selectedUserId">Add User</v-btn>
+          </v-col>
+        </v-row>
+        <div v-if="assignedUsers.length" class="d-flex flex-wrap ga-2">
+          <v-chip
+            v-for="user in assignedUsers"
+            :key="user.id"
+            closable
+            :data-test="`remove-user-${user.id}`"
+            @click:close="removeUser(user.id)"
+          >
+            {{ user.name }}
+          </v-chip>
+        </div>
+        <div v-else>No users assigned</div>
+      </v-card-text>
+    </v-card>
+
     <v-card class="mt-4" v-if="!isNew">
       <v-card-title>
         Text
@@ -49,9 +82,11 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TeamDAO from '@/dao/TeamDAO'
 import TextDAO from '@/dao/TextDAO'
+import UserDAO from '@/dao/UserDAO'
 import VenueDAO from '@/dao/VenueDAO'
 import type Team from '@/entity/Team'
 import type Text from '@/entity/Text'
+import type User from '@/entity/User'
 import { useValidations } from '@/site/components/Validation'
 import TextEdit from '@/site/components/text/TextEdit.vue'
 import EntitySelect from '../../components/EntitySelect.vue'
@@ -76,12 +111,28 @@ const rules = useValidations()
 
 const team = ref<EditableTeam | null>(null)
 const text = ref<Text | undefined>()
+const users = ref<User[]>([])
+const selectedUserId = ref('')
 const valid = ref(false)
 
 const isNew = computed(() => route.params.id === 'new')
 const hasTextReference = computed(() => Boolean(team.value?.text?.id && team.value?.text?.path))
+const availableUsers = computed(() => {
+  const assignedIds = new Set(team.value?.users.map((user) => user.id) ?? [])
+  return users.value.filter((user) => !assignedIds.has(user.id))
+})
+const assignedUsers = computed(() => {
+  return (
+    team.value?.users.map((userRef) => ({
+      ...userRef,
+      name: users.value.find((user) => user.id === userRef.id)?.name ?? userRef.id,
+    })) ?? []
+  )
+})
 
 onMounted(async () => {
+  users.value = (await UserDAO.list()) ?? []
+
   if (isNew.value) {
     team.value = {
       id: '',
@@ -103,6 +154,22 @@ onMounted(async () => {
     }
   }
 })
+
+const addUser = () => {
+  if (!team.value || !selectedUserId.value) return
+
+  const user = users.value.find((user) => user.id === selectedUserId.value)
+  if (!user || team.value.users.some((assignedUser) => assignedUser.id === user.id)) return
+
+  team.value.users = [...team.value.users, { id: user.id, path: user.path }]
+  selectedUserId.value = ''
+}
+
+const removeUser = (userId: string) => {
+  if (!team.value) return
+
+  team.value.users = team.value.users.filter((user) => user.id !== userId)
+}
 
 const save = async () => {
   if (team.value) {

@@ -30,6 +30,10 @@ function teamRef(id) {
   return ref('team', id)
 }
 
+function userRef(id) {
+  return ref('user', id)
+}
+
 function competitionRef(id) {
   return ref('competition', id, `season/${seasonId}`)
 }
@@ -60,7 +64,19 @@ function venue(id, name, address, extra = {}) {
   }
 }
 
-function team(id, name, shortName, venueId, textId, handle) {
+function user(id, name, email) {
+  return {
+    path: `user/${id}`,
+    data: {
+      id,
+      name,
+      email,
+      retired: false,
+    },
+  }
+}
+
+function team(id, name, shortName, venueId, textId, handle, userIds = []) {
   return {
     path: `team/${id}`,
     data: {
@@ -69,7 +85,7 @@ function team(id, name, shortName, venueId, textId, handle) {
       shortName,
       venue: venueRef(venueId),
       text: textRef(textId),
-      users: [],
+      users: userIds.map(userRef),
       handle,
       retired: false,
       publicSafe: true,
@@ -132,7 +148,17 @@ function leagueTable(competitionId, id, description, rows) {
   }
 }
 
-function tableRow(teamId, position, played, won, drawn, lost, leaguePoints, forScore, againstScore) {
+function tableRow(
+  teamId,
+  position,
+  played,
+  won,
+  drawn,
+  lost,
+  leaguePoints,
+  forScore,
+  againstScore,
+) {
   return {
     team: teamRef(teamId),
     position,
@@ -218,10 +244,7 @@ async function saveDocument(path, data) {
 }
 
 const documents = [
-  text(
-    'text-front-page',
-    'Welcome to the Chiltern Quiz League local development data set.',
-  ),
+  text('text-front-page', 'Welcome to the Chiltern Quiz League local development data set.'),
   text(
     'text-season-2025-2026',
     'The 2025-2026 season includes league, cup, subsidiary, and singleton competitions.',
@@ -238,6 +261,11 @@ const documents = [
   text('text-team-beaconsfield', 'Beaconsfield Bees team profile.'),
   text('text-team-chesham', 'Chesham Comets team profile.'),
   text('text-team-drayton', 'Drayton Dynamos team profile.'),
+  user('user-alice-ashridge', 'Alice Ashridge', 'alice.ashridge@example.test'),
+  user('user-ben-beaconsfield', 'Ben Beaconsfield', 'ben.beaconsfield@example.test'),
+  user('user-chloe-chesham', 'Chloe Chesham', 'chloe.chesham@example.test'),
+  user('user-dan-drayton', 'Dan Drayton', 'dan.drayton@example.test'),
+  user('user-ella-secretary', 'Ella Secretary', 'ella.secretary@example.test'),
   venue('venue-ashridge-arms', 'Ashridge Arms', '1 High Street, Ashridge HP1 1AA', {
     phone: '01494 010101',
     phoneNumber: '01494 010101',
@@ -259,7 +287,15 @@ const documents = [
     emailAddress: 'quiz@chesham.example',
     website: 'https://example.com/chesham-club',
   }),
-  team('team-ashridge-arms', 'Ashridge Arms', 'Ashridge', 'venue-ashridge-arms', 'text-team-ashridge', 'ashridge'),
+  team(
+    'team-ashridge-arms',
+    'Ashridge Arms',
+    'Ashridge',
+    'venue-ashridge-arms',
+    'text-team-ashridge',
+    'ashridge',
+    ['user-alice-ashridge', 'user-ella-secretary'],
+  ),
   team(
     'team-beaconsfield-bees',
     'Beaconsfield Bees',
@@ -267,9 +303,26 @@ const documents = [
     'venue-beaconsfield-hall',
     'text-team-beaconsfield',
     'beaconsfield',
+    ['user-ben-beaconsfield'],
   ),
-  team('team-chesham-comets', 'Chesham Comets', 'Chesham', 'venue-chesham-club', 'text-team-chesham', 'chesham'),
-  team('team-drayton-dynamos', 'Drayton Dynamos', 'Drayton', 'venue-ashridge-arms', 'text-team-drayton', 'drayton'),
+  team(
+    'team-chesham-comets',
+    'Chesham Comets',
+    'Chesham',
+    'venue-chesham-club',
+    'text-team-chesham',
+    'chesham',
+    ['user-chloe-chesham'],
+  ),
+  team(
+    'team-drayton-dynamos',
+    'Drayton Dynamos',
+    'Drayton',
+    'venue-ashridge-arms',
+    'text-team-drayton',
+    'drayton',
+    ['user-dan-drayton'],
+  ),
   {
     path: 'globatext/site',
     data: {
@@ -331,12 +384,19 @@ const documents = [
       ],
     },
   },
-  competition('league-main', 'league', 'League Championship', 'text-league-description', 'league-competition-note', {
-    icon: 'mdi-table',
-    win: 2,
-    draw: 1,
-    loss: 0,
-  }),
+  competition(
+    'league-main',
+    'league',
+    'League Championship',
+    'text-league-description',
+    'league-competition-note',
+    {
+      icon: 'mdi-table',
+      win: 2,
+      draw: 1,
+      loss: 0,
+    },
+  ),
   competition('cup-main', 'cup', 'Challenge Cup', 'text-cup-note', 'cup-competition-note', {
     icon: 'mdi-trophy',
   }),
@@ -353,22 +413,44 @@ const documents = [
       loss: 0,
     },
   ),
-  competition('individual-quiz', 'singleton', 'Individual Quiz Night', 'text-singleton-note', 'singleton-competition-note', {
-    icon: 'mdi-account-star',
-    event: {
-      date: '2026-07-02',
-      time: '20:00:00',
-      duration: 7200,
-      venue: venueRef('venue-chesham-club'),
+  competition(
+    'individual-quiz',
+    'singleton',
+    'Individual Quiz Night',
+    'text-singleton-note',
+    'singleton-competition-note',
+    {
+      icon: 'mdi-account-star',
+      event: {
+        date: '2026-07-02',
+        time: '20:00:00',
+        duration: 7200,
+        venue: venueRef('venue-chesham-club'),
+      },
     },
-  }),
+  ),
   fixtureSet('league-main', 'league-round-1', 'Round 1', '2026-05-07'),
   fixtureSet('league-main', 'league-round-2', 'Round 2', '2026-06-04'),
-  fixture('league-main', 'league-round-1', 'fixture-league-1', 'team-ashridge-arms', 'team-beaconsfield-bees', 'venue-ashridge-arms', {
-    homeScore: 42,
-    awayScore: 38,
-  }),
-  fixture('league-main', 'league-round-2', 'fixture-league-2', 'team-chesham-comets', 'team-drayton-dynamos', 'venue-chesham-club'),
+  fixture(
+    'league-main',
+    'league-round-1',
+    'fixture-league-1',
+    'team-ashridge-arms',
+    'team-beaconsfield-bees',
+    'venue-ashridge-arms',
+    {
+      homeScore: 42,
+      awayScore: 38,
+    },
+  ),
+  fixture(
+    'league-main',
+    'league-round-2',
+    'fixture-league-2',
+    'team-chesham-comets',
+    'team-drayton-dynamos',
+    'venue-chesham-club',
+  ),
   leagueTable('league-main', 'league-table-main', 'League Championship Table', [
     tableRow('team-ashridge-arms', '1', 1, 1, 0, 0, 2, 42, 38),
     tableRow('team-beaconsfield-bees', '2', 1, 0, 0, 1, 0, 38, 42),
@@ -376,7 +458,14 @@ const documents = [
     tableRow('team-drayton-dynamos', '4', 0, 0, 0, 0, 0, 0, 0),
   ]),
   fixtureSet('cup-main', 'cup-quarter-final', 'Quarter-final', '2026-06-11'),
-  fixture('cup-main', 'cup-quarter-final', 'fixture-cup-1', 'team-ashridge-arms', 'team-chesham-comets', 'venue-ashridge-arms'),
+  fixture(
+    'cup-main',
+    'cup-quarter-final',
+    'fixture-cup-1',
+    'team-ashridge-arms',
+    'team-chesham-comets',
+    'venue-ashridge-arms',
+  ),
   leagueTable('subsidiary-main', 'subsidiary-table-main', 'Plate League Table', [
     tableRow('team-drayton-dynamos', '1', 1, 1, 0, 0, 2, 41, 35),
     tableRow('team-chesham-comets', '2', 1, 0, 0, 1, 0, 35, 41),

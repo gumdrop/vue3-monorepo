@@ -126,6 +126,29 @@ export const maintenanceComponentStubs = {
         ])
     },
   }),
+  VChip: defineComponent({
+    props: {
+      closable: Boolean,
+    },
+    emits: ['click:close'],
+    inheritAttrs: false,
+    setup(props, { attrs, emit, slots }) {
+      return () =>
+        h('span', attrs, [
+          slots.default?.(),
+          props.closable
+            ? h(
+                'button',
+                {
+                  'data-test': `${String(attrs['data-test'])}-close`,
+                  onClick: () => emit('click:close'),
+                },
+                'Remove',
+              )
+            : null,
+        ])
+    },
+  }),
   VDialog: defineComponent({
     props: {
       modelValue: Boolean,
