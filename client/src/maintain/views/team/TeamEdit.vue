@@ -15,9 +15,8 @@
             :rules="[rules.required('Short Name')]"
           ></v-text-field>
           <v-text-field
-            v-model="team.email"
-            label="Email"
-            :rules="[rules.isEmail('Email')]"
+            v-model="team.handle"
+            label="Handle"
           ></v-text-field>
           <v-checkbox v-model="team.retired" label="Retired"></v-checkbox>
 
@@ -101,7 +100,6 @@ type EditableTeam = {
   users: Team['users']
   handle?: string
   retired: boolean
-  email?: string
   text?: Team['text']
 }
 
@@ -139,6 +137,7 @@ onMounted(async () => {
       path: 'team',
       name: '',
       shortName: '',
+      handle: '',
       retired: false,
       users: [],
       text: { id: '', path: '' }, // Should be handled
@@ -181,7 +180,9 @@ const save = async () => {
       team.value.id = team.value.name.toLowerCase().replace(/\s+/g, '-')
       team.value.path = `team/${team.value.id}`
     }
-    await TeamDAO.save(team.value as Team)
+    const teamToSave = { ...team.value }
+    delete (teamToSave as { email?: string }).email
+    await TeamDAO.save(teamToSave as Team)
     router.push('/team')
   }
 }

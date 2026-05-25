@@ -345,8 +345,10 @@ describe('maintenance edit views', () => {
     mocks.route.params = { id: 'new' }
     const wrapper = await mountMaintenance(TeamEdit)
 
+    expect(wrapper.find('input[aria-label="Email"]').exists()).toBe(false)
     await setField(wrapper, 'Name', 'Quiz Masters')
     await setField(wrapper, 'Short Name', 'QM')
+    await setField(wrapper, 'Handle', 'quizmasters')
     await clickButton(wrapper, 'Save')
 
     expect(mocks.teamDAO.save).toHaveBeenCalledWith(
@@ -355,6 +357,7 @@ describe('maintenance edit views', () => {
         path: 'team/quiz-masters',
         name: 'Quiz Masters',
         shortName: 'QM',
+        handle: 'quizmasters',
       }),
     )
     expect(mocks.routerPush).toHaveBeenCalledWith('/team')
@@ -367,6 +370,8 @@ describe('maintenance edit views', () => {
       path: 'team/alpha',
       name: 'Alpha',
       shortName: 'ALP',
+      handle: 'alpha',
+      email: 'alpha@example.com',
       retired: false,
       users: [],
       text: { id: 'alpha-text', path: 'text/alpha-text' },
@@ -375,6 +380,7 @@ describe('maintenance edit views', () => {
     const wrapper = await mountMaintenance(TeamEdit)
 
     await setField(wrapper, 'Name', 'Alpha Updated')
+    await setField(wrapper, 'Handle', 'alpha-updated')
     await clickButton(wrapper, 'Save')
 
     expect(mocks.teamDAO.save).toHaveBeenCalledWith(
@@ -382,8 +388,10 @@ describe('maintenance edit views', () => {
         id: 'alpha',
         path: 'team/alpha',
         name: 'Alpha Updated',
+        handle: 'alpha-updated',
       }),
     )
+    expect(mocks.teamDAO.save.mock.calls[0]?.[0]).not.toHaveProperty('email')
     expect(mocks.routerPush).toHaveBeenCalledWith('/team')
   })
 

@@ -272,6 +272,31 @@ describe('GenericConverter', () => {
       teams: [{ captain: expect.objectContaining({ path: 'team/alpha' }) }],
     })
   })
+
+  it('preserves Firestore document references when hydrating saved documents', () => {
+    const converter = new GenericConverter<{
+      id: string
+      path: string
+      text: { path: string }
+      users: Array<{ path: string }>
+    }>()
+    const textRef = mocks.makeDocRef('text/team-alpha')
+    const userRef = mocks.makeDocRef('user/alice')
+
+    const converted = converter.fromFirestore(
+      snapshot(
+        {
+          id: 'alpha',
+          text: textRef,
+          users: [userRef],
+        },
+        'team/alpha',
+      ) as never,
+    )
+
+    expect(converted.text).toBe(textRef)
+    expect(converted.users[0]).toBe(userRef)
+  })
 })
 
 describe('specific DAO helpers', () => {

@@ -1,7 +1,24 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
+
+const maintenanceBasePath = '/maintain/'
+
+const localHostnames = new Set(['localhost', '127.0.0.1', '::1', '[::1]'])
+
+export const isLocalMaintenanceHost = (
+  hostname = typeof window === 'undefined' ? '' : window.location.hostname,
+  isDev = import.meta.env.DEV,
+) => {
+  return isDev || localHostnames.has(hostname)
+}
+
+export const createMaintenanceHistory = () => {
+  return isLocalMaintenanceHost()
+    ? createWebHashHistory(maintenanceBasePath)
+    : createWebHistory(maintenanceBasePath)
+}
 
 const router = createRouter({
-  history: createWebHistory('/maintain/'),
+  history: createMaintenanceHistory(),
   routes: [
     {
       path: '/',

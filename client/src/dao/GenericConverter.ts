@@ -4,15 +4,27 @@ import type { DocumentData } from 'firebase/firestore'
 import DataConverter from './DataConverter'
 import { factorForLegacyCompetition, isLegacyRef } from '@quizleague/shared'
 
+const isDocumentReference = (value: unknown): value is { path: string; withConverter: unknown } =>
+  value !== null &&
+  typeof value === 'object' &&
+  'path' in value &&
+  'withConverter' in value
+
 export class GenericConverter<T extends Entity> extends DataConverter<T> {
   buildObject(data: DocumentData, path: string): T {
     const convert = (object: any) => {
+      if (isDocumentReference(object)) {
+        return object
+      }
+
       const copy = factorForLegacyCompetition({ ...object })
 
       for (const [key, val] of Object.entries(copy)) {
         const value = val as object
         if (value) {
-          if (isLegacyRef(value)) {
+          if (isDocumentReference(value)) {
+            copy[key] = value
+          } else if (isLegacyRef(value)) {
             copy[key] = this.makeDocumentRef(value, this)
           } else if (Array.isArray(value)) {
             copy[key] = [...value].map((item) => convert(item))

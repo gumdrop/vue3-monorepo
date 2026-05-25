@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import router from '../router'
+import router, { isLocalMaintenanceHost } from '../router'
 
 describe('Maintenance Router', () => {
   it('has correct base path', () => {
@@ -7,6 +7,14 @@ describe('Maintenance Router', () => {
     // but we can check if routes are defined
     const routes = router.getRoutes()
     expect(routes.length).toBeGreaterThan(0)
+  })
+
+  it('detects local hosts for hash navigation', () => {
+    expect(isLocalMaintenanceHost('localhost', false)).toBe(true)
+    expect(isLocalMaintenanceHost('127.0.0.1', false)).toBe(true)
+    expect(isLocalMaintenanceHost('::1', false)).toBe(true)
+    expect(isLocalMaintenanceHost('www.chilternquizleague.example', false)).toBe(false)
+    expect(isLocalMaintenanceHost('www.chilternquizleague.example', true)).toBe(true)
   })
 
   it('contains season route', () => {
