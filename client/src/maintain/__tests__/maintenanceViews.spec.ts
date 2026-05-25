@@ -947,6 +947,7 @@ describe('maintenance edit views', () => {
       path: 'applicationcontext/applicationcontext',
       leagueName: 'Chiltern Quiz League',
       textSet: { id: 'site', path: 'globaltext/site' },
+      emailAliases: [],
       senderEmail: 'sender@example.com',
       cloudStoreBucket: 'bucket',
     })
@@ -969,6 +970,7 @@ describe('maintenance edit views', () => {
       path: 'applicationcontext/applicationcontext',
       leagueName: 'Chiltern Quiz League',
       textSet: { id: 'site', path: 'globaltext/site' },
+      emailAliases: [],
       senderEmail: 'sender@example.com',
       cloudStoreBucket: 'bucket',
     })
@@ -988,6 +990,75 @@ describe('maintenance edit views', () => {
     expect(mocks.applicationContextDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
         textSet: { id: 'draft', path: 'globaltext/draft' },
+      }),
+    )
+  })
+
+  it('saves edited email aliases on the application context', async () => {
+    mocks.applicationContextDAO.getAppContext.mockResolvedValue({
+      id: 'applicationcontext',
+      path: 'applicationcontext/applicationcontext',
+      leagueName: 'Chiltern Quiz League',
+      textSet: { id: 'site', path: 'globaltext/site' },
+      emailAliases: [{ alias: 'secretary', user: { id: 'alice', path: 'user/alice' } }],
+      senderEmail: 'sender@example.com',
+      cloudStoreBucket: 'bucket',
+    })
+    mocks.userDAO.list.mockResolvedValue([
+      { id: 'alice', path: 'user/alice', name: 'Alice User', email: 'alice@example.com' },
+      { id: 'bob', path: 'user/bob', name: 'Bob User', email: 'bob@example.com' },
+    ])
+    const wrapper = await mountMaintenance(ApplicationContextEdit, {
+      ...maintenanceComponentStubs,
+      EntitySelect: false,
+    })
+
+    expect(wrapper.findAll('[data-test="email-alias-row"]')).toHaveLength(1)
+
+    await wrapper.get('input[data-test="email-alias-0"]').setValue('treasurer')
+    await wrapper.get('select[data-test="email-alias-user-0"]').setValue('bob')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.userDAO.list).toHaveBeenCalled()
+    expect(mocks.applicationContextDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        emailAliases: [{ alias: 'treasurer', user: { id: 'bob', path: 'user/bob' } }],
+      }),
+    )
+  })
+
+  it('adds and removes email aliases on the application context', async () => {
+    mocks.applicationContextDAO.getAppContext.mockResolvedValue({
+      id: 'applicationcontext',
+      path: 'applicationcontext/applicationcontext',
+      leagueName: 'Chiltern Quiz League',
+      textSet: { id: 'site', path: 'globaltext/site' },
+      emailAliases: [{ alias: 'secretary', user: { id: 'alice', path: 'user/alice' } }],
+      senderEmail: 'sender@example.com',
+      cloudStoreBucket: 'bucket',
+    })
+    mocks.userDAO.list.mockResolvedValue([
+      { id: 'alice', path: 'user/alice', name: 'Alice User', email: 'alice@example.com' },
+      { id: 'bob', path: 'user/bob', name: 'Bob User', email: 'bob@example.com' },
+    ])
+    const wrapper = await mountMaintenance(ApplicationContextEdit, {
+      ...maintenanceComponentStubs,
+      EntitySelect: false,
+    })
+
+    await clickButton(wrapper, 'Add Alias')
+    await flushPromises()
+
+    expect(wrapper.findAll('[data-test="email-alias-row"]')).toHaveLength(2)
+
+    await wrapper.get('input[data-test="email-alias-1"]').setValue('webmaster')
+    await wrapper.get('select[data-test="email-alias-user-1"]').setValue('bob')
+    await wrapper.get('[data-test="remove-email-alias-0"]').trigger('click')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.applicationContextDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        emailAliases: [{ alias: 'webmaster', user: { id: 'bob', path: 'user/bob' } }],
       }),
     )
   })

@@ -19,6 +19,48 @@
             v-model="appContext.cloudStoreBucket"
             label="Cloud Store Bucket"
           ></v-text-field>
+
+          <v-divider class="my-4"></v-divider>
+          <div class="d-flex align-center mb-2">
+            <h3 class="text-subtitle-1">Email Aliases</h3>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" @click="addEmailAlias">Add Alias</v-btn>
+          </div>
+          <template v-if="appContext.emailAliases.length">
+            <v-row
+              v-for="(emailAlias, index) in appContext.emailAliases"
+              :key="index"
+              align="center"
+              data-test="email-alias-row"
+            >
+              <v-col cols="12" md="5">
+                <v-text-field
+                  v-model="emailAlias.alias"
+                  label="Alias"
+                  :data-test="`email-alias-${index}`"
+                  :rules="[rules.required('Alias')]"
+                ></v-text-field>
+              </v-col>
+              <v-col cols="12" md="6">
+                <EntitySelect
+                  v-model="emailAlias.user"
+                  :dao="UserDAO"
+                  label="User"
+                  :data-test="`email-alias-user-${index}`"
+                />
+              </v-col>
+              <v-col cols="12" md="1">
+                <v-btn
+                  icon="mdi-delete"
+                  variant="text"
+                  :aria-label="`Remove email alias ${emailAlias.alias || index + 1}`"
+                  :data-test="`remove-email-alias-${index}`"
+                  @click="removeEmailAlias(index)"
+                ></v-btn>
+              </v-col>
+            </v-row>
+          </template>
+          <div v-else>No email aliases configured</div>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -33,6 +75,7 @@
 import { ref, onMounted } from 'vue'
 import ApplicationContextDAO from '@/dao/ApplicationContextDAO'
 import GlobalTextDAO from '@/dao/GlobalTextDAO'
+import UserDAO from '@/dao/UserDAO'
 import type { ApplicationContext } from '@quizleague/shared'
 import { useValidations } from '@/site/components/Validation'
 import EntitySelect from '../../components/EntitySelect.vue'
@@ -43,8 +86,25 @@ const appContext = ref<ApplicationContext | null>(null)
 const valid = ref(false)
 
 onMounted(async () => {
-  appContext.value = (await ApplicationContextDAO.getAppContext()) ?? null
+  const context = await ApplicationContextDAO.getAppContext()
+  appContext.value = context
+    ? {
+        ...context,
+        emailAliases: context.emailAliases ?? [],
+      }
+    : null
 })
+
+const addEmailAlias = () => {
+  appContext.value?.emailAliases.push({
+    alias: '',
+    user: { id: '', path: '' },
+  })
+}
+
+const removeEmailAlias = (index: number) => {
+  appContext.value?.emailAliases.splice(index, 1)
+}
 
 const save = async () => {
   if (appContext.value) {
