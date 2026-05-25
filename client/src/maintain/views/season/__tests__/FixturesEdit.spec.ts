@@ -33,6 +33,7 @@ const mocks = vi.hoisted(() => ({
     list: vi.fn(),
     getByPath: vi.fn((path: string) => ({ id: path.split('/').at(-1), path })),
   },
+  uuid: vi.fn(),
 }))
 
 vi.mock('vue-router', () => ({
@@ -52,6 +53,8 @@ vi.mock('@/dao/TeamDAO', () => ({
 vi.mock('@/dao/VenueDAO', () => ({
   default: mocks.venueDAO,
 }))
+
+vi.mock('uuid', () => ({ v4: mocks.uuid }))
 
 const team = (id: string): Team =>
   ({
@@ -133,9 +136,11 @@ describe('FixturesEdit', () => {
       venue('echo-venue'),
     ])
     mocks.fixtureDAO.entities.mockResolvedValue([])
+    let uuidCounter = 0
+    mocks.uuid.mockImplementation(() => `uuid-${++uuidCounter}`)
   })
 
-  it('saves a new fixture group with a date-derived id and path', async () => {
+  it('saves a new fixture group with a uuid id and path', async () => {
     mocks.route.params = {
       seasonId: 'season-1',
       competitionId: 'competition-1',
@@ -149,8 +154,8 @@ describe('FixturesEdit', () => {
 
     expect(mocks.fixturesDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: '2026-01-08',
-        path: 'season/season-1/competition/competition-1/fixtures/2026-01-08',
+        id: 'uuid-1',
+        path: 'season/season-1/competition/competition-1/fixtures/uuid-1',
         description: 'Week 2',
         date: '2026-01-08',
       }),
@@ -170,28 +175,23 @@ describe('FixturesEdit', () => {
   })
 
   it('saves a new fixture using selected team and venue references', async () => {
-    const now = vi.spyOn(Date, 'now').mockReturnValue(123456)
-    try {
-      const wrapper = await mountFixturesEdit()
+    const wrapper = await mountFixturesEdit()
 
-      await wrapper.find('[data-test="add-fixture-button"]').trigger('click')
-      await wrapper.find<HTMLSelectElement>('[data-test="home-team-select"]').setValue('team/alpha')
-      await wrapper.find<HTMLSelectElement>('[data-test="away-team-select"]').setValue('team/bravo')
-      await wrapper.find('[data-test="save-fixture-button"]').trigger('click')
+    await wrapper.find('[data-test="add-fixture-button"]').trigger('click')
+    await wrapper.find<HTMLSelectElement>('[data-test="home-team-select"]').setValue('team/alpha')
+    await wrapper.find<HTMLSelectElement>('[data-test="away-team-select"]').setValue('team/bravo')
+    await wrapper.find('[data-test="save-fixture-button"]').trigger('click')
 
-      expect(mocks.fixtureDAO.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: '123456',
-          path: 'season/season-1/competition/competition-1/fixtures/fixture-set-1/fixture/123456',
-          home: { id: 'alpha', path: 'team/alpha' },
-          away: { id: 'bravo', path: 'team/bravo' },
-          venue: { id: 'alpha-venue', path: 'venue/alpha-venue' },
-        }),
-      )
-      expect(wrapper.findAll('[data-test="fixture-list-item"]')).toHaveLength(1)
-    } finally {
-      now.mockRestore()
-    }
+    expect(mocks.fixtureDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'uuid-1',
+        path: 'season/season-1/competition/competition-1/fixtures/fixture-set-1/fixture/uuid-1',
+        home: { id: 'alpha', path: 'team/alpha' },
+        away: { id: 'bravo', path: 'team/bravo' },
+        venue: { id: 'alpha-venue', path: 'venue/alpha-venue' },
+      }),
+    )
+    expect(wrapper.findAll('[data-test="fixture-list-item"]')).toHaveLength(1)
   })
 
   it('shows only unallocated teams plus the current fixture team in fixture team dropdowns', async () => {

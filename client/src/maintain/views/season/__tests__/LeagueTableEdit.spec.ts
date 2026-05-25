@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   teamDAO: {
     list: vi.fn(),
   },
+  uuid: vi.fn(),
 }))
 
 vi.mock('vue-router', () => ({
@@ -36,6 +37,8 @@ vi.mock('@/dao/LeagueTableDAO', () => ({
 vi.mock('@/dao/TeamDAO', () => ({
   default: mocks.teamDAO,
 }))
+
+vi.mock('uuid', () => ({ v4: mocks.uuid }))
 
 const team = (id: string): Team =>
   ({
@@ -86,9 +89,10 @@ describe('LeagueTableEdit', () => {
       description: 'Main',
       rows: [row('alpha', 1, 10), row('bravo', 3, 8)],
     } as LeagueTable)
+    mocks.uuid.mockReturnValue('uuid-1')
   })
 
-  it('adds a row and saves a new league table with a description-derived id', async () => {
+  it('adds a row and saves a new league table with a uuid id', async () => {
     mocks.route.params = {
       seasonId: 'season-1',
       competitionId: 'competition-1',
@@ -105,8 +109,8 @@ describe('LeagueTableEdit', () => {
 
     expect(mocks.leagueTableDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: 'main-table',
-        path: 'season/season-1/competition/competition-1/leaguetable/main-table',
+        id: 'uuid-1',
+        path: 'season/season-1/competition/competition-1/leaguetable/uuid-1',
         description: 'Main Table',
         rows: [
           expect.objectContaining({

@@ -2,14 +2,20 @@
   <v-container v-if="season">
     <v-form ref="form" v-model="valid">
       <v-card>
-        <v-card-title>
-          {{ isNew ? 'Add' : 'Edit' }} Season
-        </v-card-title>
+        <v-card-title> {{ isNew ? 'Add' : 'Edit' }} Season </v-card-title>
         <v-card-text>
-          <v-text-field v-model.number="season.startYear" label="Start Year" type="number"
-            :rules="[rules.required('Start Year')]"></v-text-field>
-          <v-text-field v-model.number="season.endYear" label="End Year" type="number"
-            :rules="[rules.required('End Year')]"></v-text-field>
+          <v-text-field
+            v-model.number="season.startYear"
+            label="Start Year"
+            type="number"
+            :rules="[rules.required('Start Year')]"
+          ></v-text-field>
+          <v-text-field
+            v-model.number="season.endYear"
+            label="End Year"
+            type="number"
+            :rules="[rules.required('End Year')]"
+          ></v-text-field>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -54,6 +60,7 @@ import TextDAO from '@/dao/TextDAO'
 import type Season from '@/entity/Season'
 import type Competition from '@/entity/Competition'
 import type Text from '@/entity/Text'
+import { newEntityIdentity } from '@/maintain/utils/entityIds'
 import { useValidations } from '@/site/components/Validation'
 import TextEdit from '@/site/components/text/TextEdit.vue'
 
@@ -77,7 +84,7 @@ onMounted(async () => {
       startYear: new Date().getFullYear(),
       endYear: new Date().getFullYear() + 1,
       calendar: [],
-      text: undefined
+      text: undefined,
     } as Season
   } else {
     const id = route.params.id as string
@@ -107,15 +114,14 @@ const save = async () => {
       const cleaned = path.replace(/\/$/, '')
       season.value.text = {
         id,
-        path: cleaned.endsWith(`/${id}`) ? cleaned.substring(0, cleaned.lastIndexOf(`/${id}`)) : cleaned,
+        path: cleaned.endsWith(`/${id}`)
+          ? cleaned.substring(0, cleaned.lastIndexOf(`/${id}`))
+          : cleaned,
       }
     }
 
     if (isNew.value) {
-      // Generate a random ID or let Firestore handle it
-      // DAO.save uses getByPath(entity.path), so we need to set path and id
-      season.value.id = `${season.value.startYear}-${season.value.endYear}`
-      season.value.path = `season/${season.value.id}`
+      Object.assign(season.value, newEntityIdentity('season'))
     }
     await SeasonDAO.save(season.value)
     router.push('/season')
@@ -137,19 +143,18 @@ const saveText = async (textEntity: Text) => {
 
 const addText = async () => {
   if (!season.value) return
-  // create a text entity and link it to this season
-  const textId = `${season.value.id}-text`
-  const textEntity = { id: textId, path: `text/${textId}`, text: '', mimeType: 'text/html' } as Text
+
+  const textReference = newEntityIdentity('text')
+  const textEntity = { ...textReference, text: '', mimeType: 'text/html' } as Text
   await TextDAO.save(textEntity)
-  season.value.text = { id: textId, path: `text/${textId}` }
+  season.value.text = textReference
   await SeasonDAO.save(season.value)
   text.value = textEntity
 }
-
 </script>
 
 <script lang="ts">
 export default {
-  components: { TextEdit }
+  components: { TextEdit },
 }
 </script>

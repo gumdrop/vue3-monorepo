@@ -46,8 +46,14 @@ describe('league table edit helpers', () => {
   it('keeps the current row team selectable while excluding teams allocated to other rows', () => {
     const rows = [row('alpha'), row('bravo')]
 
-    expect(availableTeamsForLeagueTableRow(teams, rows, 0).map((t) => t.id)).toEqual(['alpha', 'charlie'])
-    expect(availableTeamsForLeagueTableRow(teams, rows, 1).map((t) => t.id)).toEqual(['bravo', 'charlie'])
+    expect(availableTeamsForLeagueTableRow(teams, rows, 0).map((t) => t.id)).toEqual([
+      'alpha',
+      'charlie',
+    ])
+    expect(availableTeamsForLeagueTableRow(teams, rows, 1).map((t) => t.id)).toEqual([
+      'bravo',
+      'charlie',
+    ])
   })
 
   it('creates an empty row with zero statistics', () => {
@@ -80,9 +86,11 @@ describe('league table edit helpers', () => {
       rows: [{ ...row('alpha'), team: { id: 'alpha', path: '' } }],
     } as LeagueTable
 
-    expect(leagueTableForSave(table, 'season/s1/competition/c1', 'new', true)).toMatchObject({
-      id: 'main-table',
-      path: 'season/s1/competition/c1/leaguetable/main-table',
+    expect(
+      leagueTableForSave(table, 'season/s1/competition/c1', 'new', true, () => 'uuid-1'),
+    ).toMatchObject({
+      id: 'uuid-1',
+      path: 'season/s1/competition/c1/leaguetable/uuid-1',
       rows: [{ team: { id: 'alpha', path: 'team/alpha' } }],
     })
   })

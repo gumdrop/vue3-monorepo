@@ -48,6 +48,12 @@ const isDocRefReference = <U extends Entity>(value: unknown): value is DocRef =>
 const isReference = <U extends Entity>(value: unknown): value is Pathish<U> =>
   isLegacyRef(value) || isPathAndIdReference<U>(value) || isDocRefReference<U>(value)
 
+const normalizeDocumentPath = (path: string) => {
+  const normalized = path.replace(/^\/+|\/+$/g, '')
+  const segments = normalized.split('/').filter(Boolean)
+  return segments.length > 0 && segments.length % 2 === 0 ? normalized : undefined
+}
+
 abstract class DataConverter<T extends Entity> implements FirestoreDataConverter<T, DocumentData> {
   db = () => useFirestore()
 
@@ -60,7 +66,10 @@ abstract class DataConverter<T extends Entity> implements FirestoreDataConverter
     | import('@firebase/firestore').PartialWithFieldValue<DocumentData> {
     const data: any = {}
     for (const [key, value] of Object.entries(modelObject)) {
-      data[key] = this.toFirestoreValue(value)
+      const converted = this.toFirestoreValue(value)
+      if (converted !== undefined) {
+        data[key] = converted
+      }
     }
     delete data.key
     delete data.path
@@ -86,6 +95,7 @@ abstract class DataConverter<T extends Entity> implements FirestoreDataConverter
     if (referencePath) {
       return doc(this.db(), referencePath)
     }
+    if (isReference(value)) return undefined
 
     if (Array.isArray(value)) {
       return value.map((item) => this.toFirestoreValue(item)).filter((item) => item !== undefined)
@@ -120,10 +130,10 @@ abstract class DataConverter<T extends Entity> implements FirestoreDataConverter
         key !== undefined && key !== null ? key.parentKey : undefined
       const parent = parentKey ? `${parentKey}/` : ''
 
-      return `${parent}${legacyRef.typeName}/${legacyRef.id}`
+      return normalizeDocumentPath(`${parent}${legacyRef.typeName}/${legacyRef.id}`)
     }
 
-    return toPath(value)
+    return normalizeDocumentPath(toPath(value))
   }
 
   abstract buildObject(data: DocumentData, key: string): T

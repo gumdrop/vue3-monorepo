@@ -2,19 +2,21 @@
   <v-container v-if="siteUser">
     <v-form ref="form" v-model="valid">
       <v-card>
-        <v-card-title>
-          {{ isNew ? 'Add' : 'Edit' }} Site User
-        </v-card-title>
+        <v-card-title> {{ isNew ? 'Add' : 'Edit' }} Site User </v-card-title>
         <v-card-text>
-          <v-text-field v-model="siteUser.handle" label="Handle" :rules="[rules.required('Handle')]"></v-text-field>
-          <v-text-field v-model="siteUser.email" label="Email" :rules="[rules.required('Email'), rules.isEmail('Email')]"></v-text-field>
+          <v-text-field
+            v-model="siteUser.handle"
+            label="Handle"
+            :rules="[rules.required('Handle')]"
+          ></v-text-field>
+          <v-text-field
+            v-model="siteUser.email"
+            label="Email"
+            :rules="[rules.required('Email'), rules.isEmail('Email')]"
+          ></v-text-field>
           <v-text-field v-model="siteUser.uid" label="Firebase UID"></v-text-field>
-          
-          <EntitySelect
-            v-model="siteUser.user"
-            :dao="UserDAO"
-            label="User Reference"
-          />
+
+          <EntitySelect v-model="siteUser.user" :dao="UserDAO" label="User Reference" />
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -32,6 +34,7 @@ import { useRoute, useRouter } from 'vue-router'
 import SiteUserDAO from '@/dao/SiteUserDAO'
 import UserDAO from '@/dao/UserDAO'
 import type SiteUser from '@/entity/SiteUser'
+import { newEntityIdentity } from '@/maintain/utils/entityIds'
 import { useValidations } from '@/site/components/Validation'
 import EntitySelect from '../../components/EntitySelect.vue'
 
@@ -53,7 +56,7 @@ onMounted(async () => {
       email: '',
       uid: '',
       avatar: '',
-      user: { id: '', path: '' }
+      user: { id: '', path: '' },
     } as any
   } else {
     const id = route.params.id as string
@@ -64,8 +67,7 @@ onMounted(async () => {
 const save = async () => {
   if (siteUser.value) {
     if (isNew.value) {
-        siteUser.value.id = siteUser.value.handle.toLowerCase().replace(/\s+/g, '-')
-        siteUser.value.path = `siteuser/${siteUser.value.id}`
+      Object.assign(siteUser.value, newEntityIdentity('siteuser'))
     }
     await SiteUserDAO.save(siteUser.value)
     router.push('/siteuser')

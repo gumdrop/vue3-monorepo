@@ -14,10 +14,7 @@
             label="Short Name"
             :rules="[rules.required('Short Name')]"
           ></v-text-field>
-          <v-text-field
-            v-model="team.handle"
-            label="Handle"
-          ></v-text-field>
+          <v-text-field v-model="team.handle" label="Handle"></v-text-field>
           <v-checkbox v-model="team.retired" label="Retired"></v-checkbox>
 
           <EntitySelect v-model="team.venue" :dao="VenueDAO" label="Venue" />
@@ -86,6 +83,7 @@ import VenueDAO from '@/dao/VenueDAO'
 import type Team from '@/entity/Team'
 import type Text from '@/entity/Text'
 import type User from '@/entity/User'
+import { newEntityIdentity } from '@/maintain/utils/entityIds'
 import { useValidations } from '@/site/components/Validation'
 import TextEdit from '@/site/components/text/TextEdit.vue'
 import EntitySelect from '../../components/EntitySelect.vue'
@@ -96,7 +94,7 @@ type EditableTeam = {
   key?: string
   name: string
   shortName: string
-  venue: Team['venue']
+  venue?: Team['venue']
   users: Team['users']
   handle?: string
   retired: boolean
@@ -140,8 +138,8 @@ onMounted(async () => {
       handle: '',
       retired: false,
       users: [],
-      text: { id: '', path: '' }, // Should be handled
-      venue: { id: '', path: '' },
+      text: undefined,
+      venue: undefined,
     } as EditableTeam
   } else {
     const id = route.params.id as string
@@ -176,12 +174,12 @@ const save = async () => {
       await TextDAO.save(text.value)
     }
     if (isNew.value) {
-      // Simple ID generation for now
-      team.value.id = team.value.name.toLowerCase().replace(/\s+/g, '-')
-      team.value.path = `team/${team.value.id}`
+      Object.assign(team.value, newEntityIdentity('team'))
     }
     const teamToSave = { ...team.value }
     delete (teamToSave as { email?: string }).email
+    if (!teamToSave.text) delete teamToSave.text
+    if (!teamToSave.venue) delete teamToSave.venue
     await TeamDAO.save(teamToSave as Team)
     router.push('/team')
   }
@@ -195,10 +193,10 @@ const saveText = async (textEntity: Text) => {
 const addText = async () => {
   if (!team.value) return
 
-  const textId = `${team.value.id}-text`
-  const textEntity = { id: textId, path: `text/${textId}`, text: '', mimeType: 'text/html' } as Text
+  const textReference = newEntityIdentity('text')
+  const textEntity = { ...textReference, text: '', mimeType: 'text/html' } as Text
   await TextDAO.save(textEntity)
-  team.value.text = { id: textId, path: `text/${textId}` }
+  team.value.text = textReference
   await TeamDAO.save(team.value as Team)
   text.value = textEntity
 }

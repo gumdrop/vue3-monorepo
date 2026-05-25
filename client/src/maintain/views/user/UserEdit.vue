@@ -2,12 +2,18 @@
   <v-container v-if="user">
     <v-form ref="form" v-model="valid">
       <v-card>
-        <v-card-title>
-          {{ isNew ? 'Add' : 'Edit' }} User
-        </v-card-title>
+        <v-card-title> {{ isNew ? 'Add' : 'Edit' }} User </v-card-title>
         <v-card-text>
-          <v-text-field v-model="user.name" label="Name" :rules="[rules.required('Name')]"></v-text-field>
-          <v-text-field v-model="user.email" label="Email" :rules="[rules.required('Email'), rules.isEmail('Email')]"></v-text-field>
+          <v-text-field
+            v-model="user.name"
+            label="Name"
+            :rules="[rules.required('Name')]"
+          ></v-text-field>
+          <v-text-field
+            v-model="user.email"
+            label="Email"
+            :rules="[rules.required('Email'), rules.isEmail('Email')]"
+          ></v-text-field>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -24,6 +30,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import UserDAO from '@/dao/UserDAO'
 import type User from '@/entity/User'
+import { newEntityIdentity } from '@/maintain/utils/entityIds'
 import { useValidations } from '@/site/components/Validation'
 
 const route = useRoute()
@@ -41,7 +48,7 @@ onMounted(async () => {
       id: '',
       path: 'user',
       name: '',
-      email: ''
+      email: '',
     } as User
   } else {
     const id = route.params.id as string
@@ -52,8 +59,7 @@ onMounted(async () => {
 const save = async () => {
   if (user.value) {
     if (isNew.value) {
-        user.value.id = user.value.email.replace(/[.@]/g, '_')
-        user.value.path = `user/${user.value.id}`
+      Object.assign(user.value, newEntityIdentity('user'))
     }
     await UserDAO.save(user.value)
     router.push('/user')

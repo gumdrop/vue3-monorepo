@@ -140,6 +140,7 @@ import type Competition from '@/entity/Competition'
 import type Fixtures from '@/entity/Fixtures'
 import type LeagueTable from '@/entity/LeagueTable'
 import type Text from '@/entity/Text'
+import { newEntityIdentity } from '@/maintain/utils/entityIds'
 import { useValidations } from '@/site/components/Validation'
 import TextEdit from '@/site/components/text/TextEdit.vue'
 
@@ -192,8 +193,7 @@ const save = async () => {
       await TextDAO.save(text.value)
     }
     if (isNew.value) {
-      competition.value.id = competition.value.name.toLowerCase().replace(/\s+/g, '-')
-      competition.value.path = `season/${seasonId.value}/competition/${competition.value.id}`
+      Object.assign(competition.value, newEntityIdentity(`season/${seasonId.value}/competition`))
     }
     await CompetitionDAO.save(competition.value)
     back()
@@ -230,10 +230,10 @@ const saveText = async (textEntity: Text) => {
 const addText = async () => {
   if (!competition.value) return
 
-  const textId = `${seasonId.value}-${competition.value.id}-text`
-  const textEntity = { id: textId, path: `text/${textId}`, text: '', mimeType: 'text/html' } as Text
+  const textReference = newEntityIdentity('text')
+  const textEntity = { ...textReference, text: '', mimeType: 'text/html' } as Text
   await TextDAO.save(textEntity)
-  competition.value.text = { id: textId, path: `text/${textId}` }
+  competition.value.text = textReference
   await CompetitionDAO.save(competition.value)
   text.value = textEntity
 }

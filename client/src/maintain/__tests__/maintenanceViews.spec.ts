@@ -24,6 +24,7 @@ const mocks = vi.hoisted(() => ({
     params: {} as Record<string, string>,
   },
   routerPush: vi.fn(),
+  uuid: vi.fn(),
   applicationContextDAO: {
     getAppContext: vi.fn(),
     save: vi.fn(),
@@ -85,6 +86,7 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: mocks.routerPush }),
 }))
 
+vi.mock('uuid', () => ({ v4: mocks.uuid }))
 vi.mock('@/dao/ApplicationContextDAO', () => ({ default: mocks.applicationContextDAO }))
 vi.mock('@/dao/CompetitionDAO', () => ({ default: mocks.competitionDAO }))
 vi.mock('@/dao/FixturesDAO', () => ({ default: mocks.fixturesDAO }))
@@ -162,6 +164,8 @@ const resetDaoMocks = () => {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  let uuidCounter = 0
+  mocks.uuid.mockImplementation(() => `uuid-${++uuidCounter}`)
   resetDaoMocks()
   mocks.route.params = {}
   vi.stubGlobal('alert', vi.fn())
@@ -344,7 +348,7 @@ describe('maintenance list views', () => {
 })
 
 describe('maintenance edit views', () => {
-  it('saves a new team with a generated id and path', async () => {
+  it('saves a new team with a uuid id and path', async () => {
     mocks.route.params = { id: 'new' }
     const wrapper = await mountMaintenance(TeamEdit)
 
@@ -356,13 +360,15 @@ describe('maintenance edit views', () => {
 
     expect(mocks.teamDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: 'quiz-masters',
-        path: 'team/quiz-masters',
+        id: 'uuid-1',
+        path: 'team/uuid-1',
         name: 'Quiz Masters',
         shortName: 'QM',
         handle: 'quizmasters',
       }),
     )
+    expect(mocks.teamDAO.save.mock.calls[0]?.[0]).not.toHaveProperty('text')
+    expect(mocks.teamDAO.save.mock.calls[0]?.[0]).not.toHaveProperty('venue')
     expect(mocks.routerPush).toHaveBeenCalledWith('/team')
   })
 
@@ -485,20 +491,20 @@ describe('maintenance edit views', () => {
 
     expect(mocks.textDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: 'alpha-text',
-        path: 'text/alpha-text',
+        id: 'uuid-1',
+        path: 'text/uuid-1',
         text: '',
         mimeType: 'text/html',
       }),
     )
     expect(mocks.teamDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        text: { id: 'alpha-text', path: 'text/alpha-text' },
+        text: { id: 'uuid-1', path: 'text/uuid-1' },
       }),
     )
   })
 
-  it('saves a new venue with a generated id and path', async () => {
+  it('saves a new venue with a uuid id and path', async () => {
     mocks.route.params = { id: 'new' }
     const wrapper = await mountMaintenance(VenueEdit)
 
@@ -512,8 +518,8 @@ describe('maintenance edit views', () => {
     expect(savedVenue).not.toHaveProperty('postCode')
     expect(savedVenue).toEqual(
       expect.objectContaining({
-        id: 'town-hall',
-        path: 'venue/town-hall',
+        id: 'uuid-1',
+        path: 'venue/uuid-1',
         name: 'Town Hall',
         address: 'High Street',
       }),
@@ -550,7 +556,7 @@ describe('maintenance edit views', () => {
     expect(mocks.routerPush).toHaveBeenCalledWith('/venue')
   })
 
-  it('saves a new user with an email-derived id and path', async () => {
+  it('saves a new user with a uuid id and path', async () => {
     mocks.route.params = { id: 'new' }
     const wrapper = await mountMaintenance(UserEdit)
 
@@ -560,8 +566,8 @@ describe('maintenance edit views', () => {
 
     expect(mocks.userDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: 'alice_example_com',
-        path: 'user/alice_example_com',
+        id: 'uuid-1',
+        path: 'user/uuid-1',
         name: 'Alice User',
         email: 'alice@example.com',
       }),
@@ -592,7 +598,7 @@ describe('maintenance edit views', () => {
     expect(mocks.routerPush).toHaveBeenCalledWith('/user')
   })
 
-  it('saves a new site user with a handle-derived id and path', async () => {
+  it('saves a new site user with a uuid id and path', async () => {
     mocks.route.params = { id: 'new' }
     const wrapper = await mountMaintenance(SiteUserEdit)
 
@@ -602,8 +608,8 @@ describe('maintenance edit views', () => {
 
     expect(mocks.siteUserDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: 'alice-admin',
-        path: 'siteuser/alice-admin',
+        id: 'uuid-1',
+        path: 'siteuser/uuid-1',
         handle: 'Alice Admin',
         email: 'alice@example.com',
       }),
@@ -653,9 +659,9 @@ describe('maintenance edit views', () => {
     expect(mocks.textDAO.save).not.toHaveBeenCalled()
     expect(mocks.globalTextDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: 'rules',
-        path: 'globaltext/rules',
-        text: { 'rules-content': { id: 'text-rules-content', path: 'text/text-rules-content' } },
+        id: 'uuid-1',
+        path: 'globaltext/uuid-1',
+        text: { 'rules-content': { id: 'uuid-2', path: 'text/uuid-2' } },
       }),
     )
     expect(mocks.routerPush).toHaveBeenCalledWith('/globaltext')
@@ -727,7 +733,7 @@ describe('maintenance edit views', () => {
     expect(mocks.routerPush).toHaveBeenCalledWith('/globaltext')
   })
 
-  it('saves a new season with a generated season id and path', async () => {
+  it('saves a new season with a uuid id and path', async () => {
     mocks.route.params = { id: 'new' }
     const wrapper = await mountMaintenance(SeasonEdit)
 
@@ -737,8 +743,8 @@ describe('maintenance edit views', () => {
 
     expect(mocks.seasonDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: '2026-2027',
-        path: 'season/2026-2027',
+        id: 'uuid-1',
+        path: 'season/uuid-1',
         startYear: 2026,
         endYear: 2027,
       }),
@@ -762,14 +768,14 @@ describe('maintenance edit views', () => {
 
     expect(mocks.textDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: '2026-2027-text',
-        path: 'text/2026-2027-text',
+        id: 'uuid-1',
+        path: 'text/uuid-1',
         text: '',
       }),
     )
     expect(mocks.seasonDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        text: { id: '2026-2027-text', path: 'text/2026-2027-text' },
+        text: { id: 'uuid-1', path: 'text/uuid-1' },
       }),
     )
   })
@@ -904,20 +910,20 @@ describe('maintenance edit views', () => {
 
     expect(mocks.textDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: '2026-2027-league-text',
-        path: 'text/2026-2027-league-text',
+        id: 'uuid-1',
+        path: 'text/uuid-1',
         text: '',
         mimeType: 'text/html',
       }),
     )
     expect(mocks.competitionDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        text: { id: '2026-2027-league-text', path: 'text/2026-2027-league-text' },
+        text: { id: 'uuid-1', path: 'text/uuid-1' },
       }),
     )
   })
 
-  it('saves a new competition with a generated id and path', async () => {
+  it('saves a new competition with a uuid id and path', async () => {
     mocks.route.params = { seasonId: '2026-2027', id: 'new' }
     const wrapper = await mountMaintenance(CompetitionEdit)
 
@@ -931,8 +937,8 @@ describe('maintenance edit views', () => {
 
     expect(mocks.competitionDAO.save).toHaveBeenCalledWith(
       expect.objectContaining({
-        id: 'knockout-cup',
-        path: 'season/2026-2027/competition/knockout-cup',
+        id: 'uuid-1',
+        path: 'season/2026-2027/competition/uuid-1',
         name: 'Knockout Cup',
         textName: 'knockout-cup-text',
         icon: 'mdi-trophy',

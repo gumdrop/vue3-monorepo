@@ -2,14 +2,24 @@
   <v-container v-if="venue">
     <v-form ref="form" v-model="valid">
       <v-card>
-        <v-card-title>
-          {{ isNew ? 'Add' : 'Edit' }} Venue
-        </v-card-title>
+        <v-card-title> {{ isNew ? 'Add' : 'Edit' }} Venue </v-card-title>
         <v-card-text>
-          <v-text-field v-model="venue.name" label="Name" :rules="[rules.required('Name')]"></v-text-field>
-          <v-text-field v-model="venue.address" label="Address" :rules="[rules.required('Address')]"></v-text-field>
+          <v-text-field
+            v-model="venue.name"
+            label="Name"
+            :rules="[rules.required('Name')]"
+          ></v-text-field>
+          <v-text-field
+            v-model="venue.address"
+            label="Address"
+            :rules="[rules.required('Address')]"
+          ></v-text-field>
           <v-text-field v-model="venue.phone" label="Phone"></v-text-field>
-          <v-text-field v-model="venue.email" label="Email" :rules="[rules.isEmail('Email')]"></v-text-field>
+          <v-text-field
+            v-model="venue.email"
+            label="Email"
+            :rules="[rules.isEmail('Email')]"
+          ></v-text-field>
           <v-text-field v-model="venue.website" label="Website"></v-text-field>
           <v-text-field v-model="venue.imageURL" label="Image URL"></v-text-field>
           <v-checkbox v-model="venue.retired" label="Retired"></v-checkbox>
@@ -29,6 +39,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import VenueDAO from '@/dao/VenueDAO'
 import type Venue from '@/entity/Venue'
+import { newEntityIdentity } from '@/maintain/utils/entityIds'
 import { useValidations } from '@/site/components/Validation'
 
 const route = useRoute()
@@ -64,8 +75,7 @@ onMounted(async () => {
 const save = async () => {
   if (venue.value) {
     if (isNew.value) {
-      venue.value.id = venue.value.name.toLowerCase().replace(/\s+/g, '-')
-      venue.value.path = `venue/${venue.value.id}`
+      Object.assign(venue.value, newEntityIdentity('venue'))
     }
     const venueToSave = { ...venue.value }
     delete venueToSave.postCode

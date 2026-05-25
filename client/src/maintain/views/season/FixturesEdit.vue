@@ -2,15 +2,24 @@
   <v-container v-if="fixtures">
     <v-form ref="form" v-model="valid">
       <v-card>
-        <v-card-title>
-          {{ isNew ? 'Add' : 'Edit' }} Fixture Group
-        </v-card-title>
+        <v-card-title> {{ isNew ? 'Add' : 'Edit' }} Fixture Group </v-card-title>
         <v-card-text>
-          <v-text-field v-model="fixtures.description" label="Description"
-            :rules="[rules.required('Description')]"></v-text-field>
-          <v-text-field v-model="fixtures.date" label="Date" type="date"
-            :rules="[rules.required('Date')]"></v-text-field>
-          <v-text-field v-model="fixtures.start" label="Start Time" placeholder="20:00"></v-text-field>
+          <v-text-field
+            v-model="fixtures.description"
+            label="Description"
+            :rules="[rules.required('Description')]"
+          ></v-text-field>
+          <v-text-field
+            v-model="fixtures.date"
+            label="Date"
+            type="date"
+            :rules="[rules.required('Date')]"
+          ></v-text-field>
+          <v-text-field
+            v-model="fixtures.start"
+            label="Start Time"
+            placeholder="20:00"
+          ></v-text-field>
           <v-text-field v-model="fixtures.questionsUrl" label="Questions URL"></v-text-field>
         </v-card-text>
         <v-card-actions>
@@ -25,15 +34,31 @@
       <v-card-title>
         Fixtures
         <v-spacer></v-spacer>
-        <v-btn data-test="add-fixture-button" color="primary" @click="addFixture" :disabled="unallocatedTeams.length < 2">Add Fixture</v-btn>
+        <v-btn
+          data-test="add-fixture-button"
+          color="primary"
+          @click="addFixture"
+          :disabled="unallocatedTeams.length < 2"
+          >Add Fixture</v-btn
+        >
       </v-card-title>
       <v-list>
-        <v-list-item data-test="fixture-list-item" v-for="fix in fixtureList" :key="fix.id" @click="editFixture(fix)">
+        <v-list-item
+          data-test="fixture-list-item"
+          v-for="fix in fixtureList"
+          :key="fix.id"
+          @click="editFixture(fix)"
+        >
           <v-list-item-title>
             {{ nameFor(fix.home?.id) }} vs {{ nameFor(fix.away?.id) }}
           </v-list-item-title>
           <template v-slot:append>
-            <v-btn icon="mdi-delete" variant="text" color="error" @click.stop="removeFixture(fix)"></v-btn>
+            <v-btn
+              icon="mdi-delete"
+              variant="text"
+              color="error"
+              @click.stop="removeFixture(fix)"
+            ></v-btn>
           </template>
         </v-list-item>
       </v-list>
@@ -41,25 +66,52 @@
 
     <v-dialog v-model="showFixtureDialog" persistent max-width="600">
       <v-card>
-        <v-card-title>{{ fixtureToEdit && fixtureToEdit.id ? 'Edit' : 'Add' }} Fixture</v-card-title>
+        <v-card-title
+          >{{ fixtureToEdit && fixtureToEdit.id ? 'Edit' : 'Add' }} Fixture</v-card-title
+        >
         <v-card-text>
-          <v-select data-test="home-team-select" v-model="fixtureToEdit.homePath" :items="availableTeamsForFixture('home')" item-title="name" item-value="path"
-            label="Home Team" @update:model-value="setHomeTeam"></v-select>
-          <v-select data-test="away-team-select" v-model="fixtureToEdit.awayPath" :items="availableTeamsForFixture('away')" item-title="name" item-value="path"
-            label="Away Team"></v-select>
-          <v-select data-test="venue-select" v-model="fixtureToEdit.venuePath" :items="venues" item-title="name" item-value="path"
-            label="Venue"></v-select>
+          <v-select
+            data-test="home-team-select"
+            v-model="fixtureToEdit.homePath"
+            :items="availableTeamsForFixture('home')"
+            item-title="name"
+            item-value="path"
+            label="Home Team"
+            @update:model-value="setHomeTeam"
+          ></v-select>
+          <v-select
+            data-test="away-team-select"
+            v-model="fixtureToEdit.awayPath"
+            :items="availableTeamsForFixture('away')"
+            item-title="name"
+            item-value="path"
+            label="Away Team"
+          ></v-select>
+          <v-select
+            data-test="venue-select"
+            v-model="fixtureToEdit.venuePath"
+            :items="venues"
+            item-title="name"
+            item-value="path"
+            label="Venue"
+          ></v-select>
 
           <template v-if="fixtureToEdit && fixtureToEdit.id && fixtureToEdit.result">
             <v-divider class="my-2"></v-divider>
             <v-row>
               <v-col cols="6">
-                <v-text-field type="number" v-model.number="fixtureToEdit.result.homeScore"
-                  label="Home Score"></v-text-field>
+                <v-text-field
+                  type="number"
+                  v-model.number="fixtureToEdit.result.homeScore"
+                  label="Home Score"
+                ></v-text-field>
               </v-col>
               <v-col cols="6">
-                <v-text-field type="number" v-model.number="fixtureToEdit.result.awayScore"
-                  label="Away Score"></v-text-field>
+                <v-text-field
+                  type="number"
+                  v-model.number="fixtureToEdit.result.awayScore"
+                  label="Away Score"
+                ></v-text-field>
               </v-col>
             </v-row>
             <v-text-field v-model="fixtureToEdit.result.note" label="Result Note"></v-text-field>
@@ -75,7 +127,13 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="secondary" @click="showFixtureDialog = false">Cancel</v-btn>
-          <v-btn data-test="save-fixture-button" color="primary" @click="saveFixture" :disabled="!canSaveFixture">Save</v-btn>
+          <v-btn
+            data-test="save-fixture-button"
+            color="primary"
+            @click="saveFixture"
+            :disabled="!canSaveFixture"
+            >Save</v-btn
+          >
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -93,6 +151,7 @@ import type Team from '@/entity/Team'
 import type Fixtures from '@/entity/Fixtures'
 import type { Fixture } from '@/entity/Fixtures'
 import type Venue from '@/entity/Venue'
+import { newEntityIdentity } from '@/maintain/utils/entityIds'
 import { useValidations } from '@/site/components/Validation'
 import {
   applyHomeTeamSelection,
@@ -164,7 +223,12 @@ const setHomeTeam = (homePath: string | null) => {
 }
 
 const editFixture = (fix: Fixture) => {
-  fixtureToEdit.value = { ...fix, homePath: fix.home?.path, awayPath: fix.away?.path, venuePath: fix.venue?.path } as FixtureEdit
+  fixtureToEdit.value = {
+    ...fix,
+    homePath: fix.home?.path,
+    awayPath: fix.away?.path,
+    venuePath: fix.venue?.path,
+  } as FixtureEdit
   showFixtureDialog.value = true
 }
 
@@ -199,7 +263,10 @@ const saveFixture = async () => {
   if (!fixtureToEdit.value || !fixtures.value) return
   // ensure id
   if (!fixtureToEdit.value.id) {
-    fixtureToEdit.value = { ...fixtureToEdit.value, id: `${Date.now()}` }
+    fixtureToEdit.value = {
+      ...fixtureToEdit.value,
+      ...newEntityIdentity(`${fixtures.value.path}/fixture`),
+    }
   }
   // convert selected paths to DocumentReferences
   if (fixtureToEdit.value.homePath) {
@@ -213,7 +280,10 @@ const saveFixture = async () => {
   }
   // ensure path
   if (!fixtureToEdit.value.path) {
-    fixtureToEdit.value = { ...fixtureToEdit.value, path: `${fixtures.value.path}/fixture/${fixtureToEdit.value.id}` }
+    fixtureToEdit.value = {
+      ...fixtureToEdit.value,
+      path: `${fixtures.value.path}/fixture/${fixtureToEdit.value.id}`,
+    }
   }
   const toSave = fixtureToEdit.value as unknown as Fixture
   await fixtureDAO.save(toSave)
@@ -230,8 +300,12 @@ const saveFixture = async () => {
 const save = async () => {
   if (fixtures.value) {
     if (isNew.value) {
-      const id = fixtures.value.date
-      fixtures.value = { ...fixtures.value, id, path: `season/${seasonId.value}/competition/${competitionId.value}/fixtures/${id}` } as Fixtures
+      fixtures.value = {
+        ...fixtures.value,
+        ...newEntityIdentity(
+          `season/${seasonId.value}/competition/${competitionId.value}/fixtures`,
+        ),
+      } as Fixtures
     }
     await FixturesDAO.save(fixtures.value)
     back()
@@ -247,7 +321,7 @@ const back = () => {
 const removeFixture = async (fix: Fixture) => {
   if (confirm('Are you sure?')) {
     await fixtureDAO.remove(fix.path)
-    fixtureList.value = fixtureList.value.filter(f => f.id !== fix.id)
+    fixtureList.value = fixtureList.value.filter((f) => f.id !== fix.id)
   }
 }
 </script>

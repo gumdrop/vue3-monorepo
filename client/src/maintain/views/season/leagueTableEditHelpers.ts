@@ -1,6 +1,7 @@
 import type LeagueTable from '@/entity/LeagueTable'
 import type { LeagueTableRow } from '@/entity/LeagueTable'
 import type Team from '@/entity/Team'
+import { newEntityId } from '@/maintain/utils/entityIds'
 
 export const allocatedLeagueTableTeamIds = (rows: LeagueTableRow[]) => {
   return new Set(rows.map((row) => row.team?.id).filter(Boolean))
@@ -28,7 +29,11 @@ export const setLeagueTableRowTeam = (row: LeagueTableRow, teams: Team[], id: st
   row.team = team ? { id: team.id, path: team.path } : { id, path: '' }
 }
 
-export const availableTeamsForLeagueTableRow = (teams: Team[], rows: LeagueTableRow[], rowIndex: number) => {
+export const availableTeamsForLeagueTableRow = (
+  teams: Team[],
+  rows: LeagueTableRow[],
+  rowIndex: number,
+) => {
   const allocatedToOtherRows = new Set(
     rows
       .filter((_, index) => index !== rowIndex)
@@ -38,10 +43,13 @@ export const availableTeamsForLeagueTableRow = (teams: Team[], rows: LeagueTable
   return teams.filter((team) => !allocatedToOtherRows.has(team.id))
 }
 
-export const slugLeagueTableId = (value: string) => value.trim().toLowerCase().replace(/\s+/g, '-')
-
-export const leagueTableId = (table: LeagueTable, routeId: string, isNew: boolean) => {
-  return isNew ? slugLeagueTableId(table.description || '') : table.id || routeId
+export const leagueTableId = (
+  table: LeagueTable,
+  routeId: string,
+  isNew: boolean,
+  createId = newEntityId,
+) => {
+  return isNew ? table.id || createId() : table.id || routeId
 }
 
 export const normaliseLeagueTableRow = (row: LeagueTableRow): LeagueTableRow => {
@@ -60,8 +68,9 @@ export const leagueTableForSave = (
   compPath: string,
   routeId: string,
   isNew: boolean,
+  createId = newEntityId,
 ): LeagueTable => {
-  const id = leagueTableId(table, routeId, isNew)
+  const id = leagueTableId(table, routeId, isNew, createId)
   return {
     ...table,
     id,

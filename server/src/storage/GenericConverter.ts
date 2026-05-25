@@ -18,7 +18,10 @@ export class GenericConverter<T extends Entity> implements FirestoreDataConverte
   toFirestore(modelObject: T) {
     const copy: any = {}
     for (const [key, value] of Object.entries(modelObject)) {
-      copy[key] = toFirestoreValue(value)
+      const converted = toFirestoreValue(value)
+      if (converted !== undefined) {
+        copy[key] = converted
+      }
     }
     delete copy.path
     delete copy.key
@@ -95,6 +98,12 @@ function isReference<U extends Entity>(value: unknown): value is Pathish<U> {
   return isLegacyRef(value) || isPathAndIdReference<U>(value) || isDocRefReference(value)
 }
 
+function normalizeDocumentPath(path: string) {
+  const normalized = path.replace(/^\/+|\/+$/g, '')
+  const segments = normalized.split('/').filter(Boolean)
+  return segments.length > 0 && segments.length % 2 === 0 ? normalized : undefined
+}
+
 function referencePath<U extends Entity>(value: unknown) {
   if (!isReference<U>(value)) return undefined
 
@@ -105,10 +114,10 @@ function referencePath<U extends Entity>(value: unknown) {
       key !== undefined && key !== null ? key.parentKey : undefined
     const parent = parentKey ? `${parentKey}/` : ''
 
-    return `${parent}${legacyRef.typeName}/${legacyRef.id}`
+    return normalizeDocumentPath(`${parent}${legacyRef.typeName}/${legacyRef.id}`)
   }
 
-  return toPath(value)
+  return normalizeDocumentPath(toPath(value))
 }
 
 function toFirestoreValue(value: any): any {
@@ -119,6 +128,7 @@ function toFirestoreValue(value: any): any {
   if (path) {
     return db().doc(path)
   }
+  if (isReference(value)) return undefined
 
   if (Array.isArray(value)) {
     return value.map((item) => toFirestoreValue(item)).filter((item) => item !== undefined)

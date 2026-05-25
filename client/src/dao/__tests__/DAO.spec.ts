@@ -279,6 +279,41 @@ describe('GenericConverter', () => {
     })
   })
 
+  it('omits empty reference placeholders before writing', () => {
+    const converter = new GenericConverter<TestEntity>()
+
+    const converted = converter.toFirestore({
+      id: 'alpha',
+      name: 'Alpha',
+      path: 'testentity/alpha',
+      text: { id: '', path: '' },
+      venue: { type: 'document', path: '' },
+      users: [
+        { id: 'alice', path: 'user/alice' },
+        { id: '', path: '' },
+      ],
+      nested: {
+        secretary: { id: '', path: '' },
+        note: 'kept',
+      },
+    } as TestEntity & {
+      text: { id: string; path: string }
+      venue: { type: 'document'; path: string }
+      users: Array<{ id: string; path: string }>
+      nested: { secretary: { id: string; path: string }; note: string }
+    }) as Record<string, unknown>
+
+    expect(converted).toMatchObject({
+      id: 'alpha',
+      name: 'Alpha',
+      users: [{ type: 'document', path: 'user/alice' }],
+      nested: { note: 'kept' },
+    })
+    expect(converted).not.toHaveProperty('text')
+    expect(converted).not.toHaveProperty('venue')
+    expect(mocks.doc).not.toHaveBeenCalledWith(expect.anything(), '/')
+  })
+
   it('hydrates ids, paths, legacy competition wrappers and nested legacy references', () => {
     const converter = new GenericConverter<{
       id: string

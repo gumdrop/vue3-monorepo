@@ -84,6 +84,7 @@ import GlobalTextDAO from '@/dao/GlobalTextDAO'
 import TextDAO from '@/dao/TextDAO'
 import type GlobalText from '@/entity/GlobalText'
 import type Text from '@/entity/Text'
+import { newEntityId, newEntityIdentity } from '@/maintain/utils/entityIds'
 import { useValidations } from '@/site/components/Validation'
 import TextEdit from '@/site/components/text/TextEdit.vue'
 
@@ -131,9 +132,14 @@ const canSave = computed(
 )
 
 const pathFromTextId = (id: string) => `text/${id.trim()}`
-const textIdFromName = (name: string) => `text-${name.trim().toLowerCase().replace(/\s+/g, '-')}`
-const resolveTextId = (row: TextReferenceRow) =>
-  row.textId.trim() || (row.name.trim() ? textIdFromName(row.name) : '')
+const resolveTextId = (row: TextReferenceRow) => {
+  const textId = row.textId.trim()
+  if (textId) return textId
+  if (!row.name.trim()) return ''
+
+  row.textId = newEntityId()
+  return row.textId
+}
 
 const makeRow = (name = '', textId = ''): TextReferenceRow => ({
   uid: `text-reference-${nextRowUid++}`,
@@ -224,8 +230,7 @@ const save = async () => {
     }
 
     if (isNew.value) {
-      globalText.value.id = globalText.value.name.toLowerCase().replace(/\s+/g, '-')
-      globalText.value.path = `globaltext/${globalText.value.id}`
+      Object.assign(globalText.value, newEntityIdentity('globaltext'))
     }
     globalText.value.text = buildTextMap()
     await GlobalTextDAO.save(globalText.value)
