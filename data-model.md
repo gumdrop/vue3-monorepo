@@ -41,6 +41,11 @@ flowchart TD
   venue["Venue"]
   userCollection["user collection"]
   user["User"]
+  statisticsCollection["statistics collection"]
+  statistics["Statistics"]
+  seasonStats["SeasonStats"]
+  headToHead["HeadToHead"]
+  weekStats["WeekStats"]
   competitionStatisticsCollection["competitionstatistics collection"]
   competitionStatistics["CompetitionStatistics"]
   competitionStatisticsResult["CompetitionStatistics Result"]
@@ -77,6 +82,11 @@ flowchart TD
   venueCollection --> venue
   firestore --> userCollection
   userCollection --> user
+  firestore --> statisticsCollection
+  statisticsCollection --> statistics
+  statistics --> seasonStats
+  seasonStats --> headToHead
+  statistics --> weekStats
   firestore --> competitionStatisticsCollection
   competitionStatisticsCollection --> competitionStatistics
   competitionStatistics --> competitionStatisticsResult
@@ -92,6 +102,10 @@ flowchart TD
   matchReport --> team
   event --> venue
   leagueTableRow --> team
+  statistics --> team
+  statistics --> season
+  statistics --> leagueTable
+  headToHead --> team
   competitionStatisticsResult --> competition
   competitionStatisticsResult --> season
   competitionStatisticsResult --> team
@@ -319,6 +333,58 @@ CompetitionStatistics result rows are embedded values inside a CompetitionStatis
 | `seasonText`  | `string`                                | Yes      | Season display text.                                         |
 | `team`        | `Reference<Team> \| LegacyRef`          | No       | Optional team reference; saved as a document reference.        |
 | `teamText`    | `string`                                | Yes      | Team display text.                                           |
+
+## Statistics
+
+Statistics is a top-level generated entity that stores one team's statistics for one season. Documents live in the `statistics` collection and are regenerated from league fixtures, results, and league tables by the server statistics tasks. Team statistics pages query these documents by `team.id` and, for single-season views, by `season.id`.
+
+| Field         | Type                     | Required | Notes                                                                  |
+| ------------- | ------------------------ | -------- | ---------------------------------------------------------------------- |
+| `id`          | `UUID`                   | Yes      | Canonical statistics identifier.                                       |
+| `team`        | `Reference<Team>`        | Yes      | Team represented by the statistics document.                           |
+| `season`      | `Reference<Season>`      | Yes      | Season covered by the statistics document.                             |
+| `table`       | `Reference<LeagueTable>` | Yes      | League table used to derive league positions and team counts.          |
+| `seasonStats` | `SeasonStats`            | Yes      | Running aggregate values for the season.                               |
+| `weekStats`   | `Map<string, WeekStats>` | Yes      | Weekly statistics keyed by ISO local date string, such as `2025-01-08`. |
+
+## SeasonStats
+
+SeasonStats is an embedded value inside a Statistics document.
+
+| Field                     | Type                  | Required | Notes                                                 |
+| ------------------------- | --------------------- | -------- | ----------------------------------------------------- |
+| `currentLeaguePosition`   | `integer`             | Yes      | Current league position summary.                      |
+| `runningPointsFor`        | `integer`             | Yes      | Running points scored by the team.                    |
+| `runningPointsAgainst`    | `integer`             | Yes      | Running points scored against the team.               |
+| `runningPointsDifference` | `integer`             | Yes      | Running points difference.                            |
+| `headToHead`              | `array<HeadToHead>`   | Yes      | Head-to-head summaries against other teams.           |
+
+## HeadToHead
+
+HeadToHead is an embedded value inside SeasonStats.
+
+| Field  | Type              | Required | Notes                                  |
+| ------ | ----------------- | -------- | -------------------------------------- |
+| `team` | `Reference<Team>` | Yes      | Opponent team represented by this row. |
+| `win`  | `integer`         | Yes      | Wins against the opponent.             |
+| `lose` | `integer`         | Yes      | Losses against the opponent.           |
+| `draw` | `integer`         | Yes      | Draws against the opponent.            |
+
+## WeekStats
+
+WeekStats is an embedded value in a Statistics document's `weekStats` map. The map key is the fixture week date; the embedded `date` field carries the same local date value for consumers that read the row directly.
+
+| Field                  | Type        | Required | Notes                                                      |
+| ---------------------- | ----------- | -------- | ---------------------------------------------------------- |
+| `date`                 | `LocalDate` | Yes      | Fixture week date.                                         |
+| `leaguePosition`       | `integer`   | Yes      | League position after this week.                           |
+| `pointsFor`            | `integer`   | Yes      | Points scored by the team in this week.                    |
+| `pointsAgainst`        | `integer`   | Yes      | Points scored against the team in this week.               |
+| `pointsDifference`     | `integer`   | Yes      | Weekly points difference.                                  |
+| `cumuPointsFor`        | `integer`   | Yes      | Cumulative points scored by the team through this week.    |
+| `cumuPointsAgainst`    | `integer`   | Yes      | Cumulative points scored against the team through this week. |
+| `cumuPointsDifference` | `integer`   | Yes      | Cumulative points difference through this week.            |
+| `ignorable`            | `boolean`   | Yes      | True when this row should be skipped by graph calculations. |
 
 ## Fixtures
 
