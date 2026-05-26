@@ -1,6 +1,5 @@
-import Express = require('express')
-import Path = require('node:path')
-import type { Request, Response } from 'express'
+import Express, { type Request, type Response } from 'express'
+import Path from 'node:path'
 import configureSite from './endpoint/SiteEndpoints'
 import configureCalendar from './endpoint/CalendarEndpoints'
 import configureMaintain from './endpoint/MaintainEndpoints'
@@ -9,6 +8,7 @@ export const isLocal = () => true && process.env['FIRESTORE_EMULATOR_HOST']
 export const emulatorAddr = () => process.env['FIRESTORE_EMULATOR_HOST']
 
 const app = Express()
+const builtRoot = Path.join(process.cwd(), 'deploy', 'built')
 
 const bodyParser = (req: Request, res: Response, next: () => void) => {
   let data = ''
@@ -23,14 +23,14 @@ const bodyParser = (req: Request, res: Response, next: () => void) => {
 }
 
 const indexMapping = (req: Request, res: Response) => {
-  let path = 'built/index.html'
+  let path = 'index.html'
   if (req.originalUrl.includes('/maintain/')) {
-    path = 'built/maintain/index.html'
+    path = 'maintain/index.html'
   }
-  res.sendFile(Path.join(`${__dirname}/${path}`))
+  res.sendFile(Path.join(builtRoot, path))
 }
 
-app.use(Express.static(Path.join(`${__dirname}/built`)))
+app.use(Express.static(builtRoot))
 app.use(bodyParser)
 
 const port = process.env['PORT'] || '8000'

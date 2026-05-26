@@ -111,6 +111,11 @@ const router = createRouter({
       component: () => import('../views/competitionstatistics/CompetitionStatisticsEdit.vue')
     },
     {
+      path: '/statistics',
+      name: 'statistics',
+      component: () => import('../views/statistics/StatisticsRecalculate.vue')
+    },
+    {
       path: '/applicationcontext',
       name: 'applicationcontext',
       component: () => import('../views/applicationcontext/ApplicationContextEdit.vue')

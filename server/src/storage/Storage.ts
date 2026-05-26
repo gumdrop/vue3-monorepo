@@ -6,11 +6,15 @@ import _ from 'lodash'
 
 let _db: Firestore
 
+const localProjectId = () => process.env['FIREBASE_PROJECT_ID'] ?? 'chiltern-ql-firestore'
+
 const db = () => {
   if (!_db) {
-    _db = new Firestore()
     if (isLocal()) {
+      _db = new Firestore({ projectId: localProjectId() })
       _db.settings({ host: emulatorAddr(), ssl: false })
+    } else {
+      _db = new Firestore()
     }
   }
   return _db
@@ -67,13 +71,7 @@ export function list<T extends Entity>(entityType: EntityType, parent?: Pathish<
 
 export async function runQuery<T extends Entity>(query: Query<T>) {
   const docs = (await query.get()).docs
-  const retval: T[] = []
-
-  for (const doc of docs) {
-    retval.push(await getData<T>(doc.path))
-  }
-
-  return retval
+  return docs.map((doc) => doc.data())
 }
 
 export async function delete1<T extends Entity>(entity: T) {

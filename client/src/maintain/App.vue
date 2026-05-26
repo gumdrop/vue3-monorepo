@@ -33,6 +33,7 @@ const menuItems = [
   { title: 'Site Users', to: '/siteuser', icon: 'mdi-account-circle' },
   { title: 'Global Text', to: '/globaltext', icon: 'mdi-text' },
   { title: 'Competition Statistics', to: '/competitionstatistics', icon: 'mdi-chart-line' },
+  { title: 'Statistics', to: '/statistics', icon: 'mdi-chart-bar' },
   { title: 'Application Context', to: '/applicationcontext', icon: 'mdi-cog' },
 ]
 </script>

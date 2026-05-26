@@ -449,13 +449,24 @@ describe('specific DAO helpers', () => {
     expect(seasonStats).toMatchObject({
       base: expect.objectContaining({ path: 'statistics' }),
       constraints: [
-        expect.objectContaining({ field: 'team.id', value: 'team-1' }),
-        expect.objectContaining({ field: 'season.id', value: 'season-1' }),
+        expect.objectContaining({
+          field: 'team',
+          value: expect.objectContaining({ path: 'team/team-1' }),
+        }),
+        expect.objectContaining({
+          field: 'season',
+          value: expect.objectContaining({ path: 'season/season-1' }),
+        }),
       ],
     })
     expect(allTeamStats).toMatchObject({
       base: expect.objectContaining({ path: 'statistics' }),
-      constraints: [expect.objectContaining({ field: 'team.id', value: 'team-1' })],
+      constraints: [
+        expect.objectContaining({
+          field: 'team',
+          value: expect.objectContaining({ path: 'team/team-1' }),
+        }),
+      ],
     })
   })
 

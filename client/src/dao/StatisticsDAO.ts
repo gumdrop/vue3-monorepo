@@ -1,6 +1,8 @@
 import type Statistics from '@/entity/Statisitics'
 import { query, where } from 'firebase/firestore'
 import DAO from './DAO'
+import SeasonDAO from './SeasonDAO'
+import TeamDAO from './TeamDAO'
 
 class StatisticsDAO extends DAO<Statistics> {
   constructor() {
@@ -10,13 +12,13 @@ class StatisticsDAO extends DAO<Statistics> {
   teamStats = (teamId: string, seasonId: string) => {
     return query(
       this.collection(),
-      where('team.id', '==', teamId),
-      where('season.id', '==', seasonId),
+      where('team', '==', TeamDAO.getById(teamId)),
+      where('season', '==', SeasonDAO.getById(seasonId)),
     )
   }
 
   allTeamStats = (teamId: string) => {
-    return query(this.collection(), where('team.id', '==', teamId))
+    return query(this.collection(), where('team', '==', TeamDAO.getById(teamId)))
   }
 }
 

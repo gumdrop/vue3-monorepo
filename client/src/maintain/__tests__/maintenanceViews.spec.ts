@@ -13,6 +13,7 @@ import SeasonEdit from '../views/season/SeasonEdit.vue'
 import SeasonList from '../views/season/SeasonList.vue'
 import SiteUserEdit from '../views/siteuser/SiteUserEdit.vue'
 import SiteUserList from '../views/siteuser/SiteUserList.vue'
+import StatisticsRecalculate from '../views/statistics/StatisticsRecalculate.vue'
 import TeamEdit from '../views/team/TeamEdit.vue'
 import TeamList from '../views/team/TeamList.vue'
 import UserEdit from '../views/user/UserEdit.vue'
@@ -28,6 +29,7 @@ const mocks = vi.hoisted(() => ({
   },
   routerPush: vi.fn(),
   uuid: vi.fn(),
+  axiosPost: vi.fn(),
   applicationContextDAO: {
     getAppContext: vi.fn(),
     save: vi.fn(),
@@ -97,6 +99,12 @@ vi.mock('vue-router', () => ({
   useRouter: () => ({ push: mocks.routerPush }),
 }))
 
+vi.mock('axios', () => ({
+  default: {
+    post: mocks.axiosPost,
+  },
+}))
+
 vi.mock('uuid', () => ({ v4: mocks.uuid }))
 vi.mock('@/dao/ApplicationContextDAO', () => ({ default: mocks.applicationContextDAO }))
 vi.mock('@/dao/CompetitionDAO', () => ({ default: mocks.competitionDAO }))
@@ -149,6 +157,7 @@ const legacyRef = (typeName: string, id: string, parentKey = '') => ({
 const resetDaoMocks = () => {
   mocks.applicationContextDAO.getAppContext.mockResolvedValue(undefined)
   mocks.applicationContextDAO.save.mockResolvedValue(undefined)
+  mocks.axiosPost.mockResolvedValue({ data: {} })
   mocks.competitionDAO.entities.mockResolvedValue([])
   mocks.competitionDAO.getDataByPath.mockResolvedValue(undefined)
   mocks.competitionDAO.getByPath.mockImplementation((path: string) => mocks.makeDocumentRef(path))
@@ -229,6 +238,7 @@ describe('maintenance shell components', () => {
         '/siteuser',
         '/globaltext',
         '/competitionstatistics',
+        '/statistics',
         '/applicationcontext',
       ]),
     )
@@ -391,6 +401,36 @@ describe('maintenance list views', () => {
     await clickButton(wrapper, 'Add Season')
 
     expect(mocks.routerPush).toHaveBeenCalledWith('/season/new')
+  })
+
+  it('recalculates statistics for the selected season', async () => {
+    mocks.seasonDAO.list.mockResolvedValue([
+      { id: '2024-2025', path: 'season/2024-2025', startYear: 2024, endYear: 2025 },
+      { id: '2025-2026', path: 'season/2025-2026', startYear: 2025, endYear: 2026 },
+    ])
+    const wrapper = await mountMaintenance(StatisticsRecalculate)
+
+    await wrapper.get('select[data-test="statistics-season"]').setValue('2025-2026')
+    await clickButton(wrapper, 'Recalculate Statistics')
+    await flushPromises()
+
+    expect(mocks.axiosPost).toHaveBeenCalledWith(
+      '/rest/maintain/season/2025-2026/statistics/recalculate',
+    )
+    expect(wrapper.text()).toContain('Statistics recalculated for 2025/2026')
+  })
+
+  it('requires a selected season before recalculating statistics', async () => {
+    mocks.seasonDAO.list.mockResolvedValue([
+      { id: '2025-2026', path: 'season/2025-2026', startYear: 2025, endYear: 2026 },
+    ])
+    const wrapper = await mountMaintenance(StatisticsRecalculate)
+    const button = wrapper
+      .findAll('button')
+      .find((candidate) => candidate.text().includes('Recalculate Statistics'))
+
+    expect(button?.attributes('disabled')).toBeDefined()
+    expect(mocks.axiosPost).not.toHaveBeenCalled()
   })
 })
 
