@@ -1,5 +1,6 @@
-import Express, { Request, Response } from 'express'
-import Path from 'node:path'
+import Express = require('express')
+import Path = require('node:path')
+import type { Request, Response } from 'express'
 import configureSite from './endpoint/SiteEndpoints'
 import configureCalendar from './endpoint/CalendarEndpoints'
 import configureMaintain from './endpoint/MaintainEndpoints'

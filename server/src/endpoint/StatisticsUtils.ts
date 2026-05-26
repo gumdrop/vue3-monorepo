@@ -201,7 +201,7 @@ async function seasonStats(season: Season) {
 }
 
 export async function calculateStats(season: Season) {
-  const ss = await list<Statistics>('season')
+  const ss = await list<Statistics>('statistics')
   const seasonStats = ss.filter((s) => s.season.id === season.id)
   await deleteAll(seasonStats)
   const c = await leagueComp(season)
@@ -241,6 +241,6 @@ export async function calculateStats(season: Season) {
       )
     }
 
-    saveAll(startingStats)
+    await saveAll(startingStats)
   }
 }
