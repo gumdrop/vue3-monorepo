@@ -1,19 +1,28 @@
 <template>
-  <v-container v-if="team && seasonId" :class="gridSize" fluid>
-    <v-col>
-      <QlTextBox v-if="team.text">
-        <QlText :id="team.text.id" />
-      </QlTextBox>
-    </v-col>
-    <v-col>
-      <TeamStandings :teamId="team.id" />
-    </v-col>
-    <v-col>
-      <TeamResults :teamId="team.id" />
-    </v-col>
-    <v-col>
-      <TeamFixtures :teamId="team.id" />
-    </v-col>
+  <v-container v-if="team && seasonId" :class="gridSize" fluid class="pa-0">
+    <v-row>
+      <!-- Team Description / Text -->
+      <v-col cols="12" v-if="team.text">
+        <div class="content-wrapper mb-6">
+          <QlTextBox>
+            <QlText :id="team.text.id" />
+          </QlTextBox>
+        </div>
+      </v-col>
+
+      <!-- Team Info & Standings -->
+      <v-col cols="12" lg="4">
+        <TeamStandings :teamId="team.id" class="mb-6" />
+      </v-col>
+
+      <!-- Results & Fixtures -->
+      <v-col cols="12" lg="8">
+        <div class="match-sections">
+          <TeamResults :teamId="team.id" class="mb-6" />
+          <TeamFixtures :teamId="team.id" class="mb-6" />
+        </div>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 <script setup lang="ts">
@@ -36,3 +45,19 @@ const { seasonId } = useTeamStore()
 
 const team = useDocument(() => TeamDAO.getById(props.id))
 </script>
+<style scoped>
+.content-wrapper {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+@media (min-width: 1280px) {
+  .match-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+</style>

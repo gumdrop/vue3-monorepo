@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import QlSubTitle from '@/site/components/common/SubTitle.vue';
+import SubTitle from '@/site/components/common/SubTitle.vue';
 </script>
 
 <template>
-  <QlSubTitle title="Links" colour="green-lighten-3" />
+  <SubTitle title="Links" icon="mdi-link-variant" colour="green-lighten-3" />
 </template>

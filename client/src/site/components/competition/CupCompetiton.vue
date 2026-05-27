@@ -1,13 +1,22 @@
 <template>
-  <v-container v-if="item" fluid :class="gridSize">
-    <v-col>
-      <QlTextBox>
-        <QlNamedText :textName="itemTextName" />
-        <QlText :id="item?.text.id" v-if="item.text" />
-      </QlTextBox>
-    </v-col>
-    <LatestResults :path="key" />
-    <NextFixtures :path="key" />
+  <v-container v-if="item" fluid :class="gridSize" class="pa-0">
+    <v-row>
+      <v-col cols="12">
+        <div class="content-wrapper mb-6">
+          <QlTextBox>
+            <QlNamedText :textName="itemTextName" />
+            <QlText :id="item?.text.id" v-if="item.text" />
+          </QlTextBox>
+        </div>
+      </v-col>
+      
+      <v-col cols="12" md="6">
+        <LatestResults :path="key" />
+      </v-col>
+      <v-col cols="12" md="6">
+        <NextFixtures :path="key" />
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 <script setup lang="ts">
@@ -33,3 +42,11 @@ const itemTextName = computed<string>(() => {
   return competition?.textName ?? competition?.text?.id ?? ''
 })
 </script>
+<style scoped>
+.content-wrapper {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+</style>

@@ -212,6 +212,7 @@ const router = createRouter({
       path: '/rules',
       name: 'rules',
       components: {
+        title: () => import('../components/other/RulesTitle.vue'),
         default: () => import('../components/other/RulesMain.vue'),
       },
     },
@@ -254,6 +255,7 @@ const router = createRouter({
       path: '/home',
       name: 'home',
       components: {
+        title: () => import('../components/home/HomeTitle.vue'),
         default: () => import('../components/home/HomeMain.vue'),
       },
     },

@@ -1,86 +1,144 @@
 <template>
-  <v-col align-center style="padding-left: 48%"
-    ><v-progress-circular v-if="!fixture" indeterminate color="primary"></v-progress-circular
-  ></v-col>
-  <v-form v-model="valid" v-if="fixture">
-    <v-col>
-      <SimpleFixtures :fixtures="[fixtureDoc]" inline-details />
-      <div v-if="!fixture.result">
-        <v-text-field
-          v-model.number="result.homeScore"
-          :rules="[required('Home Score')]"
-          :label="teamLabel(fixture.home)"
-          type="number"
-        ></v-text-field>
-        <v-text-field
-          v-model.number="result.awayScore"
-          :rules="[required('Away Score')]"
-          :label="teamLabel(fixture.away)"
-          type="number"
-        ></v-text-field>
+  <div v-if="!fixture" class="d-flex justify-center pa-8">
+    <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
+  </div>
+  
+  <v-card v-if="fixture" class="submit-result-card elevation-2 overflow-hidden">
+    <v-toolbar color="grey-lighten-4" density="compact" flat>
+      <v-toolbar-title class="text-subtitle-2 font-weight-bold grey--text text--darken-2">
+        Match Details
+      </v-toolbar-title>
+    </v-toolbar>
+    
+    <v-card-text class="pa-0">
+      <div class="match-info pa-4 bg-white">
+        <SimpleFixtures :fixtures="[fixtureDoc]" inline-details />
       </div>
+      
+      <v-divider></v-divider>
+      
+      <v-form v-model="valid" class="pa-6">
+        <v-row v-if="!fixture.result" class="score-input-section mb-6">
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model.number="result.homeScore"
+              :rules="[required('Home Score')]"
+              :label="homeTeamName || 'Home Score'"
+              type="number"
+              variant="outlined"
+              prepend-inner-icon="mdi-numeric"
+              class="score-field"
+            >
+              <template v-slot:prepend v-if="homeTeamName">
+                <div class="team-label text-truncate" style="max-width: 120px;">{{ homeTeamName }}</div>
+              </template>
+            </v-text-field>
+          </v-col>
+          <v-col cols="12" sm="6">
+            <v-text-field
+              v-model.number="result.awayScore"
+              :rules="[required('Away Score')]"
+              :label="awayTeamName || 'Away Score'"
+              type="number"
+              variant="outlined"
+              prepend-inner-icon="mdi-numeric"
+              class="score-field"
+            >
+              <template v-slot:prepend v-if="awayTeamName">
+                <div class="team-label text-truncate" style="max-width: 120px;">{{ awayTeamName }}</div>
+              </template>
+            </v-text-field>
+          </v-col>
+        </v-row>
 
-      <v-textarea v-model="reportText" outline auto-grow label="Match Report">
-        <template v-slot:append
-          ><v-tooltip top
-            ><template v-slot:activator="{ props }"
-              ><v-btn v-on="props" small flat @click="preview = !preview"
-                ><v-icon color="light-blue">mdi-eye-outline</v-icon></v-btn
-              ></template
-            ><span>Preview</span></v-tooltip
-          ></template
+        <v-textarea 
+          v-model="reportText" 
+          variant="outlined" 
+          auto-grow 
+          label="Match Report" 
+          placeholder="Enter match highlights, standout performances, or any notable incidents..."
+          prepend-inner-icon="mdi-text-box-outline"
+          class="report-field"
         >
-      </v-textarea>
-      <div v-if="fixtureForSubmission && user">
-        <v-btn
-          v-on:click="
-            () => {
-              fixtureForSubmission &&
-                user?.siteUser?.user?.id &&
-                preSubmit(fixtureForSubmission, user?.siteUser?.user?.id, reportText)
-            }
-          "
-          color="primary"
-          :disabled="!valid"
-          append-icon="mdi-send"
-          >Submit</v-btn
-        >
-      </div>
-      <transition name="fade">
-        <v-card v-if="preview">
-          <v-card-title
-            ><v-icon color="light-blue">mdi-eye-outline</v-icon>
-            <div class="light-blue--text pl-1">Preview</div>
-          </v-card-title>
-          <v-card-text>
-            <QlMarkdown :text="reportText ? reportText : ''" />
-          </v-card-text>
-        </v-card>
-      </transition>
+          <template v-slot:append-inner>
+            <v-tooltip location="top" text="Preview Report">
+              <template v-slot:activator="{ props }">
+                <v-btn 
+                  v-bind="props" 
+                  icon="mdi-eye-outline" 
+                  variant="text" 
+                  color="info" 
+                  density="comfortable"
+                  @click="preview = !preview"
+                  :class="{ 'preview-active': preview }"
+                ></v-btn>
+              </template>
+            </v-tooltip>
+          </template>
+        </v-textarea>
 
-      <v-dialog v-model="confirm" persistent max-width="60%" v-bind="dialogSize">
-        <v-card>
-          <v-card-title>Check Results</v-card-title>
-          <v-card-text>
-            <table v-if="fixtureForSubmission">
+        <v-expand-transition>
+          <v-card v-if="preview" class="report-preview mt-4 mb-6 border">
+            <v-toolbar density="compact" color="info-lighten-5" flat>
+              <v-icon color="info" start class="ml-4">mdi-eye-outline</v-icon>
+              <v-toolbar-title class="text-subtitle-2 font-weight-bold info--text">Report Preview</v-toolbar-title>
+            </v-toolbar>
+            <v-card-text class="pa-4 bg-grey-lighten-5">
+              <QlMarkdown :text="reportText || '*No report text entered yet*'" />
+            </v-card-text>
+          </v-card>
+        </v-expand-transition>
+
+        <div class="d-flex justify-end mt-4">
+          <v-btn
+            @click="preSubmit(fixture, user?.siteUser?.user?.id!, reportText)"
+            color="primary"
+            :disabled="!valid"
+            size="large"
+            elevation="2"
+            class="px-8 rounded-pill"
+          >
+            <v-icon start>mdi-send</v-icon>
+            Submit Result
+          </v-btn>
+        </div>
+      </v-form>
+    </v-card-text>
+
+    <!-- Confirmation Dialog -->
+    <v-dialog v-model="confirm" persistent max-width="600px" v-bind="dialogSize">
+      <v-card class="rounded-xl overflow-hidden">
+        <v-toolbar color="primary" density="compact" flat>
+          <v-toolbar-title class="text-h6 font-weight-bold">Confirm Submission</v-toolbar-title>
+        </v-toolbar>
+        <v-card-text class="pa-6">
+          <p class="text-body-1 mb-4">Please verify the result before finalizing:</p>
+          <div class="confirmation-match-view pa-4 bg-grey-lighten-4 rounded-lg">
+            <table v-if="fixtureForSubmission" class="w-100">
               <FixtureLine :fixture="fixtureForSubmission" inline-details />
             </table>
-          </v-card-text>
-          <v-card-actions>
-            <v-btn v-on:click="confirm = false"> <v-icon left>mdi-cancel</v-icon>Cancel</v-btn>
-            <v-btn v-if="fixtureForSubmission && user" color="primary" v-on:click="submit"
-              >Submit</v-btn
-            >
-          </v-card-actions>
-        </v-card>
-      </v-dialog>
-    </v-col>
-  </v-form>
+          </div>
+        </v-card-text>
+        <v-divider></v-divider>
+        <v-card-actions class="pa-4">
+          <v-spacer></v-spacer>
+          <v-btn variant="text" color="grey-darken-1" @click="confirm = false" class="px-4">
+            <v-icon start>mdi-close</v-icon>
+            Cancel
+          </v-btn>
+          <v-btn color="primary" variant="elevated" @click="() => user?.siteUser?.user?.id && submit(fixtureForSubmission!, user.siteUser.user.id, reportText)" class="px-6 ml-2">
+            <v-icon start>mdi-check</v-icon>
+            Confirm & Submit
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+  </v-card>
 </template>
 <script setup lang="ts">
 import { Result, type Fixture } from '@/entity/Fixtures'
 import type { DocumentReference } from 'firebase/firestore'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useDocument } from 'vuefire'
 import SimpleFixtures from '../fixtures/SimpleFixtures.vue'
 import { useValidations } from '../Validation'
@@ -88,6 +146,7 @@ import QlMarkdown from '../text/QlMarkdown.vue'
 import FixtureLine from '../fixtures/FixtureLine.vue'
 import { useFixture } from '@/services/FixtureService'
 import { useUserStore } from '@/stores/app'
+import TeamDAO from '@/dao/TeamDAO'
 
 const { fixtureDoc } = defineProps<{ fixtureDoc: DocumentReference<Fixture> }>()
 const { submitResult } = useFixture()
@@ -96,6 +155,13 @@ const { required } = useValidations()
 
 const fixture = useDocument(fixtureDoc)
 const fixtureForSubmission = useDocument(fixtureDoc, { maxRefDepth: 0 })
+
+const homeTeam = useDocument(() => fixture.value ? TeamDAO.getById(fixture.value.home.id) : null)
+const awayTeam = useDocument(() => fixture.value ? TeamDAO.getById(fixture.value.away.id) : null)
+
+const homeTeamName = computed(() => homeTeam.value?.name)
+const awayTeamName = computed(() => awayTeam.value?.name)
+
 const result = ref(new Result(0, 0))
 const valid = ref(false)
 const preview = ref(false)
@@ -103,8 +169,6 @@ const confirm = ref(false)
 const reportText = ref('')
 const dialogSize = {}
 const { user } = useUserStore()
-
-const teamLabel = (team: Fixture['home']) => team.id
 
 const preSubmit = (fixture: Fixture, userId: string, reportText?: string) => {
   if (fixture.result) {
@@ -118,6 +182,58 @@ const preSubmit = (fixture: Fixture, userId: string, reportText?: string) => {
 }
 
 const submit = (fixture: Fixture, userId: string, reportText?: string) => {
-  submitResult(fixture.id, userId, fixture.result, reportText)
+  submitResult(fixture.id, userId, fixture.result!, reportText)
 }
 </script>
+<style scoped>
+.submit-result-card {
+  border-radius: 16px !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+.match-info {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.team-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-right: 8px;
+}
+
+.score-field :deep(.v-field__input) {
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.report-field :deep(.v-field__input) {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.preview-active {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.report-preview {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.confirmation-match-view {
+  border: 1px solid #e2e8f0;
+}
+
+@media (max-width: 600px) {
+  .team-label {
+    display: none;
+  }
+  .score-field :deep(.v-field__input) {
+    font-size: 1.1rem;
+  }
+}
+</style>

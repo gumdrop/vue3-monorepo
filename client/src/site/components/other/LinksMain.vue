@@ -1,12 +1,14 @@
 <template>
-  <v-container :class="gridSize" fluid>
-
-    <v-col>
-      <QlTextBox>
-        <QlNamedText textName="links-content" />
-      </QlTextBox>
-    </v-col>
-
+  <v-container :class="gridSize" fluid class="pa-0">
+    <v-row no-gutters>
+      <v-col cols="12">
+        <div class="content-wrapper">
+          <QlTextBox>
+            <QlNamedText textName="links-content" />
+          </QlTextBox>
+        </div>
+      </v-col>
+    </v-row>
   </v-container>
 </template>
 <script setup lang="ts">
@@ -21,3 +23,11 @@ const { setSidemenu } = useSideMenuStore()
 setSidemenu(false)
 
 </script>
+<style scoped>
+.content-wrapper {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+</style>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import QlSubTitle from '@/site/components/common/SubTitle.vue';
+import SubTitle from '@/site/components/common/SubTitle.vue';
 </script>
 
 <template>
-  <QlSubTitle title="Venues" colour="orange-lighten-3" />
+  <SubTitle title="Venues" icon="mdi-map-marker" colour="orange-lighten-3" />
 </template>
+

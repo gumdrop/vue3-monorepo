@@ -1,5 +1,5 @@
 <template>
-  <SubTitle v-if="venue" colour="orange-lighten-3" :title="venue.name" />
+  <SubTitle v-if="venue" :title="venue.name" icon="mdi-office-building-marker" colour="orange-lighten-3" />
 </template>
 <script setup lang="ts">
 import VenueDAO from '@/dao/VenueDAO';

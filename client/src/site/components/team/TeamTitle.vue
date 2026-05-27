@@ -1,5 +1,5 @@
 <template>
-  <SubTitle colour="amber-lighten-3" :title="team.name" v-if="team" />
+  <SubTitle v-if="team" :title="team.name" icon="mdi-shield-outline" colour="amber-lighten-3" />
 </template>
 <script setup lang="ts">
 import TeamDAO from '@/dao/TeamDAO';

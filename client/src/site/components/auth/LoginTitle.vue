@@ -4,5 +4,5 @@ import SubTitle from '../common/SubTitle.vue';
 </script>
 
 <template>
-  <SubTitle colour="amber-lighten-3" title="Login" />
+  <SubTitle title="Login" icon="mdi-login" colour="blue-lighten-3" />
 </template>
