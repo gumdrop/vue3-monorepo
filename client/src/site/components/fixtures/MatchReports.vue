@@ -1,28 +1,34 @@
 <template>
-  <v-container grid-list-sm v-if="reports">
-    <v-col v-for="report in reports" :key="report.id">
-      <v-card>
-        <v-card-title>
-          <h5>{{ teamLabel(report) }}</h5>
-        </v-card-title>
-        <v-card-text v-if="report.text">
-          <QlText :id="report.text.id" />
-        </v-card-text>
-      </v-card>
-    </v-col>
-  </v-container>
+  <div v-if="reports && reports.length > 0" class="match-reports-container pa-4">
+    <div v-for="report in reports" :key="report.id">
+      <MatchReportItem :report="report" />
+    </div>
+  </div>
+  <div v-else-if="reports && reports.length === 0" class="no-reports-message pa-8 text-center">
+    <v-icon size="48" color="grey-lighten-1" class="mb-2">mdi-note-off-outline</v-icon>
+    <div class="text-body-1 text-grey-darken-1">No match reports available yet.</div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import QlText from '../text/QlText.vue'
 import { reportDAO } from '@/dao/FixturesDAO'
 import { useCollection } from 'vuefire'
-import type { Report } from '@/entity/Fixtures'
+import MatchReportItem from './MatchReportItem.vue'
+
 const props = defineProps<{ keyval: string }>()
 
 const reportsDoc = computed(() => reportDAO.subCollection(props.keyval))
 const reports = useCollection(reportsDoc)
-
-const teamLabel = (report: Report) => report.team.id
 </script>
+
+<style scoped>
+.match-reports-container {
+  background-color: white;
+}
+
+.no-reports-message {
+  background-color: #fafafa;
+  border-radius: 8px;
+}
+</style>

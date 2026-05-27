@@ -1,76 +1,101 @@
 <template>
-  <tr v-if="inlineDetails && $vuetify.display.smAndDown">
-    <td class="inline-details" colspan="6">
-      <v-skeleton-loader v-if="!(parent && competition)" type="text" width="15em"></v-skeleton-loader>
-      <span v-if="parent && competition">
-        <span v-if="!$vuetify.display.smAndDown">{{ date(parent.date, "d MMM yyyy") }}</span>
-        <span v-else>{{ date(parent.date, "d MMM yyyy") }}</span> : {{ competition.name }} {{ parent.description }}
-      </span>
+  <!-- Mobile Inline Details Row -->
+  <tr v-if="inlineDetails && $vuetify.display.smAndDown" class="details-row">
+    <td colspan="6" class="inline-details-cell">
+      <v-skeleton-loader v-if="!(parent && competition)" type="text" width="12em"></v-skeleton-loader>
+      <div v-if="parent && competition" class="details-content">
+        <span class="details-date">{{ date(parent.date, "d MMM yyyy") }}</span>
+        <span class="details-sep">•</span>
+        <span class="details-comp">{{ competition.name }}</span>
+        <span v-if="parent.description" class="details-desc">{{ parent.description }}</span>
+      </div>
     </td>
   </tr>
-  <tr v-if="fixture && home && away">
-    <td v-if="inlineDetails && !$vuetify.display.smAndDown" class="inline-details">
-      <v-skeleton-loader v-if="!(parent && competition)" type="text" width="15em"></v-skeleton-loader>
-      <span v-if="parent && competition">
-        <span v-if="!$vuetify.display.smAndDown">{{ date(parent.date, "d MMM yyyy") }}</span><span v-else>{{
-          date(parent.date,
-            "d-MM-yy") }}</span> : {{ competition.name }} {{ parent.description }}
-      </span>
+
+  <!-- Main Fixture/Result Row -->
+  <tr v-if="fixture && home && away" class="match-row" :class="{ 'has-result': fixture.result }">
+    <!-- Desktop Inline Details Column -->
+    <td v-if="inlineDetails && !$vuetify.display.smAndDown" class="inline-details-col">
+      <v-skeleton-loader v-if="!(parent && competition)" type="text" width="10em"></v-skeleton-loader>
+      <div v-if="parent && competition" class="details-content-stacked">
+        <div class="details-date">{{ date(parent.date, "d MMM yyyy") }}</div>
+        <div class="details-comp">{{ competition.name }}</div>
+      </div>
     </td>
-    <td v-if="!fixture.result" class="home" :class="(inlineDetails && $vuetify.display.smAndDown) ? 'inline' : ''"
-      style="min-width:5em;">
-      <ResponsiveTeamName :team="home" />
+
+    <!-- Home Team -->
+    <td class="team-cell home-team" :class="[
+      (inlineDetails && $vuetify.display.smAndDown) ? 'is-inline' : '',
+      fixture.result && nameClass(fixture.result.homeScore, fixture.result.awayScore)
+    ]">
+      <div class="team-name-wrapper">
+        <ResponsiveTeamName :team="home" />
+      </div>
     </td>
-    <td v-else class="home"
-      :class="((inlineDetails && $vuetify.display.smAndDown) ? 'inline' : '') + ' ' + nameClass(fixture.result.homeScore, fixture.result.awayScore)"
-      style="min-width:5em;">
-      <ResponsiveTeamName :team="home" />
+
+    <!-- Score/VS -->
+    <td class="score-cell">
+      <div v-if="fixture.result" class="score-display">
+        <span class="score-num" :class="nameClass(fixture.result.homeScore, fixture.result.awayScore)">{{
+          fixture.result.homeScore }}</span>
+        <span class="score-divider">-</span>
+        <span class="score-num" :class="nameClass(fixture.result.awayScore, fixture.result.homeScore)">{{
+          fixture.result.awayScore }}</span>
+      </div>
+      <div v-else class="vs-label">vs</div>
     </td>
-    <td v-if="!fixture.result"></td>
-    <td v-else class="score">{{ fixture.result.homeScore }}</td>
-    <td> - </td>
-    <td v-if="!fixture.result"></td>
-    <td v-else class="score">{{ fixture.result.awayScore }}</td>
-    <td v-if="!fixture.result" class="away">
-      <ResponsiveTeamName :team="away" />
+
+    <!-- Away Team -->
+    <td class="team-cell away-team" :class="fixture.result && nameClass(fixture.result.awayScore, fixture.result.homeScore)">
+      <div class="team-name-wrapper">
+        <ResponsiveTeamName :team="away" />
+      </div>
     </td>
-    <td v-else class="away" :class="nameClass(fixture.result.awayScore, fixture.result.homeScore)">
-      <ResponsiveTeamName :team="away" />
-    </td>
-    <td v-if="!fixture.result"></td>
-    <td v-else>
-      <div v-if="reports && reports.length > 0">
+
+    <!-- Actions (Reports) -->
+    <td class="actions-cell">
+      <div v-if="reports && reports.length > 0" class="reports-action">
         <v-tooltip location="top" text="Match Reports">
           <template v-slot:activator="{ props }">
-            <v-btn density="compact" icon exact flat @click.stop="showReports = true" v-on="props" style="top:-2px">
-              <v-icon style="transform:scale(0.75)" size="22px">mdi-file-document-outline</v-icon>
+            <v-btn density="comfortable" icon variant="text" color="primary" @click.stop="showReports = true"
+              v-bind="props" class="report-btn">
+              <v-icon size="20">mdi-file-document-outline</v-icon>
             </v-btn>
           </template>
         </v-tooltip>
       </div>
-      <v-dialog v-model="showReports" max-width="60%" v-bind="dialogSize" v-if="reports">
-        <v-card>
-          <v-card-title>Reports ::&nbsp;
-            <ResponsiveTeamName :team="home" />
-            &nbsp;{{ fixture.result.homeScore }} - {{ fixture.result.awayScore }}&nbsp;
-            <ResponsiveTeamName :team="away" />
-          </v-card-title>
-          <MatchReports :keyval="`${fixture.key}`" />
-          <div v-if="parent">
-            <ql-chat :lockedFilter="filter(home, away)" name="homepagechat" :outlined="false"
-              displayName="Match Chat"></ql-chat>
-          </div>
-          <v-card-actions>
+
+      <!-- Reports Dialog -->
+      <v-dialog v-model="showReports" max-width="800px" v-bind="dialogSize">
+        <v-card class="reports-dialog-card">
+          <v-toolbar color="primary" density="compact" flat>
+            <v-toolbar-title class="text-subtitle-1 font-weight-bold d-flex align-center">
+              Match Report: <ResponsiveTeamName v-if="home" :team="home" class="mx-1" /> vs <ResponsiveTeamName v-if="away" :team="away" class="mx-1" />
+            </v-toolbar-title>
             <v-spacer></v-spacer>
-            <!-- <ql-login-button label="Login for chat"></ql-login-button> -->
-            <v-tooltip location="top" text="Close">
-              <template v-slot:activator="{ props }">
-                <v-btn icon exact flat v-on:click="showReports = false" v-on="props">
-                  <v-icon>mdi-close</v-icon>
-                </v-btn>
-              </template>
-            </v-tooltip>
-          </v-card-actions>
+            <v-btn icon @click="showReports = false">
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
+          </v-toolbar>
+
+          <v-card-text class="pa-0">
+            <div class="match-summary-banner pa-4 text-center">
+              <div class="d-flex align-center justify-center ga-4 flex-wrap">
+                <div class="text-h6 font-weight-bold"><ResponsiveTeamName v-if="home" :team="home" /></div>
+                <div class="text-h4 font-weight-black mx-4" v-if="fixture.result">
+                  {{ fixture.result.homeScore }} - {{ fixture.result.awayScore }}
+                </div>
+                <div class="text-h6 font-weight-bold"><ResponsiveTeamName v-if="away" :team="away" /></div>
+              </div>
+            </div>
+
+            <MatchReports :keyval="`${fixture.key}`" />
+
+            <div v-if="parent" class="match-chat-container pa-4 border-t">
+              <ql-chat :lockedFilter="filter(home, away)" name="homepagechat" :outlined="false"
+                displayName="Match Chat"></ql-chat>
+            </div>
+          </v-card-text>
         </v-card>
       </v-dialog>
     </td>
@@ -119,27 +144,191 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
 
 </script>
 <style lang="css" scoped>
-.inline-details {
+.match-row {
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.match-row:hover {
+  background-color: #f8fafc;
+}
+
+.match-row:last-child {
+  border-bottom: none;
+}
+
+/* Inline Details Styling */
+.details-row {
+  background-color: #fcfdfe;
+}
+
+.inline-details-cell {
+  padding: 8px 16px 4px;
+}
+
+.details-content {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.details-sep {
+  margin: 0 8px;
+  color: #cbd5e1;
+}
+
+.details-desc {
+  margin-left: 8px;
   font-style: italic;
-  padding-right: .5em;
-  color: darkblue;
+  color: #94a3b8;
 }
 
-.home {
-  text-align: right;
-  padding-right: 1em;
+.inline-details-col {
+  padding: 12px 16px;
+  width: 150px;
+  border-right: 1px solid #f1f5f9;
 }
 
-.away {
-  padding-left: 1em;
+.details-content-stacked {
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 
-.winner {
-  color: darkred;
+.details-date {
+  color: #1e293b;
   font-weight: 600;
 }
 
-.score {
+.details-comp {
+  color: #64748b;
+}
+
+/* Team Styling */
+.team-cell {
+  padding: 12px 8px;
+  width: 35%;
+}
+
+.home-team {
+  text-align: right;
+  padding-right: 16px;
+}
+
+.away-team {
+  text-align: left;
+  padding-left: 16px;
+}
+
+.team-name-wrapper {
+  font-size: 0.95rem;
   font-weight: 500;
+  color: #334155;
+}
+
+.winner .team-name-wrapper {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+/* Score Styling */
+.score-cell {
+  padding: 12px 0;
+  text-align: center;
+  min-width: 80px;
+}
+
+.score-display {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f1f5f9;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 700;
+}
+
+.score-num {
+  font-size: 1.1rem;
+  min-width: 1.2em;
+}
+
+.score-num.winner {
+  color: #2563eb;
+}
+
+.score-divider {
+  margin: 0 4px;
+  color: #94a3b8;
+  font-weight: 400;
+}
+
+.vs-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* Actions Styling */
+.actions-cell {
+  padding: 8px;
+  width: 48px;
+  text-align: center;
+}
+
+.report-btn {
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.match-row:hover .report-btn {
+  opacity: 1;
+}
+
+.report-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Dialog Styling */
+.match-summary-banner {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
+}
+
+@media (max-width: 600px) {
+  .team-cell {
+    padding: 10px 4px;
+    width: 40%;
+  }
+
+  .home-team {
+    padding-right: 8px;
+  }
+
+  .away-team {
+    padding-left: 8px;
+  }
+
+  .team-name-wrapper {
+    font-size: 0.875rem;
+  }
+
+  .score-cell {
+    min-width: 60px;
+  }
+
+  .score-display {
+    padding: 2px 8px;
+  }
+
+  .score-num {
+    font-size: 0.95rem;
+  }
 }
 </style>
