@@ -1,6 +1,6 @@
 <template>
   <v-slide-y-transition>
-    <div v-if="table" class="league-table-container elevation-3 mb-6">
+    <div v-if="table" class="league-table-container mb-6">
       <table class="ql-league-table">
         <caption v-if="table.description">{{ table.description }}</caption>
         <thead>
@@ -36,7 +36,6 @@ const table = useDocument(() => LeagueTableDAO.getByPath(props.path))
   background-color: white;
   border-radius: 8px;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .ql-league-table {
