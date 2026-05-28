@@ -1,7 +1,7 @@
 <template>
 
   <FixturesSet :fetch-function="fetchFunction" :team-id="teamId" title="Results" :initial-fetch="5">
-    <SeasonSelect v-if="seasonId" :seasonId="seasonId" :inline="true" @season="setSeason" style="top:1px"
+    <SeasonSelect v-if="seasonId" :seasonId="seasonId" :inline="true" :toolbar="true" @season="setSeason"
       label="Season" />
   </FixturesSet>
 

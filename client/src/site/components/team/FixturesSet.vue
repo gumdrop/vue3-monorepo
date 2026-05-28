@@ -1,6 +1,6 @@
 <template>
   <v-card v-if="fixtures" class="fixtures-set-card elevation-2 overflow-hidden mb-6">
-    <v-toolbar color="grey-lighten-4" density="compact" flat>
+    <v-toolbar color="grey-lighten-4" density="compact" flat class="fixtures-set-toolbar">
       <v-toolbar-title class="text-subtitle-2 font-weight-bold grey--text text--darken-2">
         Team {{ title }}
       </v-toolbar-title>
@@ -49,8 +49,18 @@ const fixtures = usePromise(() => props.fetchFunction(props.teamId, fetchSize.va
   border: 1px solid #e2e8f0 !important;
 }
 
+.fixtures-set-toolbar {
+  min-height: 56px;
+}
+
+.fixtures-set-toolbar :deep(.v-toolbar__content) {
+  height: 56px !important;
+  overflow: visible;
+}
+
 .header-actions {
   display: flex;
   align-items: center;
+  overflow: visible;
 }
 </style>
