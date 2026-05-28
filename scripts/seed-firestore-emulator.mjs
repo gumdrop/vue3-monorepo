@@ -247,6 +247,17 @@ async function saveDocument(path, data) {
 const documents = [
   text('text-front-page', 'Welcome to the Chiltern Quiz League local development data set.'),
   text(
+    'text-rules-content',
+    `# League rules
+
+- Matches are played between two teams, with each fixture hosted at the named home venue unless otherwise agreed.
+- Teams should arrive in time for an 8:00pm start and appoint a captain before the first question.
+- The question master's decision is final for the purposes of the match night.
+- Results should be submitted promptly after the match, including the final score and any match report notes.
+- League tables are calculated from submitted results and may be corrected by the league secretary if an error is found.`,
+    'text/markdown',
+  ),
+  text(
     'text-season-2025-2026',
     'The 2025-2026 season includes league, cup, subsidiary, and singleton competitions.',
   ),
@@ -331,6 +342,7 @@ const documents = [
       name: 'site',
       text: {
         'front-page': textRef('text-front-page'),
+        'rules-content': textRef('text-rules-content'),
         'league-description': textRef('text-front-page'),
         'competition-note': textRef('text-competitions-header'),
         'competitions-header': textRef('text-competitions-header'),

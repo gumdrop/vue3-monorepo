@@ -80,7 +80,6 @@ const event = computed<CompetitionEvent | undefined>(() => {
   background-color: white;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .event-details-card {
