@@ -215,6 +215,6 @@ describe('competition statistics site components', () => {
     })
 
     expect(wrapper.text()).toContain('Roll Of Honour - League')
-    expect(wrapper.get('.subtitle-background').attributes('style')).toContain('color: black')
+    expect(wrapper.get('.hero-header').attributes('style')).toContain('color: black')
   })
 })

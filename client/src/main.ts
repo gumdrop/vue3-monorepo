@@ -3,7 +3,7 @@ import { createPinia } from 'pinia'
 
 import App from './site/components/App.vue'
 import router from './site/router'
-import { createVuetify } from 'vuetify'
+import vuetify from './plugins/vuetify'
 
 import { VueFire, VueFireAuth } from 'vuefire'
 import { initializeApp } from '@firebase/app'
@@ -46,7 +46,7 @@ app.use(VueFire, {
 
 app.use(createPinia())
 app.use(router)
-app.use(createVuetify())
+app.use(vuetify)
 app.use(VueShowdownPlugin, { flavor: 'github' })
 
 app.mount('#app')

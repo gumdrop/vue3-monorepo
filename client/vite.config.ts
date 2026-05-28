@@ -8,7 +8,14 @@ import { resolve } from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [vue(), vueJsx(), vuetify({ autoImport: true })],
+  plugins: [
+    vue(),
+    vueJsx(),
+    vuetify({
+      autoImport: true,
+      styles: { configFile: 'src/settings/vuetify.scss' },
+    }),
+  ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

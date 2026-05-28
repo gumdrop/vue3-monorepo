@@ -2,7 +2,7 @@
   <SubTitle v-if="season" title="Welcome to the Chiltern Quiz League" icon="mdi-comment-quote" gradient="linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)">
     <template v-slot:subtitle>
       <div class="text-subtitle-1 white--text opacity-80">
-        Current Season: {{ season.description }}
+        Current Season: {{ formatSeason(season) }}
       </div>
     </template>
   </SubTitle>
@@ -13,8 +13,10 @@ import { useAppContextStore } from '@/stores/app';
 import { useDocument } from 'vuefire';
 import SeasonDAO from '@/dao/SeasonDAO';
 import SubTitle from '../common/SubTitle.vue';
+import { useSeason } from '@/services/SeasonService';
 
 const { seasonId } = useAppContextStore()
+const { formatSeason } = useSeason()
 const season = useDocument(() => SeasonDAO.getById(seasonId.value))
 </script>
 
