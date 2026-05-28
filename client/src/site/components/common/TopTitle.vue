@@ -16,10 +16,14 @@ const rest = computed(() => props.title.split(" ").slice(1, 3).join(" "))
 <style lang="css" scoped>
 .page-header {
   font-family: 'Quicksand', sans-serif;
+  display: inline-flex;
+  align-items: center;
   font-size: 200% !important;
   font-weight: bold;
+  line-height: 1.2;
   margin-left: .3em;
   margin-right: .3em;
+  padding-block: .08em;
 }
 
 .page-header-first {
@@ -37,8 +41,12 @@ const rest = computed(() => props.title.split(" ").slice(1, 3).join(" "))
 
 .page-header-small {
   font-family: 'Quicksand', sans-serif;
+  display: inline-flex;
+  align-items: center;
   font-size: 120% !important;
   font-weight: bold;
+  line-height: 1.2;
+  padding-block: .08em;
 }
 
 .page-header:hover .page-header-first {

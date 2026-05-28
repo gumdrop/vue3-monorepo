@@ -189,7 +189,7 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
 
 .inline-details-col {
   padding: 12px 16px;
-  width: 150px;
+  width: 136px;
   border-right: 1px solid #f1f5f9;
 }
 
@@ -210,7 +210,8 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
 /* Team Styling */
 .team-cell {
   padding: 12px 8px;
-  width: 35%;
+  overflow: hidden;
+  width: auto;
 }
 
 .home-team {
@@ -224,8 +225,13 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
 }
 
 .team-name-wrapper {
+  display: block;
   font-size: 0.95rem;
   font-weight: 500;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: #334155;
 }
 
@@ -236,9 +242,10 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
 
 /* Score Styling */
 .score-cell {
-  padding: 12px 0;
+  padding: 12px 4px;
   text-align: center;
-  min-width: 80px;
+  min-width: 88px;
+  width: 88px;
 }
 
 .score-display {
@@ -246,10 +253,13 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
   align-items: center;
   justify-content: center;
   background-color: #f1f5f9;
-  padding: 4px 12px;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 4px 10px;
   border-radius: 6px;
   font-family: 'Roboto Mono', monospace;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .score-num {
@@ -278,7 +288,7 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
 /* Actions Styling */
 .actions-cell {
   padding: 8px;
-  width: 48px;
+  width: 40px;
   text-align: center;
 }
 
@@ -304,7 +314,6 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
 @media (max-width: 600px) {
   .team-cell {
     padding: 10px 4px;
-    width: 40%;
   }
 
   .home-team {
@@ -320,7 +329,8 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
   }
 
   .score-cell {
-    min-width: 60px;
+    min-width: 64px;
+    width: 64px;
   }
 
   .score-display {
