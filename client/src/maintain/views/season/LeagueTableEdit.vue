@@ -10,10 +10,10 @@
 
           <v-row class="mb-3">
             <v-col cols="12" class="d-flex justify-end ga-2">
-              <v-btn data-test="recalculate-positions-button" color="secondary" small @click="recalculatePositions" :disabled="!leagueTable.rows.length">
+              <v-btn data-test="recalculate-positions-button" color="secondary" @click="recalculatePositions" :disabled="!leagueTable.rows.length">
                 Recalculate Positions
               </v-btn>
-              <v-btn data-test="add-row-button" color="primary" small @click="addRow" :disabled="!unallocatedTeams.length">Add Row</v-btn>
+              <v-btn data-test="add-row-button" color="primary" @click="addRow" :disabled="!unallocatedTeams.length">Add Row</v-btn>
             </v-col>
           </v-row>
           <v-table>
@@ -63,7 +63,7 @@
                   <v-text-field v-model.number="row.matchPointsAgainst" type="number" dense hide-details />
                 </td>
                 <td>
-                  <v-btn icon small color="error" @click="removeRow(index)">
+                  <v-btn icon color="error" size="small" @click="removeRow(index)">
                     <span class="mdi mdi-delete"></span>
                   </v-btn>
                 </td>
