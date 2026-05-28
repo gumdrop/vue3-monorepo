@@ -4,7 +4,7 @@
   <v-combobox v-model="chips" :items="teams" label="Teams" chips clearable solo multiple>
     <template v-slot:selection="data">
       <v-chip>
-        {{ data.item.value.name }}
+        {{ data.item.title }}
       </v-chip>
     </template>
   </v-combobox>
