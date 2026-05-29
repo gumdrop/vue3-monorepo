@@ -1,15 +1,14 @@
 <template>
   <div v-if="results" class="fixtures-set-wrapper mb-8">
     <v-card class="fixtures-set-header-card elevation-2 mb-4 overflow-hidden">
-      <v-toolbar color="primary" density="compact" flat>
-        <v-toolbar-title class="text-subtitle-1 font-weight-bold white--text">
+      <div class="fixtures-set-header">
+        <h2 class="fixtures-set-title text-subtitle-1 font-weight-bold">
           {{ title }}
-        </v-toolbar-title>
-        <v-spacer></v-spacer>
-        <div class="px-2">
-          <FetchActions :initial-fetch="1" @fetch="(fetch) => fetchSize = fetch" />
+        </h2>
+        <div class="fixtures-set-actions">
+          <FetchActions class="fixtures-fetch-actions" :initial-fetch="1" @fetch="(fetch) => fetchSize = fetch" />
         </div>
-      </v-toolbar>
+      </div>
     </v-card>
 
     <div class="fixtures-cards-container">
@@ -40,9 +39,51 @@ const results = usePromise(() => props.fetchFunction(props.path, fetchSize.value
   border-radius: 12px !important;
 }
 
+.fixtures-set-header {
+  align-items: center;
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 8px 16px;
+}
+
+.fixtures-set-title {
+  flex: 1 1 auto;
+  margin: 0;
+  min-width: 0;
+}
+
+.fixtures-set-actions {
+  display: flex;
+  flex: 0 0 auto;
+}
+
 .fixtures-cards-container {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+@media (max-width: 600px) {
+  .fixtures-set-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .fixtures-set-title,
+  .fixtures-set-actions,
+  .fixtures-fetch-actions {
+    flex: none;
+    width: 100%;
+  }
+
+  .fixtures-fetch-actions :deep(.v-btn) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
 }
 </style>

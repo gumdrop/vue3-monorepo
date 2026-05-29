@@ -51,4 +51,11 @@ watch(() => props.seasonId, (id) => {
   min-width: 150px;
   width: 150px;
 }
+
+@media (max-width: 600px) {
+  .season-select--toolbar {
+    min-width: 0;
+    width: 100%;
+  }
+}
 </style>

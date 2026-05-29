@@ -1,14 +1,13 @@
 <template>
   <v-card v-if="fixtures" class="fixtures-set-card elevation-2 overflow-hidden mb-6">
-    <v-toolbar color="grey-lighten-4" density="compact" flat class="fixtures-set-toolbar">
-      <v-toolbar-title class="text-subtitle-2 font-weight-bold grey--text text--darken-2">
+    <div class="fixtures-set-header">
+      <h2 class="fixtures-set-title text-subtitle-2 font-weight-bold">
         Team {{ title }}
-      </v-toolbar-title>
-      <v-spacer></v-spacer>
-      <div class="header-actions px-2">
+      </h2>
+      <div class="header-actions">
         <slot></slot>
       </div>
-    </v-toolbar>
+    </div>
     
     <v-card-text class="pa-0">
       <div class="fixtures-list bg-white">
@@ -49,18 +48,52 @@ const fixtures = usePromise(() => props.fetchFunction(props.teamId, fetchSize.va
   border: 1px solid #e2e8f0 !important;
 }
 
-.fixtures-set-toolbar {
+.fixtures-set-header {
+  align-items: center;
+  background: #f5f5f5;
+  color: #374151;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
   min-height: 56px;
+  padding: 8px 16px;
 }
 
-.fixtures-set-toolbar :deep(.v-toolbar__content) {
-  height: 56px !important;
-  overflow: visible;
+.fixtures-set-title {
+  flex: 1 1 auto;
+  margin: 0;
+  min-width: 0;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
+  flex: 0 0 auto;
   overflow: visible;
+}
+
+@media (max-width: 600px) {
+  .fixtures-set-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+    min-height: 0;
+    padding: 12px 16px;
+  }
+
+  .fixtures-set-title {
+    flex: none;
+  }
+
+  .header-actions {
+    flex: none;
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .header-actions :deep(.season-select--toolbar) {
+    min-width: 0;
+    width: 100%;
+  }
 }
 </style>
