@@ -41,6 +41,10 @@ configureMaintain(app)
 
 app.use('/', indexMapping).listen(port)
 
+if (isLocal()) {
+  console.log(`Running against Firestore emulator at ${emulatorAddr()}`)
+}
+
 console.log(`Server started on port ${port}`)
 
 export default app

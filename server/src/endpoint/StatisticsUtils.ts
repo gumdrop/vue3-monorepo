@@ -89,15 +89,33 @@ async function updateStats(
     }
 
     const homeStats = addToHeadToHead(
-      addWeekStats(hs, date, fixture.result?.homeScore, fixture.result?.awayScore),
+      addWeekStats(
+        hs,
+        date,
+        fixture.result?.homeScore,
+        fixture.result?.awayScore,
+        getPosition(hs.team.id, tables),
+      ),
       fixture,
     )
     const awayStats = addToHeadToHead(
-      addWeekStats(as, date, fixture.result?.awayScore, fixture.result?.homeScore),
+      addWeekStats(
+        as,
+        date,
+        fixture.result?.awayScore,
+        fixture.result?.homeScore,
+        getPosition(as.team.id, tables),
+      ),
       fixture,
     )
 
-    return [homeStats, awayStats, ...allStats]
+    return [homeStats, awayStats, ...allStats].map((s) => ({
+      ...s,
+      seasonStats: {
+        ...s.seasonStats,
+        currentLeaguePosition: getPosition(s.team.id, tables),
+      },
+    }))
   } else return statistics
 }
 
@@ -106,6 +124,7 @@ function addWeekStats(
   date: LocalDate,
   pointsFor: number,
   pointsAgainst: number,
+  leaguePosition: number,
 ) {
   const newStats: WeekStats = {
     date,
@@ -115,7 +134,7 @@ function addWeekStats(
     cumuPointsAgainst: 0,
     cumuPointsDifference: 0,
     cumuPointsFor: 0,
-    leaguePosition: 0,
+    leaguePosition,
     ignorable: false,
   }
 
@@ -142,6 +161,7 @@ function updateFromCurrent(
     runningPointsFor: week.cumuPointsFor,
     runningPointsAgainst: week.cumuPointsAgainst,
     runningPointsDifference: week.cumuPointsDifference,
+    currentLeaguePosition: week.leaguePosition,
   }
 
   return {
@@ -149,6 +169,11 @@ function updateFromCurrent(
     seasonStats: season,
     weekStats: { ...statistics.weekStats, [week.date.toString()]: week },
   }
+}
+
+function getPosition(teamId: string, tables: LeagueTable[]): number {
+  const row = tables.flatMap((t) => t.rows).find((r) => r.team.id === teamId)
+  return row?.position ? parseInt(row.position) : 0
 }
 
 function addToHeadToHead(statistics: Statistics, fixture: Fixture) {
