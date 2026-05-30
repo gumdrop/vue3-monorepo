@@ -128,17 +128,24 @@ describe('FixtureService', () => {
   })
 
   it('submits result details to the result endpoint', () => {
+    const fixturePath = 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1'
     const result = { homeScore: 3, awayScore: 2 }
 
-    useFixture().submitResult('fixture-1', 'user-1', result, 'Report text')
+    useFixture().submitResult(fixturePath, 'user-1', result, 'Report text')
 
     expect(mocks.axiosPost).toHaveBeenCalledWith(
-      '/result/submit',
-      expect.objectContaining({
-        userId: 'user-1',
-        result,
+      '/rest/site/result/submit',
+      {
+        fixtures: [
+          {
+            fixturePath,
+            homeScore: 3,
+            awayScore: 2,
+          },
+        ],
+        userID: 'user-1',
         reportText: 'Report text',
-      }),
+      },
       { headers: { 'Content-type': 'application/json' } },
     )
   })

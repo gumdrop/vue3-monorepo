@@ -6,6 +6,8 @@ import { LocalDateTime } from '@js-joda/core'
 import { DocumentReference } from 'firebase/firestore'
 import { useFixtures } from './FixturesService'
 import axios from 'axios'
+import { REST_ROOT } from './constants'
+import type { ResultsSubmitCommand } from '@quizleague/shared'
 
 export const useFixture = () => {
   const getAppContext = () => ApplicationContextDAO.getData(ApplicationContextDAO.get())
@@ -72,16 +74,30 @@ export const useFixture = () => {
   }
 
   const submitResult = (
-    fixtureId: string,
+    fixturePath: string,
     userId: string,
     result?: Result,
     reportText?: string,
   ) => {
-    axios.post(
-      '/result/submit',
-      { fixtureDAO, userId, result, reportText },
-      { headers: { 'Content-type': 'application/json' } },
-    )
+    if (!result) {
+      throw new Error('Cannot submit a fixture result without scores')
+    }
+
+    const command: ResultsSubmitCommand = {
+      fixtures: [
+        {
+          fixturePath,
+          homeScore: result.homeScore,
+          awayScore: result.awayScore,
+        },
+      ],
+      reportText,
+      userID: userId,
+    }
+
+    return axios.post(`${REST_ROOT}/result/submit`, command, {
+      headers: { 'Content-type': 'application/json' },
+    })
   }
 
   return { fixturesForResultSubmission, teamFixtures, teamResults, fixtureList, submitResult }

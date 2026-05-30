@@ -93,7 +93,8 @@
           <v-btn
             @click="preSubmit(fixture, user?.siteUser?.user?.id!, reportText)"
             color="primary"
-            :disabled="!valid"
+            :disabled="!canSubmit"
+            :loading="submitting"
             size="large"
             elevation="2"
             class="px-8 rounded-pill"
@@ -126,7 +127,14 @@
             <v-icon start>mdi-close</v-icon>
             Cancel
           </v-btn>
-          <v-btn color="primary" variant="elevated" @click="() => user?.siteUser?.user?.id && submit(fixtureForSubmission!, user.siteUser.user.id, reportText)" class="px-6 ml-2">
+          <v-btn
+            color="primary"
+            variant="elevated"
+            :loading="submitting"
+            :disabled="submitting"
+            @click="confirmSubmit"
+            class="px-6 ml-2"
+          >
             <v-icon start>mdi-check</v-icon>
             Confirm & Submit
           </v-btn>
@@ -167,13 +175,18 @@ const result = ref(new Result(0, 0))
 const valid = ref(false)
 const preview = ref(false)
 const confirm = ref(false)
+const submitting = ref(false)
 const reportText = ref('')
 const dialogSize = {}
 const { user } = storeToRefs(useUserStore())
+const reportHasValue = computed(() => reportText.value.trim().length > 0)
+const canSubmit = computed(
+  () => valid.value && !submitting.value && (!fixture.value?.result || reportHasValue.value),
+)
 
-const preSubmit = (fixture: Fixture, userId: string, reportText?: string) => {
+const preSubmit = async (fixture: Fixture, userId: string, submittedReportText?: string) => {
   if (fixture.result) {
-    submit(fixture, userId, reportText)
+    await submit(fixture, userId, submittedReportText)
   } else {
     const fixtureInFlight = { ...fixture }
     fixtureInFlight.result = result.value
@@ -182,8 +195,22 @@ const preSubmit = (fixture: Fixture, userId: string, reportText?: string) => {
   }
 }
 
-const submit = (fixture: Fixture, userId: string, reportText?: string) => {
-  submitResult(fixture.id, userId, fixture.result!, reportText)
+const submit = async (fixture: Fixture, userId: string, submittedReportText?: string) => {
+  submitting.value = true
+  try {
+    await submitResult(fixture.path, userId, fixture.result!, submittedReportText)
+    reportText.value = ''
+    confirm.value = false
+  } finally {
+    submitting.value = false
+  }
+}
+
+const confirmSubmit = async () => {
+  const userId = user.value?.siteUser?.user?.id
+  if (!fixtureForSubmission.value || !userId) return
+
+  await submit(fixtureForSubmission.value, userId, reportText.value)
 }
 </script>
 <style scoped>
