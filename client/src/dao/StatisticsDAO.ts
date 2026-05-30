@@ -17,6 +17,10 @@ class StatisticsDAO extends DAO<Statistics> {
     )
   }
 
+  seasonStats = (seasonId: string) => {
+    return query(this.collection(), where('season', '==', SeasonDAO.getById(seasonId)))
+  }
+
   allTeamStats = (teamId: string) => {
     return query(this.collection(), where('team', '==', TeamDAO.getById(teamId)))
   }

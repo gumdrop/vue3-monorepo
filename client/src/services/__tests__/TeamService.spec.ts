@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   statisticsDAO: {
     allTeamStats: vi.fn(),
     entities: vi.fn(),
+    seasonStats: vi.fn(),
   },
   teamDAO: {
     getDataById: vi.fn(),
@@ -133,6 +134,7 @@ describe('TeamService', () => {
     mocks.leagueTableDAO.subCollection.mockImplementation((key: string) => `${key}/leaguetable`)
     mocks.seasonDAO.collection.mockReturnValue('season-collection')
     mocks.seasonDAO.entities.mockResolvedValue(seasons)
+    mocks.statisticsDAO.seasonStats.mockImplementation((seasonId: string) => `stats/${seasonId}`)
     mocks.teamDAO.getDataById.mockImplementation(async (id: string) => ({
       id,
       shortName: id.toUpperCase(),
@@ -189,6 +191,36 @@ describe('TeamService', () => {
       datasets: [{ data: [null, 2], lineTension: 0.2 }],
       labels: ['2024/25', '2025/26'],
     })
+  })
+
+  it('uses the largest available season team count for position axis bounds', async () => {
+    mocks.leagueTableDAO.getDataByPath.mockResolvedValue({
+      rows: [{ team: { id: 'alpha' } }, { team: { id: 'bravo' } }],
+    })
+    mocks.statisticsDAO.entities.mockResolvedValue([
+      stat('season-1', 'alpha'),
+      stat('season-1', 'bravo'),
+      stat('season-1', 'charlie'),
+      stat('season-1', 'delta'),
+    ])
+
+    await expect(useTeams().teamCount(stat('season-1', 'alpha') as never)).resolves.toBe(4)
+    expect(mocks.leagueTableDAO.getDataByPath).toHaveBeenCalledWith(
+      'season/season-1/competition/league/leaguetable/main',
+    )
+    expect(mocks.statisticsDAO.seasonStats).toHaveBeenCalledWith('season-1')
+  })
+
+  it('falls back to season statistics when the league table count cannot be loaded', async () => {
+    mocks.leagueTableDAO.getDataByPath.mockRejectedValue(new Error('missing table'))
+    mocks.statisticsDAO.entities.mockResolvedValue([
+      stat('season-1', 'alpha'),
+      stat('season-1', 'bravo'),
+      stat('season-1', 'charlie'),
+      stat('season-1', 'delta'),
+    ])
+
+    await expect(useTeams().teamCount(stat('season-1', 'alpha') as never)).resolves.toBe(4)
   })
 
   it('calculates all-seasons averages from non-ignorable fixtures', async () => {

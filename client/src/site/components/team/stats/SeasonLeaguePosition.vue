@@ -1,5 +1,6 @@
 <template>
   <LineChart
+    :key="chartKey"
     :data-fn="positionData"
     :options="positionOptions"
     title="League Position"
@@ -19,10 +20,22 @@ const props = defineProps<{ stats: Statistics }>()
 const { positionData, teamCount: count } = useTeams()
 
 const teamCount = usePromise(() => count(props.stats))
+const chartKey = computed(() => `${props.stats.id}-${teamCount.value ?? 'pending'}`)
 const positionOptions = computed<ChartOptions<'line'>>(() => ({
   plugins: { legend: { display: false } },
   scales: {
-    y: { type: 'linear', reverse: true, min: 1, max: teamCount.value || 20, ticks: { stepSize: 1 } },
+    y: {
+      type: 'linear',
+      reverse: true,
+      min: 1,
+      max: teamCount.value,
+      ticks: {
+        stepSize: 1,
+        count: teamCount.value,
+        precision: 0,
+        callback: (value) => (Number.isInteger(Number(value)) ? `${Number(value)}` : ''),
+      },
+    },
   },
 }))
 </script>

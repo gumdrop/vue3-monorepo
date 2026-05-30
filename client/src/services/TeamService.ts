@@ -251,8 +251,17 @@ export const useTeams = () => {
   }
 
   const teamCount = async (stats: Statistics) => {
-    const table = await LeagueTableDAO.getDataByPath(stats.table.path)
-    return table?.rows.length || 20
+    let tableRows = 0
+
+    try {
+      const table = await LeagueTableDAO.getDataByPath(stats.table.path)
+      tableRows = table?.rows.length ?? 0
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {}
+
+    const seasonStatistics = await StatisticsDAO.entities(StatisticsDAO.seasonStats(stats.season.id))
+
+    return Math.max(tableRows, seasonStatistics.length)
   }
 
   const teamCountAllSeasons = async (stats: Statistics[]) => {
