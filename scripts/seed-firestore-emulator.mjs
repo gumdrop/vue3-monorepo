@@ -4,7 +4,9 @@ const baseUrl = `http://${emulatorHost}/v1/projects/${projectId}/databases/(defa
 const clearUrl = `http://${emulatorHost}/emulator/v1/projects/${projectId}/databases/(default)/documents`
 
 const appContextId = '5659313586569216'
-const seasonId = 'season-2025-2026'
+const currentSeasonId = 'season-2025-2026'
+const previousSeasonId = 'season-2024-2025'
+const seasonId = currentSeasonId
 
 function ref(typeName, id, parentKey = '') {
   const parent = parentKey ? `${parentKey}/` : ''
@@ -29,8 +31,8 @@ function userRef(id) {
   return ref('user', id)
 }
 
-function competitionRef(id) {
-  return ref('competition', id, `season/${seasonId}`)
+function competitionRef(id, targetSeasonId = seasonId) {
+  return ref('competition', id, `season/${targetSeasonId}`)
 }
 
 function text(id, body, mimeType = 'text/plain') {
@@ -88,9 +90,17 @@ function team(id, name, shortName, venueId, textId, handle, userIds = []) {
   }
 }
 
-function competition(id, type, name, textId, textName, extra = {}) {
+function competition(
+  id,
+  type,
+  name,
+  textId,
+  textName,
+  extra = {},
+  targetSeasonId = seasonId,
+) {
   return {
-    path: `season/${seasonId}/competition/${id}`,
+    path: `season/${targetSeasonId}/competition/${id}`,
     data: {
       id,
       type,
@@ -107,9 +117,16 @@ function competition(id, type, name, textId, textName, extra = {}) {
   }
 }
 
-function fixtureSet(competitionId, id, description, date, start = '20:00:00') {
+function fixtureSet(
+  competitionId,
+  id,
+  description,
+  date,
+  start = '20:00:00',
+  targetSeasonId = seasonId,
+) {
   return {
-    path: `season/${seasonId}/competition/${competitionId}/fixtures/${id}`,
+    path: `season/${targetSeasonId}/competition/${competitionId}/fixtures/${id}`,
     data: {
       id,
       description,
@@ -119,9 +136,18 @@ function fixtureSet(competitionId, id, description, date, start = '20:00:00') {
   }
 }
 
-function fixture(competitionId, fixturesId, id, homeId, awayId, venueId, result) {
+function fixture(
+  competitionId,
+  fixturesId,
+  id,
+  homeId,
+  awayId,
+  venueId,
+  result,
+  targetSeasonId = seasonId,
+) {
   return {
-    path: `season/${seasonId}/competition/${competitionId}/fixtures/${fixturesId}/fixture/${id}`,
+    path: `season/${targetSeasonId}/competition/${competitionId}/fixtures/${fixturesId}/fixture/${id}`,
     data: {
       id,
       home: teamRef(homeId),
@@ -132,9 +158,9 @@ function fixture(competitionId, fixturesId, id, homeId, awayId, venueId, result)
   }
 }
 
-function leagueTable(competitionId, id, description, rows) {
+function leagueTable(competitionId, id, description, rows, targetSeasonId = seasonId) {
   return {
-    path: `season/${seasonId}/competition/${competitionId}/leaguetable/${id}`,
+    path: `season/${targetSeasonId}/competition/${competitionId}/leaguetable/${id}`,
     data: {
       id,
       description,
@@ -167,6 +193,467 @@ function tableRow(
     matchesPlayed: played,
     pointsScored: forScore,
   }
+}
+
+const leagueCompetitionId = 'league-main'
+const leagueTableId = 'league-table-main'
+const leagueTeamIds = [
+  'team-ashridge-arms',
+  'team-beaconsfield-bees',
+  'team-chesham-comets',
+  'team-drayton-dynamos',
+]
+
+const leagueFixtureSets = [
+  {
+    id: 'league-round-1',
+    description: 'Round 1',
+    date: '2026-05-07',
+    fixtures: [
+      {
+        id: 'fixture-league-1',
+        homeId: 'team-ashridge-arms',
+        awayId: 'team-beaconsfield-bees',
+        venueId: 'venue-ashridge-arms',
+        result: {
+          homeScore: 42,
+          awayScore: 38,
+        },
+      },
+    ],
+  },
+  {
+    id: 'league-round-2',
+    description: 'Round 2',
+    date: '2026-06-04',
+    fixtures: [
+      {
+        id: 'fixture-league-2',
+        homeId: 'team-chesham-comets',
+        awayId: 'team-drayton-dynamos',
+        venueId: 'venue-chesham-club',
+      },
+    ],
+  },
+]
+
+const leagueTableRows = [
+  tableRow('team-ashridge-arms', '1', 1, 1, 0, 0, 2, 42, 38),
+  tableRow('team-beaconsfield-bees', '2', 1, 0, 0, 1, 0, 38, 42),
+  tableRow('team-chesham-comets', '3', 0, 0, 0, 0, 0, 0, 0),
+  tableRow('team-drayton-dynamos', '4', 0, 0, 0, 0, 0, 0, 0),
+]
+
+const previousLeagueFixtureSets = [
+  {
+    id: 'league-2024-round-1',
+    description: 'Round 1',
+    date: '2024-09-05',
+    fixtures: [
+      {
+        id: 'fixture-2024-league-1',
+        homeId: 'team-ashridge-arms',
+        awayId: 'team-beaconsfield-bees',
+        venueId: 'venue-ashridge-arms',
+        result: {
+          homeScore: 44,
+          awayScore: 36,
+        },
+      },
+      {
+        id: 'fixture-2024-league-2',
+        homeId: 'team-chesham-comets',
+        awayId: 'team-drayton-dynamos',
+        venueId: 'venue-chesham-club',
+        result: {
+          homeScore: 39,
+          awayScore: 41,
+        },
+      },
+    ],
+  },
+  {
+    id: 'league-2024-round-2',
+    description: 'Round 2',
+    date: '2024-09-19',
+    fixtures: [
+      {
+        id: 'fixture-2024-league-3',
+        homeId: 'team-beaconsfield-bees',
+        awayId: 'team-chesham-comets',
+        venueId: 'venue-beaconsfield-hall',
+        result: {
+          homeScore: 40,
+          awayScore: 40,
+        },
+      },
+      {
+        id: 'fixture-2024-league-4',
+        homeId: 'team-drayton-dynamos',
+        awayId: 'team-ashridge-arms',
+        venueId: 'venue-ashridge-arms',
+        result: {
+          homeScore: 35,
+          awayScore: 45,
+        },
+      },
+    ],
+  },
+  {
+    id: 'league-2024-round-3',
+    description: 'Round 3',
+    date: '2024-10-03',
+    fixtures: [
+      {
+        id: 'fixture-2024-league-5',
+        homeId: 'team-ashridge-arms',
+        awayId: 'team-chesham-comets',
+        venueId: 'venue-ashridge-arms',
+        result: {
+          homeScore: 38,
+          awayScore: 42,
+        },
+      },
+      {
+        id: 'fixture-2024-league-6',
+        homeId: 'team-drayton-dynamos',
+        awayId: 'team-beaconsfield-bees',
+        venueId: 'venue-ashridge-arms',
+        result: {
+          homeScore: 43,
+          awayScore: 37,
+        },
+      },
+    ],
+  },
+  {
+    id: 'league-2024-round-4',
+    description: 'Round 4',
+    date: '2024-10-17',
+    fixtures: [
+      {
+        id: 'fixture-2024-league-7',
+        homeId: 'team-beaconsfield-bees',
+        awayId: 'team-ashridge-arms',
+        venueId: 'venue-beaconsfield-hall',
+        result: {
+          homeScore: 41,
+          awayScore: 39,
+        },
+      },
+      {
+        id: 'fixture-2024-league-8',
+        homeId: 'team-drayton-dynamos',
+        awayId: 'team-chesham-comets',
+        venueId: 'venue-ashridge-arms',
+        result: {
+          homeScore: 40,
+          awayScore: 40,
+        },
+      },
+    ],
+  },
+  {
+    id: 'league-2024-round-5',
+    description: 'Round 5',
+    date: '2024-10-31',
+    fixtures: [
+      {
+        id: 'fixture-2024-league-9',
+        homeId: 'team-chesham-comets',
+        awayId: 'team-beaconsfield-bees',
+        venueId: 'venue-chesham-club',
+        result: {
+          homeScore: 36,
+          awayScore: 44,
+        },
+      },
+      {
+        id: 'fixture-2024-league-10',
+        homeId: 'team-ashridge-arms',
+        awayId: 'team-drayton-dynamos',
+        venueId: 'venue-ashridge-arms',
+        result: {
+          homeScore: 46,
+          awayScore: 34,
+        },
+      },
+    ],
+  },
+  {
+    id: 'league-2024-round-6',
+    description: 'Round 6',
+    date: '2024-11-14',
+    fixtures: [
+      {
+        id: 'fixture-2024-league-11',
+        homeId: 'team-chesham-comets',
+        awayId: 'team-ashridge-arms',
+        venueId: 'venue-chesham-club',
+        result: {
+          homeScore: 37,
+          awayScore: 43,
+        },
+      },
+      {
+        id: 'fixture-2024-league-12',
+        homeId: 'team-beaconsfield-bees',
+        awayId: 'team-drayton-dynamos',
+        venueId: 'venue-beaconsfield-hall',
+        result: {
+          homeScore: 39,
+          awayScore: 41,
+        },
+      },
+    ],
+  },
+]
+
+function referenceId(reference) {
+  return reference.__referencePath.split('/').pop()
+}
+
+function blankLeagueTableRows(rows) {
+  return rows.map((row) => ({
+    ...row,
+    position: '',
+    played: 0,
+    won: 0,
+    drawn: 0,
+    lost: 0,
+    leaguePoints: 0,
+    matchPointsFor: 0,
+    matchPointsAgainst: 0,
+    matchesPlayed: 0,
+    pointsScored: 0,
+  }))
+}
+
+function emptyLeagueTableRows(teamIds) {
+  return teamIds.map((teamId) => tableRow(teamId, '', 0, 0, 0, 0, 0, 0, 0))
+}
+
+function resultRows(fixtureData) {
+  if (!fixtureData.result) return []
+
+  const { homeScore, awayScore } = fixtureData.result
+  const homeWin = homeScore > awayScore ? 1 : 0
+  const awayWin = homeScore < awayScore ? 1 : 0
+  const draw = homeScore === awayScore ? 1 : 0
+
+  return [
+    {
+      teamId: fixtureData.homeId,
+      played: 1,
+      won: homeWin,
+      drawn: draw,
+      lost: awayWin,
+      leaguePoints: homeWin * 2 + draw,
+      matchPointsFor: homeScore,
+      matchPointsAgainst: awayScore,
+    },
+    {
+      teamId: fixtureData.awayId,
+      played: 1,
+      won: awayWin,
+      drawn: draw,
+      lost: homeWin,
+      leaguePoints: awayWin * 2 + draw,
+      matchPointsFor: awayScore,
+      matchPointsAgainst: homeScore,
+    },
+  ]
+}
+
+function applyFixtureToTableRows(rows, fixtureData) {
+  const rowsByTeam = new Map(resultRows(fixtureData).map((row) => [row.teamId, row]))
+
+  return rows
+    .map((row) => {
+      const teamId = referenceId(row.team)
+      const resultRow = rowsByTeam.get(teamId)
+      if (!resultRow) return row
+
+      const played = row.played + resultRow.played
+      const matchPointsFor = row.matchPointsFor + resultRow.matchPointsFor
+
+      return {
+        ...row,
+        played,
+        won: row.won + resultRow.won,
+        drawn: row.drawn + resultRow.drawn,
+        lost: row.lost + resultRow.lost,
+        leaguePoints: row.leaguePoints + resultRow.leaguePoints,
+        matchPointsFor,
+        matchPointsAgainst: row.matchPointsAgainst + resultRow.matchPointsAgainst,
+        matchesPlayed: played,
+        pointsScored: matchPointsFor,
+      }
+    })
+    .sort(
+      (a, b) =>
+        b.leaguePoints - a.leaguePoints ||
+        b.matchPointsFor - a.matchPointsFor ||
+        a.matchPointsAgainst - b.matchPointsAgainst ||
+        b.won - a.won ||
+        b.drawn - a.drawn,
+    )
+    .map((row, index) => ({ ...row, position: `${index + 1}` }))
+}
+
+function emptySeasonStats() {
+  return {
+    currentLeaguePosition: 0,
+    runningPointsFor: 0,
+    runningPointsAgainst: 0,
+    runningPointsDifference: 0,
+    headToHead: [],
+  }
+}
+
+function ensureTeamStatistics(statsByTeam, leagueConfig, teamId) {
+  if (!statsByTeam.has(teamId)) {
+    const id = `${teamId}-${leagueConfig.seasonId}`
+    statsByTeam.set(teamId, {
+      id,
+      path: `statistics/${id}`,
+      team: teamRef(teamId),
+      season: ref('season', leagueConfig.seasonId),
+      table: ref(
+        'leaguetable',
+        leagueConfig.tableId,
+        `season/${leagueConfig.seasonId}/competition/${leagueConfig.competitionId}`,
+      ),
+      seasonStats: emptySeasonStats(),
+      weekStats: {},
+    })
+  }
+
+  return statsByTeam.get(teamId)
+}
+
+function leaguePosition(tableRows, teamId) {
+  return parseInt(tableRows.find((row) => referenceId(row.team) === teamId)?.position ?? '0', 10)
+}
+
+function addHeadToHead(statistics, opponentId, pointsFor, pointsAgainst) {
+  const win = pointsFor > pointsAgainst ? 1 : 0
+  const draw = pointsFor === pointsAgainst ? 1 : 0
+  const lose = pointsFor < pointsAgainst ? 1 : 0
+  const existing = statistics.seasonStats.headToHead.find(
+    (row) => referenceId(row.team) === opponentId,
+  )
+  const updated = {
+    team: teamRef(opponentId),
+    win: win + (existing?.win ?? 0),
+    draw: draw + (existing?.draw ?? 0),
+    lose: lose + (existing?.lose ?? 0),
+  }
+
+  statistics.seasonStats.headToHead = [
+    ...statistics.seasonStats.headToHead.filter((row) => referenceId(row.team) !== opponentId),
+    updated,
+  ]
+}
+
+function addWeekStats(statistics, date, pointsFor, pointsAgainst, position) {
+  const pointsDifference = pointsFor - pointsAgainst
+  const week = {
+    date,
+    leaguePosition: position,
+    pointsFor,
+    pointsAgainst,
+    pointsDifference,
+    cumuPointsFor: statistics.seasonStats.runningPointsFor + pointsFor,
+    cumuPointsAgainst: statistics.seasonStats.runningPointsAgainst + pointsAgainst,
+    cumuPointsDifference: statistics.seasonStats.runningPointsDifference + pointsDifference,
+    ignorable: false,
+  }
+
+  statistics.weekStats = {
+    ...statistics.weekStats,
+    [date]: week,
+  }
+  statistics.seasonStats = {
+    ...statistics.seasonStats,
+    currentLeaguePosition: position,
+    runningPointsFor: week.cumuPointsFor,
+    runningPointsAgainst: week.cumuPointsAgainst,
+    runningPointsDifference: week.cumuPointsDifference,
+  }
+}
+
+function updateCurrentPositions(statsByTeam, leagueConfig, tableRows) {
+  for (const row of tableRows) {
+    const teamId = referenceId(row.team)
+    ensureTeamStatistics(
+      statsByTeam,
+      leagueConfig,
+      teamId,
+    ).seasonStats.currentLeaguePosition = leaguePosition(tableRows, teamId)
+  }
+}
+
+function buildLeagueTableRows(leagueConfig) {
+  let tableRows = emptyLeagueTableRows(leagueConfig.teamIds)
+
+  for (const fixtureSetData of [...leagueConfig.fixtureSets].sort((a, b) =>
+    a.date.localeCompare(b.date),
+  )) {
+    for (const fixtureData of fixtureSetData.fixtures) {
+      tableRows = applyFixtureToTableRows(tableRows, fixtureData)
+    }
+  }
+
+  return tableRows
+}
+
+function seasonStatistics(leagueConfig) {
+  const statsByTeam = new Map()
+  let tableRows = blankLeagueTableRows(leagueConfig.tableRows)
+
+  for (const fixtureSetData of [...leagueConfig.fixtureSets].sort((a, b) =>
+    a.date.localeCompare(b.date),
+  )) {
+    const completedFixtures = []
+
+    for (const fixtureData of fixtureSetData.fixtures) {
+      tableRows = applyFixtureToTableRows(tableRows, fixtureData)
+
+      if (fixtureData.result) {
+        completedFixtures.push(fixtureData)
+      }
+    }
+
+    updateCurrentPositions(statsByTeam, leagueConfig, tableRows)
+
+    for (const fixtureData of completedFixtures) {
+      const homeStats = ensureTeamStatistics(statsByTeam, leagueConfig, fixtureData.homeId)
+      const awayStats = ensureTeamStatistics(statsByTeam, leagueConfig, fixtureData.awayId)
+
+      const { homeScore, awayScore } = fixtureData.result
+
+      addWeekStats(
+        homeStats,
+        fixtureSetData.date,
+        homeScore,
+        awayScore,
+        leaguePosition(tableRows, fixtureData.homeId),
+      )
+      addHeadToHead(homeStats, fixtureData.awayId, homeScore, awayScore)
+
+      addWeekStats(
+        awayStats,
+        fixtureSetData.date,
+        awayScore,
+        homeScore,
+        leaguePosition(tableRows, fixtureData.awayId),
+      )
+      addHeadToHead(awayStats, fixtureData.homeId, awayScore, homeScore)
+    }
+  }
+
+  return [...statsByTeam.values()]
 }
 
 function firestoreValue(value) {
@@ -244,6 +731,40 @@ async function saveDocument(path, data) {
   })
 }
 
+const currentLeagueConfig = {
+  seasonId,
+  competitionId: leagueCompetitionId,
+  tableId: leagueTableId,
+  teamIds: leagueTeamIds,
+  fixtureSets: leagueFixtureSets,
+  tableRows: leagueTableRows,
+}
+
+const previousLeagueTableRows = buildLeagueTableRows({
+  teamIds: leagueTeamIds,
+  fixtureSets: previousLeagueFixtureSets,
+})
+
+const previousLeagueConfig = {
+  seasonId: previousSeasonId,
+  competitionId: leagueCompetitionId,
+  tableId: leagueTableId,
+  teamIds: leagueTeamIds,
+  fixtureSets: previousLeagueFixtureSets,
+  tableRows: previousLeagueTableRows,
+}
+
+const generatedCurrentSeasonStatistics = seasonStatistics(currentLeagueConfig)
+const generatedPreviousSeasonStatistics = seasonStatistics(previousLeagueConfig)
+const generatedSeasonStatistics = [
+  ...generatedCurrentSeasonStatistics,
+  ...generatedPreviousSeasonStatistics,
+]
+const previousLeagueResultCount = previousLeagueFixtureSets.reduce(
+  (total, fixtureSetData) => total + fixtureSetData.fixtures.length,
+  0,
+)
+
 const documents = [
   text('text-front-page', 'Welcome to the Chiltern Quiz League local development data set.'),
   text(
@@ -260,6 +781,10 @@ const documents = [
   text(
     'text-season-2025-2026',
     'The 2025-2026 season includes league, cup, subsidiary, and singleton competitions.',
+  ),
+  text(
+    'text-season-2024-2025',
+    'The 2024-2025 season contains a completed home-and-away league schedule.',
   ),
   text('text-competitions-header', 'Current season competitions.'),
   text('text-league-description', 'League fixtures and current standings.'),
@@ -397,6 +922,33 @@ const documents = [
       ],
     },
   },
+  {
+    path: `season/${previousSeasonId}`,
+    data: {
+      id: previousSeasonId,
+      startYear: 2024,
+      endYear: 2025,
+      text: textRef('text-season-2024-2025'),
+      calendar: [
+        {
+          description: 'Presentation evening',
+          date: '2025-05-15',
+          time: '19:30:00',
+          duration: 5400,
+          venue: venueRef('venue-ashridge-arms'),
+        },
+      ],
+      events: [
+        {
+          description: 'Presentation evening',
+          date: '2025-05-15',
+          time: '19:30:00',
+          duration: 5400,
+          venue: venueRef('venue-ashridge-arms'),
+        },
+      ],
+    },
+  },
   competition(
     'league-main',
     'league',
@@ -409,6 +961,20 @@ const documents = [
       draw: 1,
       loss: 0,
     },
+  ),
+  competition(
+    'league-main',
+    'league',
+    'League Championship',
+    'text-league-description',
+    'league-competition-note',
+    {
+      icon: 'mdi-table',
+      win: 2,
+      draw: 1,
+      loss: 0,
+    },
+    previousSeasonId,
   ),
   competition('cup-main', 'cup', 'Challenge Cup', 'text-cup-note', 'cup-competition-note', {
     icon: 'mdi-trophy',
@@ -442,34 +1008,64 @@ const documents = [
       },
     },
   ),
-  fixtureSet('league-main', 'league-round-1', 'Round 1', '2026-05-07'),
-  fixtureSet('league-main', 'league-round-2', 'Round 2', '2026-06-04'),
-  fixture(
-    'league-main',
-    'league-round-1',
-    'fixture-league-1',
-    'team-ashridge-arms',
-    'team-beaconsfield-bees',
-    'venue-ashridge-arms',
-    {
-      homeScore: 42,
-      awayScore: 38,
-    },
+  ...leagueFixtureSets.map((fixtureSetData) =>
+    fixtureSet(
+      leagueCompetitionId,
+      fixtureSetData.id,
+      fixtureSetData.description,
+      fixtureSetData.date,
+      fixtureSetData.start,
+    ),
   ),
-  fixture(
-    'league-main',
-    'league-round-2',
-    'fixture-league-2',
-    'team-chesham-comets',
-    'team-drayton-dynamos',
-    'venue-chesham-club',
+  ...leagueFixtureSets.flatMap((fixtureSetData) =>
+    fixtureSetData.fixtures.map((fixtureData) =>
+      fixture(
+        leagueCompetitionId,
+        fixtureSetData.id,
+        fixtureData.id,
+        fixtureData.homeId,
+        fixtureData.awayId,
+        fixtureData.venueId,
+        fixtureData.result,
+      ),
+    ),
   ),
-  leagueTable('league-main', 'league-table-main', 'League Championship Table', [
-    tableRow('team-ashridge-arms', '1', 1, 1, 0, 0, 2, 42, 38),
-    tableRow('team-beaconsfield-bees', '2', 1, 0, 0, 1, 0, 38, 42),
-    tableRow('team-chesham-comets', '3', 0, 0, 0, 0, 0, 0, 0),
-    tableRow('team-drayton-dynamos', '4', 0, 0, 0, 0, 0, 0, 0),
-  ]),
+  leagueTable(leagueCompetitionId, leagueTableId, 'League Championship Table', leagueTableRows),
+  ...previousLeagueFixtureSets.map((fixtureSetData) =>
+    fixtureSet(
+      leagueCompetitionId,
+      fixtureSetData.id,
+      fixtureSetData.description,
+      fixtureSetData.date,
+      fixtureSetData.start,
+      previousSeasonId,
+    ),
+  ),
+  ...previousLeagueFixtureSets.flatMap((fixtureSetData) =>
+    fixtureSetData.fixtures.map((fixtureData) =>
+      fixture(
+        leagueCompetitionId,
+        fixtureSetData.id,
+        fixtureData.id,
+        fixtureData.homeId,
+        fixtureData.awayId,
+        fixtureData.venueId,
+        fixtureData.result,
+        previousSeasonId,
+      ),
+    ),
+  ),
+  leagueTable(
+    leagueCompetitionId,
+    leagueTableId,
+    'League Championship Table',
+    previousLeagueTableRows,
+    previousSeasonId,
+  ),
+  ...generatedSeasonStatistics.map(({ path, ...data }) => ({
+    path,
+    data,
+  })),
   fixtureSet('cup-main', 'cup-quarter-final', 'Quarter-final', '2026-06-11'),
   fixture(
     'cup-main',
@@ -492,5 +1088,8 @@ for (const document of documents) {
 }
 
 console.log(
-  `Seeded ${documents.length} Firestore documents into ${projectId} at ${emulatorHost}. Current season ${seasonId} has league, cup, subsidiary, and singleton competitions.`,
+  `Seeded ${documents.length} Firestore documents into ${projectId} at ${emulatorHost}. ` +
+    `Current season ${seasonId} has ${generatedCurrentSeasonStatistics.length} generated statistics documents; ` +
+    `${previousSeasonId} has ${previousLeagueResultCount} league results and ` +
+    `${generatedPreviousSeasonStatistics.length} generated statistics documents.`,
 )
