@@ -5,6 +5,7 @@ import {
   applyHomeTeamSelection,
   availableTeamsForFixtureSlot,
   canSaveFixtureEdit,
+  toFixtureEntity,
   unallocatedFixtureTeams,
 } from '../fixtureEditHelpers'
 
@@ -77,5 +78,22 @@ describe('fixture edit helpers', () => {
     expect(canSaveFixtureEdit({ homePath: 'team/alpha', awayPath: 'team/bravo' })).toBe(true)
     expect(canSaveFixtureEdit({ homePath: 'team/alpha', awayPath: 'team/alpha' })).toBe(false)
     expect(canSaveFixtureEdit({ homePath: 'team/alpha' })).toBe(false)
+  })
+
+  it('removes edit-only path fields from saved fixture entities', () => {
+    const saved = toFixtureEntity({
+      ...fixture('fixture-1', 'alpha', 'bravo'),
+      homePath: 'team/alpha',
+      awayPath: 'team/bravo',
+      venuePath: 'venue/alpha-venue',
+    })
+
+    expect(saved).toMatchObject({
+      home: expect.objectContaining({ path: 'team/alpha' }),
+      away: expect.objectContaining({ path: 'team/bravo' }),
+    })
+    expect(saved).not.toHaveProperty('homePath')
+    expect(saved).not.toHaveProperty('awayPath')
+    expect(saved).not.toHaveProperty('venuePath')
   })
 })

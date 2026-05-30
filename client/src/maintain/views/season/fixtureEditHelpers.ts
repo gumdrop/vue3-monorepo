@@ -7,6 +7,14 @@ export type FixtureEdit = Partial<Fixture> & {
   venuePath?: string
 }
 
+export const toFixtureEntity = (fixture: FixtureEdit): Fixture => {
+  const fixtureEntity = { ...fixture }
+  delete fixtureEntity.homePath
+  delete fixtureEntity.awayPath
+  delete fixtureEntity.venuePath
+  return fixtureEntity as Fixture
+}
+
 export const fixtureTeamPaths = (fixture: Partial<Fixture>) => [fixture.home?.path, fixture.away?.path].filter(Boolean)
 
 export const allocatedFixtureTeamPaths = (fixtures: Partial<Fixture>[]) => {

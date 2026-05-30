@@ -191,6 +191,10 @@ describe('FixturesEdit', () => {
         venue: { id: 'alpha-venue', path: 'venue/alpha-venue' },
       }),
     )
+    const savedFixture = mocks.fixtureDAO.save.mock.calls[0][0]
+    expect(savedFixture).not.toHaveProperty('homePath')
+    expect(savedFixture).not.toHaveProperty('awayPath')
+    expect(savedFixture).not.toHaveProperty('venuePath')
     expect(wrapper.findAll('[data-test="fixture-list-item"]')).toHaveLength(1)
   })
 

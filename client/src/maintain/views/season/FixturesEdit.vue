@@ -157,6 +157,7 @@ import {
   applyHomeTeamSelection,
   availableTeamsForFixtureSlot,
   canSaveFixtureEdit,
+  toFixtureEntity,
   type FixtureEdit,
   unallocatedFixtureTeams,
 } from './fixtureEditHelpers'
@@ -236,7 +237,7 @@ const createResult = async () => {
   if (!fixtureToEdit.value) return
   if (!fixtureToEdit.value.id) return
   fixtureToEdit.value.result = { homeScore: 0, awayScore: 0, note: '' }
-  const toSave = fixtureToEdit.value as unknown as Fixture
+  const toSave = toFixtureEntity(fixtureToEdit.value)
   await fixtureDAO.save(toSave)
   const idx = fixtureList.value.findIndex((f) => f.id === toSave.id)
   if (idx >= 0) {
@@ -285,7 +286,7 @@ const saveFixture = async () => {
       path: `${fixtures.value.path}/fixture/${fixtureToEdit.value.id}`,
     }
   }
-  const toSave = fixtureToEdit.value as unknown as Fixture
+  const toSave = toFixtureEntity(fixtureToEdit.value)
   await fixtureDAO.save(toSave)
   // update local list
   const idx = fixtureList.value.findIndex((f) => f.id === toSave.id)
