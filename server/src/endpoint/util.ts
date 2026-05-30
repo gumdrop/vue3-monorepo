@@ -5,7 +5,7 @@ import { ApplicationContext, Season, SINGLETON_ID } from '@quizleague/shared'
 export function send<T>(result: Promise<T> | T, res: Response) {
   Promise.resolve(result)
     .then((r) => {
-      res.json(JSON.stringify(r))
+      res.json(r)
     })
     .catch((e: Error) => {
       res.status(500)

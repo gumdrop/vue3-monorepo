@@ -14,10 +14,10 @@
 <script setup lang="ts">
 import type { LoggedInUser } from '@/services/AuthService';
 import useAuth from '@/services/AuthService';
-import { useUserStore } from '@/stores/app';
+
+defineProps<{ user: LoggedInUser }>()
 
 const { logout } = useAuth()
-const { user } = useUserStore()
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const logoff = (_user: LoggedInUser) => {

@@ -97,6 +97,7 @@
 <script lang="ts" setup>
 import ApplicationContextDAO from "@/dao/ApplicationContextDAO";
 import { useSideMenuStore, useUserStore } from "@/stores/app";
+import { storeToRefs } from "pinia";
 import { ref } from "vue";
 import { useDocument } from "vuefire";
 import { useDisplay } from "vuetify";
@@ -109,7 +110,7 @@ const appData = useDocument(ApplicationContextDAO.get())
 
 const { mdAndDown, smAndDown, smAndUp, mdAndUp, lgAndUp } = useDisplay()
 
-const { user } = useUserStore()
+const { user } = storeToRefs(useUserStore())
 
 const sideMenu = useSideMenuStore()
 const showMenu = ref(false)

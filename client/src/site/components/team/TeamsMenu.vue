@@ -12,12 +12,13 @@ import { useCollection } from 'vuefire';
 import SideMenu from '../common/SideMenu.vue';
 import { useSideMenuStore, useUserStore } from '@/stores/app';
 import SideMenuItem from '../common/SideMenuItem.vue';
+import { storeToRefs } from 'pinia';
 const { setSidemenu } = useSideMenuStore()
 
 setSidemenu(true)
 
 const teams = useCollection(() => TeamDAO.sortedActive("name"))
 
-const { user } = useUserStore()
+const { user } = storeToRefs(useUserStore())
 
 </script>

@@ -68,6 +68,7 @@
 <script setup lang="ts">
 import { useLayout } from '@/services/LayoutService';
 import { useSideMenuStore, useUserStore } from '@/stores/app';
+import { storeToRefs } from 'pinia';
 import QlNamedText from '../text/QlNamedText.vue';
 
 const { setSidemenu } = useSideMenuStore()
@@ -75,7 +76,7 @@ const { setSidemenu } = useSideMenuStore()
 setSidemenu(true)
 const { gridSize } = useLayout()
 
-const { user } = useUserStore()
+const { user } = storeToRefs(useUserStore())
 
 </script>
 <style scoped>

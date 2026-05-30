@@ -1,6 +1,8 @@
 import { flushPromises, mount } from '@vue/test-utils'
+import { useUserStore } from '@/stores/app'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { defineComponent, h } from 'vue'
+import { defineComponent, h, nextTick } from 'vue'
+import App from '../App.vue'
 import LoginMain from '../auth/LoginMain.vue'
 import ProfileEdit from '../auth/ProfileEdit.vue'
 import EventsTab from '../home/EventsTab.vue'
@@ -33,6 +35,15 @@ vi.mock('@/dao/SeasonDAO', () => ({
   default: {
     collection: () => ({
       __data: mocks.seasons,
+    }),
+  },
+}))
+
+vi.mock('@/dao/ApplicationContextDAO', () => ({
+  default: {
+    get: () => ({
+      path: 'applicationcontext/site',
+      __data: { id: 'site', leagueName: 'Quiz League' },
     }),
   },
 }))
@@ -81,15 +92,34 @@ vi.mock('@/services/SeasonService', () => ({
   }),
 }))
 
-vi.mock('@/stores/app', () => ({
-  useSideMenuStore: () => ({
-    sidemenu: true,
-    setSidemenu: mocks.setSidemenu,
-  }),
-  useUserStore: () => ({
-    user: mocks.user,
+vi.mock('@/services/TitleService', () => ({
+  default: () => ({
+    setTitle: vi.fn(),
   }),
 }))
+
+vi.mock('@/stores/app', async () => {
+  const { ref } = await import('vue')
+  const userRef = ref<typeof mocks.user>()
+
+  return {
+    useSideMenuStore: () => ({
+      sidemenu: true,
+      setSidemenu: mocks.setSidemenu,
+    }),
+    useUserStore: () => {
+      const store = {}
+      Object.defineProperty(store, 'user', {
+        get: () => userRef.value ?? mocks.user,
+        set: (nextUser) => {
+          userRef.value = nextUser as typeof mocks.user
+          mocks.user = nextUser as typeof mocks.user
+        },
+      })
+      return store
+    },
+  }
+})
 
 vi.mock('pinia', async () => {
   const { computed } = await import('vue')
@@ -112,6 +142,21 @@ vi.mock('vue-router', () => ({
     push: mocks.routerPush,
   }),
 }))
+
+vi.mock('vuetify', async () => {
+  const { ref } = await import('vue')
+
+  return {
+    useDisplay: () => ({
+      lgAndUp: ref(true),
+      mdAndDown: ref(false),
+      mdAndUp: ref(true),
+      smAndDown: ref(false),
+      smAndUp: ref(true),
+    }),
+    useGoTo: () => vi.fn(),
+  }
+})
 
 vi.mock('vuefire', async () => {
   const { ref } = await import('vue')
@@ -155,6 +200,26 @@ const venueLinkStub = defineComponent({
   },
   setup(props) {
     return () => h('span', { 'data-test': 'venue-link' }, props.id)
+  },
+})
+
+const passthroughStub = defineComponent({
+  setup(_, { slots }) {
+    return () => h('div', slots.default?.())
+  },
+})
+
+const routerViewSlotStub = defineComponent({
+  props: {
+    name: String,
+  },
+  setup(_, { slots }) {
+    const emptyRouteComponent = defineComponent({
+      setup() {
+        return () => null
+      },
+    })
+    return () => h('div', slots.default?.({ Component: emptyRouteComponent }))
   },
 })
 
@@ -213,10 +278,41 @@ beforeEach(() => {
     },
     email: 'alice@example.com',
   }
+  useUserStore().user = mocks.user
   mocks.verifyEmail.mockResolvedValue(undefined)
 })
 
 describe('interactive site components', () => {
+  it('updates the app bar when the login store receives a user', async () => {
+    const loggedInUser = mocks.user
+    useUserStore().user = undefined
+    const wrapper = mountSite(App, {
+      global: {
+        stubs: {
+          ...siteComponentStubs,
+          ChatNotifications: true,
+          Notifications: true,
+          PageTitle: true,
+          RouterView: routerViewSlotStub,
+          VBottomNavigation: true,
+          VFadeTransition: passthroughStub,
+          VToolbarItems: passthroughStub,
+          'v-fade-transition': passthroughStub,
+          FadeTransition: passthroughStub,
+        },
+      },
+    })
+
+    expect(wrapper.find('[data-image="/avatar.png"]').exists()).toBe(false)
+    expect(wrapper.text()).toContain('Login')
+
+    useUserStore().user = loggedInUser
+    await nextTick()
+
+    expect(wrapper.find('[data-image="/avatar.png"]').exists()).toBe(true)
+    expect(wrapper.text()).not.toContain('Login')
+  })
+
   it('sorts seasons newest first and emits selected season changes', async () => {
     const wrapper = mountSite(SeasonSelect, {
       props: {

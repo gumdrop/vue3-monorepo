@@ -17,8 +17,9 @@ import { useGoTo } from 'vuetify'
 
 import { useUserStore } from '@/stores/app'
 import SideMenu from '@/site/components/common/SideMenu.vue';
+import { storeToRefs } from 'pinia';
 
-const { user } = useUserStore()
+const { user } = storeToRefs(useUserStore())
 
 const goTo = useGoTo()
 

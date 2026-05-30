@@ -12,13 +12,14 @@
 </template>
 <script setup lang="ts">
 import { useSideMenuStore, useUserStore } from '@/stores/app';
+import { storeToRefs } from 'pinia';
 import SideMenu from '../common/SideMenu.vue';
 import SideMenuItem from '../common/SideMenuItem.vue';
 
 const { setSidemenu } = useSideMenuStore()
 setSidemenu(true)
 
-const { user } = useUserStore()
+const { user } = storeToRefs(useUserStore())
 
 
 </script>

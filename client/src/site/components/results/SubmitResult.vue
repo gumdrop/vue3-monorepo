@@ -147,6 +147,7 @@ import FixtureLine from '../fixtures/FixtureLine.vue'
 import { useFixture } from '@/services/FixtureService'
 import { useUserStore } from '@/stores/app'
 import TeamDAO from '@/dao/TeamDAO'
+import { storeToRefs } from 'pinia'
 
 const { fixtureDoc } = defineProps<{ fixtureDoc: DocumentReference<Fixture> }>()
 const { submitResult } = useFixture()
@@ -168,7 +169,7 @@ const preview = ref(false)
 const confirm = ref(false)
 const reportText = ref('')
 const dialogSize = {}
-const { user } = useUserStore()
+const { user } = storeToRefs(useUserStore())
 
 const preSubmit = (fixture: Fixture, userId: string, reportText?: string) => {
   if (fixture.result) {

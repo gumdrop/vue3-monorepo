@@ -57,9 +57,10 @@ import QlNamedText from '../text/QlNamedText.vue';
 import { ref } from 'vue';
 import AliasContactDialog from './AliasContactDialog.vue';
 import { useLayout } from '@/services/LayoutService';
+import { storeToRefs } from 'pinia';
 const { gridSize } = useLayout()
 
-const { user } = useUserStore()
+const { user } = storeToRefs(useUserStore())
 const { setSidemenu } = useSideMenuStore()
 setSidemenu(false)
 
