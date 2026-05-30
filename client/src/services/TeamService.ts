@@ -239,7 +239,7 @@ export const useTeams = () => {
     const sortedStats = sortAndPadStats(stats, seasons)
 
     const data = sortedStats.map((x) =>
-      !x.seasonStats || x.seasonStats.currentLeaguePosition == 0
+      !x.seasonStats || !x.seasonStats.currentLeaguePosition
         ? null
         : x.seasonStats.currentLeaguePosition,
     )
@@ -252,7 +252,7 @@ export const useTeams = () => {
 
   const teamCount = async (stats: Statistics) => {
     const table = await LeagueTableDAO.getDataByPath(stats.table.path)
-    return table?.rows.length
+    return table?.rows.length || 20
   }
 
   const teamCountAllSeasons = async (stats: Statistics[]) => {
@@ -368,7 +368,7 @@ export const useTeams = () => {
   const multipleTeamsAllSeasonsPositionData = (stats: Statistics[][]) => {
     const mapFn = (x: Statistics) =>
       x.seasonStats
-        ? x.seasonStats.currentLeaguePosition == 0
+        ? !x.seasonStats.currentLeaguePosition
           ? null
           : x.seasonStats.currentLeaguePosition
         : null

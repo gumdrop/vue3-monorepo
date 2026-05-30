@@ -21,7 +21,7 @@ const { multipleTeamsAllSeasonsPositionData, teamCountAllSeasons: count } = useT
 const teamCount = usePromise(() => count(props.stats[0]))
 const positionOptions = computed<ChartOptions<'line'>>(() => ({
   scales: {
-    y: { type: 'linear', reverse: true, min: 1, max: teamCount.value ?? 1, ticks: { stepSize: 1 } },
+    y: { type: 'linear', reverse: true, min: 1, max: teamCount.value || 20, ticks: { stepSize: 1 } },
   },
 }))
 </script>
