@@ -143,12 +143,17 @@ describe('TeamService', () => {
 
   it('combines league and cup standings for a team', async () => {
     mocks.competitionsService.firstClassCompetitions.mockResolvedValue([
-      { id: 'league', key: 'season/season-1/competition/league', name: 'League', _name: 'league' },
-      { id: 'cup', key: 'season/season-1/competition/cup', name: 'Cup', _name: 'cup' },
+      {
+        id: 'league',
+        path: 'season/season-1/competition/league',
+        name: 'League Championship',
+        _name: 'league',
+      },
+      { id: 'cup', path: 'season/season-1/competition/cup', name: 'Cup', _name: 'cup' },
     ])
     mocks.leagueTableDAO.entities.mockResolvedValue([
       {
-        description: 'A',
+        description: 'League Championship Table',
         rows: [
           { team: { id: 'alpha', path: 'team/alpha' }, position: '2' },
           { team: { id: 'bravo', path: 'team/bravo' }, position: '1' },
@@ -164,9 +169,15 @@ describe('TeamService', () => {
       .mockResolvedValueOnce([{ home: { id: 'alpha' }, away: { id: 'delta' } }])
 
     await expect(useTeams().standings('alpha')).resolves.toEqual([
-      { name: 'League A', standing: '2nd' },
+      { name: 'League Championship', standing: '2nd' },
       { name: 'Cup', standing: 'Round 2' },
     ])
+    expect(mocks.leagueTableDAO.subCollection).toHaveBeenCalledWith(
+      'season/season-1/competition/league',
+    )
+    expect(mocks.competitionsService.fixtures).toHaveBeenCalledWith(
+      'season/season-1/competition/cup',
+    )
   })
 
   it('builds chart datasets from non-ignorable weekly stats in date order', () => {

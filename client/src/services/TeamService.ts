@@ -43,14 +43,14 @@ export const useTeams = () => {
 
     if (!league) return []
 
-    const tables = await LeagueTableDAO.entities(LeagueTableDAO.subCollection(`${league.key}`))
+    const tables = await LeagueTableDAO.entities(LeagueTableDAO.subCollection(league.path))
 
     return tables
       .map((t) =>
         t.rows
           .filter((r) => r.team.id == teamId)
           .map((r) => {
-            return { name: `League ${t.description}`, standing: ordinal(r.position) }
+            return { name: league.name, standing: ordinal(r.position) }
           }),
       )
       .flatMap((s) => s)
@@ -66,7 +66,7 @@ export const useTeams = () => {
     const fixtureGroup: { fixtures: Fixtures; competition: Competition }[] = []
 
     for (const cup of cups) {
-      const fixs = await fixtures(`${cup.key}`)
+      const fixs = await fixtures(cup.path)
 
       for (const fix of fixs) {
         const fixture = (await fixtureList([fix])).find(
