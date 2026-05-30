@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
+import { getCurrentUser } from 'vuefire'
 
 const maintenanceBasePath = '/maintain/'
 
@@ -15,6 +16,25 @@ export const createMaintenanceHistory = () => {
   return isLocalMaintenanceHost()
     ? createWebHashHistory(maintenanceBasePath)
     : createWebHistory(maintenanceBasePath)
+}
+
+export const currentMaintenancePath = (
+  location: Pick<Location, 'pathname' | 'search' | 'hash'> = window.location,
+) => `${location.pathname}${location.search}${location.hash}`
+
+export const loginRedirectUrl = (forwardPath = currentMaintenancePath()) => {
+  const search = new URLSearchParams({ forward: forwardPath })
+  return `/login?${search.toString()}`
+}
+
+export const requireAuthenticatedUser = async (
+  redirect: (url: string) => void = (url) => window.location.assign(url),
+) => {
+  const user = await getCurrentUser()
+  if (user) return true
+
+  redirect(loginRedirectUrl())
+  return false
 }
 
 const router = createRouter({
@@ -122,5 +142,7 @@ const router = createRouter({
     }
   ]
 })
+
+router.beforeEach(() => requireAuthenticatedUser())
 
 export default router
