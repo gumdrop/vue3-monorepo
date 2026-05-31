@@ -2,7 +2,7 @@
   <v-container v-if="team && seasonId" :class="gridSize" fluid class="pa-0">
     <v-row>
       <!-- Team Description / Text -->
-      <v-col cols="12" v-if="team.text">
+      <v-col cols="12" v-if="team.text?.id">
         <div class="content-wrapper mb-6">
           <QlTextBox>
             <QlText :id="team.text.id" />

@@ -7,7 +7,7 @@
       </v-toolbar>
       
       <v-card-text v-if="team" class="pa-4">
-        <div class="d-flex align-center mb-6">
+        <div v-if="team.venue?.id" class="d-flex align-center mb-6">
           <v-icon color="primary" class="mr-3">mdi-map-marker-radius</v-icon>
           <div>
             <div class="text-caption text-uppercase font-weight-bold grey--text">Home Venue</div>

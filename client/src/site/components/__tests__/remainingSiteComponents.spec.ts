@@ -1474,6 +1474,39 @@ describe('remaining team, venue, and statistics components', () => {
       }).text(),
     ).toContain('team-text')
 
+    mocks.teamsById.set(team.id, {
+      ...team,
+      venue: { path: 'venue/town-hall' },
+      text: { path: 'text/team-text' },
+    })
+
+    const teamWithPathOnlyReferences = mountSite(TeamMain, {
+      props: { id: team.id },
+      global: {
+        stubs: {
+          ...siteComponentStubs,
+          TeamFixtures: simpleStub('team-fixtures'),
+          TeamResults: simpleStub('team-results'),
+          TeamStandings: simpleStub('team-info'),
+          QlText: qlTextStub,
+          QlTextBox,
+        },
+      },
+    })
+    expect(teamWithPathOnlyReferences.find('[data-test="ql-text"]').exists()).toBe(false)
+
+    const infoWithPathOnlyVenue = mountSite(TeamInfo, {
+      props: { teamId: team.id },
+      global: {
+        stubs: {
+          ...siteComponentStubs,
+          TeamStandings: simpleStub('team-standings'),
+          VenueLink: simpleStub('venue-link'),
+        },
+      },
+    })
+    expect(infoWithPathOnlyVenue.find('[data-test="venue-link"]').exists()).toBe(false)
+
     const edit = mountSite(TeamEdit, {
       global: {
         stubs: {
