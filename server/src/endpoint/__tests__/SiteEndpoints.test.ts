@@ -2,13 +2,18 @@ import type { Application, Request, Response } from 'express'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import configure from '../SiteEndpoints'
 import { resultSubmission } from '../TaskFunctions'
+import { siteUserForEmail } from '../SiteFunctions'
 
 vi.mock('../TaskFunctions', () => ({
   resultSubmission: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('../SiteFunctions', () => ({
-  siteUserForEmail: vi.fn(),
+  siteUserForEmail: vi.fn().mockResolvedValue({
+    id: 'site-user-1',
+    path: 'siteuser/site-user-1',
+    user: { id: 'user-1', path: 'user/user-1' },
+  }),
 }))
 
 vi.mock('../util', () => ({
@@ -75,5 +80,29 @@ describe('SiteEndpoints', () => {
 
     expect(resultSubmission).toHaveBeenCalledWith(command)
     expect(response.json).toHaveBeenCalledWith({ ok: true })
+  })
+
+  it('routes site user email lookups to the site function', async () => {
+    const { app, routes } = createApp()
+    configure(app)
+
+    const response = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as unknown as Response
+
+    routes.get('GET /rest/site/site-user-for-email/:email')?.(
+      { params: { email: 'PLAYER@example.com' } } as unknown as Request,
+      response,
+    )
+    await flushPromises()
+
+    expect(siteUserForEmail).toHaveBeenCalledWith('PLAYER@example.com')
+    expect(response.json).toHaveBeenCalledWith({
+      id: 'site-user-1',
+      path: 'siteuser/site-user-1',
+      user: { id: 'user-1', path: 'user/user-1' },
+    })
   })
 })

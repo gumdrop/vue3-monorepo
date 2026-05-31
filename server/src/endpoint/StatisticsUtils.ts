@@ -17,7 +17,7 @@ import {
 import { v4 as uuid } from 'uuid'
 import { deleteAll, docRef, entityPath, list, load, saveAll } from '../storage/Storage'
 
-export async function uppdateForFixture(fixture: Fixture, season: Season) {
+export async function updateForFixture(fixture: Fixture, season: Season) {
   const fixtures = await load<Fixtures>(parseParent(fixture.path))
   const competition = await load<Competition>(parseParent(fixtures.path))
   const tables = await list<LeagueTable>('leaguetable', competition.path)

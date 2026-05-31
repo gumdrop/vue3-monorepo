@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => ({
   load: vi.fn(),
   save: vi.fn(),
   saveAll: vi.fn(),
-  uppdateForFixture: vi.fn(),
+  calculateStats: vi.fn(),
+  updateForFixture: vi.fn(),
 }))
 
 vi.mock('../../storage/Storage', () => ({
@@ -27,11 +28,11 @@ vi.mock('../GeminiResultsSummary', () => ({
 }))
 
 vi.mock('../StatisticsUtils', () => ({
-  calculateStats: vi.fn(),
-  uppdateForFixture: mocks.uppdateForFixture,
+  calculateStats: mocks.calculateStats,
+  updateForFixture: mocks.updateForFixture,
 }))
 
-import { resultSubmission } from '../TaskFunctions'
+import { regenerateFixtureSetResultsSummary, resultSubmission, statsRegenerate } from '../TaskFunctions'
 
 const fixtureSetPath = 'season/season-1/competition/league/fixtures/week-1'
 const fixturePath = (id: string) => `${fixtureSetPath}/fixture/${id}`
@@ -231,5 +232,125 @@ describe('TaskFunctions', () => {
     })
 
     expect(mocks.generateFixtureSetResultsSummary).not.toHaveBeenCalled()
+  })
+
+  it('regenerates a completed fixture set summary using an existing text document', async () => {
+    const fixtureSet = {
+      id: 'week-1',
+      path: fixtureSetPath,
+      description: 'Week 1',
+      date: '2026-05-31',
+      start: '19:30',
+      resultsSummary: { id: 'summary-existing', path: 'text/summary-existing' },
+    }
+    const existingSummary = {
+      id: 'summary-existing',
+      path: 'text/summary-existing',
+      text: 'Old summary',
+      mimeType: 'text/markdown',
+    }
+    const fixture = {
+      id: 'fixture-1',
+      path: fixturePath('fixture-1'),
+      home: { id: 'team-a', path: 'team/team-a' },
+      away: { id: 'team-b', path: 'team/team-b' },
+      result: { homeScore: 43, awayScore: 42 },
+    }
+    const longReport = `  ${'Alpha '.repeat(260)}  `
+
+    mocks.load.mockImplementation(async (pathish) => {
+      const path = typeof pathish === 'string' ? pathish : pathish.path
+      if (path === fixtureSetPath) return fixtureSet
+      if (path === 'season/season-1/competition/league') {
+        return { id: 'league', path, name: 'League', _name: 'league' }
+      }
+      if (path === 'team/team-a') return { id: 'team-a', path, shortName: 'Alpha' }
+      if (path === 'team/team-b') return { id: 'team-b', path, name: 'Bravo' }
+      if (path === 'text/report-1') {
+        return {
+          id: 'report-1',
+          path,
+          text: longReport,
+          mimeType: 'text/markdown',
+        }
+      }
+      if (path === 'text/summary-existing') return existingSummary
+      return undefined
+    })
+    mocks.list.mockImplementation(async (type, parent) => {
+      if (type === 'fixture' && parent === fixtureSetPath) return [fixture]
+      if (type === 'report' && parent === fixture.path) {
+        return [
+          {
+            id: 'report-1',
+            path: `${fixture.path}/report/report-1`,
+            team: { id: 'team-a', path: 'team/team-a' },
+            text: { id: 'report-1', path: 'text/report-1' },
+          },
+        ]
+      }
+      return []
+    })
+    mocks.generateFixtureSetResultsSummary.mockResolvedValue({
+      text: 'Alpha edged Bravo.',
+      model: 'gemini-test',
+    })
+
+    await expect(regenerateFixtureSetResultsSummary(fixtureSetPath)).resolves.toBe(fixtureSet)
+
+    const report = mocks.generateFixtureSetResultsSummary.mock.calls[0][0].fixtures[0].reports[0]
+    expect(report).toMatch(/^Alpha: Alpha Alpha/)
+    expect(report).toHaveLength(1207)
+    expect(report.endsWith('...')).toBe(true)
+    expect(mocks.save).toHaveBeenCalledWith({
+      ...existingSummary,
+      text: 'Alpha edged Bravo.',
+      mimeType: 'text/markdown',
+    })
+    expect(mocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        resultsSummary: { id: 'summary-existing', path: 'text/summary-existing' },
+        resultsSummaryModel: 'gemini-test',
+        resultsSummaryGeneratedAt: expect.any(String),
+      }),
+    )
+  })
+
+  it('rejects summary regeneration for missing, empty, or incomplete fixture sets', async () => {
+    mocks.load.mockResolvedValueOnce(undefined)
+
+    await expect(regenerateFixtureSetResultsSummary(fixtureSetPath)).rejects.toThrow(
+      `Fixture set not found: ${fixtureSetPath}`,
+    )
+
+    mocks.load.mockResolvedValueOnce({ id: 'week-1', path: fixtureSetPath })
+    mocks.list.mockResolvedValueOnce([])
+
+    await expect(regenerateFixtureSetResultsSummary(fixtureSetPath)).rejects.toThrow(
+      'Cannot generate a results summary for an empty fixture set',
+    )
+
+    mocks.load.mockResolvedValueOnce({ id: 'week-1', path: fixtureSetPath })
+    mocks.list.mockResolvedValueOnce([{ id: 'fixture-1', path: fixturePath('fixture-1') }])
+
+    await expect(regenerateFixtureSetResultsSummary(fixtureSetPath)).rejects.toThrow(
+      'Cannot generate a results summary until all fixtures have results',
+    )
+  })
+
+  it('queues a full season statistics recalculation for the loaded season', async () => {
+    const queueMicrotaskSpy = vi
+      .spyOn(globalThis, 'queueMicrotask')
+      .mockImplementation((callback: () => void) => callback())
+    const season = { id: 'season-1', path: 'season/season-1' }
+    mocks.load.mockResolvedValue(season)
+
+    await statsRegenerate('season-1')
+
+    expect(mocks.load).toHaveBeenCalledWith('season/season-1')
+    expect(queueMicrotaskSpy).toHaveBeenCalledWith(expect.any(Function))
+    expect(mocks.calculateStats).toHaveBeenCalledWith(season)
+
+    queueMicrotaskSpy.mockRestore()
   })
 })

@@ -17,7 +17,7 @@ import {
 import { v4 as uuid } from 'uuid'
 import { docRef, entityPath, list, load, save, saveAll } from '../storage/Storage'
 import { currentSeason } from './util'
-import { calculateStats, uppdateForFixture } from './StatisticsUtils'
+import { calculateStats, updateForFixture } from './StatisticsUtils'
 import {
   generateFixtureSetResultsSummary,
   type FixtureSetSummaryFixture,
@@ -136,7 +136,7 @@ export async function resultSubmission(result: ResultsSubmitCommand) {
   async function statsUpdate(seasonId: string, fixtures: Fixture[]) {
     const season = await load<Season>(entityPath('season', seasonId))
 
-    fixtures.forEach((f) => uppdateForFixture(f, season))
+    fixtures.forEach((f) => updateForFixture(f, season))
   }
 }
 
