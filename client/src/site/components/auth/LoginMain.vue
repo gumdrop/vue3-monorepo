@@ -13,7 +13,7 @@
             :disabled="!email"
             >Sign in by email</v-btn
           >
-          <v-btn button v-on:click="logonWithGoogle(email)" :disabled="!email"
+          <v-btn button v-on:click="googleLogin(email)" :disabled="!email"
             >Sign with Google</v-btn
           >
           <v-btn button v-on:click="doPasswordLogin(email)" :disabled="!email"
@@ -72,17 +72,40 @@ const showFailure = ref(false)
 const showProgress = ref(false)
 const failureText = ref('')
 
+const genericFailureText = 'Unable to sign in'
+
 const login = async (emailAddress: string | undefined, forward: unknown) => {
   if (!emailAddress) return
 
   showProgress.value = true
   showFailure.value = false
   try {
-    await verifyEmail(emailAddress)
+    const siteUser = await verifyEmail(emailAddress)
+    if (!siteUser) {
+      throw new Error(genericFailureText)
+    }
     showAlert.value = true
     void forward
   } catch (error) {
-    failureText.value = error instanceof Error ? error.message : 'Unable to sign in'
+    failureText.value = error instanceof Error ? error.message : genericFailureText
+    showFailure.value = true
+  } finally {
+    showProgress.value = false
+  }
+}
+
+const googleLogin = async (emailAddress: string | undefined) => {
+  if (!emailAddress) return
+
+  showProgress.value = true
+  showFailure.value = false
+  try {
+    const siteUser = await logonWithGoogle(emailAddress)
+    if (!siteUser) {
+      throw new Error(genericFailureText)
+    }
+  } catch (error) {
+    failureText.value = error instanceof Error ? error.message : genericFailureText
     showFailure.value = true
   } finally {
     showProgress.value = false

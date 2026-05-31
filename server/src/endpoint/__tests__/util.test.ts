@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SINGLETON_ID } from '@quizleague/shared'
-import { applicationContext, currentSeason, param, send, sendText } from '../util'
+import { HttpError, applicationContext, currentSeason, param, send, sendText } from '../util'
 import { entityPath, load } from '../../storage/Storage'
 
 vi.mock('../../storage/Storage', () => ({
@@ -45,6 +45,17 @@ describe('endpoint util', () => {
     expect(res.send).toHaveBeenCalledWith('broken')
   })
 
+  it('sends rejected JSON results with HTTP error status codes', async () => {
+    const res = response()
+
+    send(Promise.reject(new HttpError(404, 'no user found for email', 'Not Found')), res)
+    await flushPromises()
+
+    expect(res.status).toHaveBeenCalledWith(404)
+    expect(res.statusMessage).toBe('Not Found')
+    expect(res.send).toHaveBeenCalledWith('no user found for email')
+  })
+
   it('sends resolved text values', async () => {
     const res = response()
 
@@ -63,6 +74,17 @@ describe('endpoint util', () => {
     expect(res.status).toHaveBeenCalledWith(500)
     expect(res.statusMessage).toBe('Internal server error')
     expect(res.send).toHaveBeenCalledWith('text failed')
+  })
+
+  it('sends rejected text results with HTTP error status codes', async () => {
+    const res = response()
+
+    sendText(Promise.reject(new HttpError(404, 'missing text', 'Not Found')), res)
+    await flushPromises()
+
+    expect(res.status).toHaveBeenCalledWith(404)
+    expect(res.statusMessage).toBe('Not Found')
+    expect(res.send).toHaveBeenCalledWith('missing text')
   })
 
   it('reads route parameters by name', () => {

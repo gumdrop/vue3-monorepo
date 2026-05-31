@@ -6,6 +6,9 @@ import axios from 'axios'
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, type User } from 'firebase/auth'
 import { REST_ROOT } from './constants'
 
+export const EMAIL_NOT_REGISTERED_MESSAGE =
+  'This email does not belong to a registered user.  Please contact your team captain.'
+
 export interface LoggedInUser {
   siteUser: SiteUser
   email: string
@@ -79,6 +82,9 @@ export default function useAuth() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
+      if (e?.response?.status === 404) {
+        throw new Error(EMAIL_NOT_REGISTERED_MESSAGE)
+      }
       console.error(`Error getting site user : ${e.message}`)
       return false
     }

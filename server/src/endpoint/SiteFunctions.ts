@@ -1,6 +1,7 @@
 import { User, SiteUser, Team } from '@quizleague/shared'
 import { v4 as uuid } from 'uuid'
 import { docRefById, entityPath, list, save } from '../storage/Storage'
+import { HttpError } from './util'
 
 function serializableSiteUser(siteUser: SiteUser): SiteUser {
   return {
@@ -49,6 +50,6 @@ export async function siteUserForEmail(email: string) {
       }
     }
   } else {
-    throw new Error('no user found for email')
+    throw new HttpError(404, 'no user found for email', 'Not Found')
   }
 }

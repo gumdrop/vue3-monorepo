@@ -93,5 +93,9 @@ describe('SiteFunctions', () => {
     await expect(siteUserForEmail('missing@example.com')).rejects.toThrow(
       'no user found for email',
     )
+    await expect(siteUserForEmail('missing@example.com')).rejects.toMatchObject({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+    })
   })
 })

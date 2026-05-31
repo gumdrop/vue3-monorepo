@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import useAuth from '../AuthService'
+import useAuth, { EMAIL_NOT_REGISTERED_MESSAGE } from '../AuthService'
 import { REST_ROOT } from '../constants'
 
 const mocks = vi.hoisted(() => ({
@@ -89,6 +89,17 @@ describe('AuthService', () => {
     } finally {
       error.mockRestore()
     }
+  })
+
+  it('throws the registered user message when email verification returns 404', async () => {
+    mocks.axiosGet.mockRejectedValue({
+      message: 'Request failed with status code 404',
+      response: { status: 404 },
+    })
+
+    await expect(useAuth().verifyEmail('missing@example.com')).rejects.toThrow(
+      EMAIL_NOT_REGISTERED_MESSAGE,
+    )
   })
 
   it('binds a verified site user to the Google Firebase uid after sign-in', async () => {

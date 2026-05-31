@@ -279,7 +279,8 @@ beforeEach(() => {
     email: 'alice@example.com',
   }
   useUserStore().user = mocks.user
-  mocks.verifyEmail.mockResolvedValue(undefined)
+  mocks.logonWithGoogle.mockResolvedValue({ id: 'site-user-1', path: 'siteuser/site-user-1' })
+  mocks.verifyEmail.mockResolvedValue({ id: 'site-user-1', path: 'siteuser/site-user-1' })
 })
 
 describe('interactive site components', () => {
@@ -363,6 +364,43 @@ describe('interactive site components', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('Email link failed')
+  })
+
+  it('shows the registered user message for every sign-in method when the email is not found', async () => {
+    const missingUserMessage =
+      'This email does not belong to a registered user.  Please contact your team captain.'
+    const cases = [
+      {
+        button: 'Sign in by email',
+        setup: () => mocks.verifyEmail.mockRejectedValue(new Error(missingUserMessage)),
+        expectedCall: mocks.verifyEmail,
+      },
+      {
+        button: 'Sign with Google',
+        setup: () => mocks.logonWithGoogle.mockRejectedValue(new Error(missingUserMessage)),
+        expectedCall: mocks.logonWithGoogle,
+      },
+      {
+        button: 'Sign in with password',
+        setup: () => mocks.verifyEmail.mockRejectedValue(new Error(missingUserMessage)),
+        expectedCall: mocks.verifyEmail,
+      },
+    ]
+
+    for (const signInCase of cases) {
+      vi.clearAllMocks()
+      signInCase.setup()
+      const wrapper = mountSite(LoginMain)
+
+      await wrapper
+        .get('input[aria-label="Enter your email address"]')
+        .setValue('missing@example.com')
+      await clickButton(wrapper, signInCase.button)
+      await flushPromises()
+
+      expect(signInCase.expectedCall).toHaveBeenCalledWith('missing@example.com')
+      expect(wrapper.text()).toContain(missingUserMessage)
+    }
   })
 
   it('saves profile handle changes and forwards when requested', async () => {
