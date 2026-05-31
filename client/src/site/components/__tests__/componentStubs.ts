@@ -136,8 +136,60 @@ export const siteComponentStubs = {
   VCardSubtitle: passthrough(),
   VCardText: passthrough(),
   VCardTitle: passthrough('h2'),
+  VChip: passthrough('span'),
   VCol: passthrough(),
+  VCombobox: defineComponent({
+    props: {
+      items: {
+        type: Array as PropType<(SelectItem | string)[]>,
+        default: () => [],
+      },
+      label: String,
+      modelValue: Array,
+    },
+    emits: ['update:modelValue'],
+    setup(props) {
+      return () =>
+        h('label', [
+          props.label ? h('span', props.label) : null,
+          h(
+            'select',
+            { multiple: true, 'aria-label': props.label },
+            props.items.map((item) =>
+              h(
+                'option',
+                { value: itemValue(item, 'id') ?? itemValue(item, 'value') },
+                String(itemValue(item, 'title') ?? item),
+              ),
+            ),
+          ),
+        ])
+    },
+  }),
   VContainer: passthrough(),
+  VDataTable: defineComponent({
+    props: {
+      headers: Array,
+      items: {
+        type: Array as PropType<SelectItem[]>,
+        default: () => [],
+      },
+    },
+    setup(props) {
+      return () =>
+        h('table', { 'data-test': 'data-table' }, [
+          h(
+            'tbody',
+            props.items.map((item) =>
+              h(
+                'tr',
+                Object.values(item).map((value) => h('td', String(value))),
+              ),
+            ),
+          ),
+        ])
+    },
+  }),
   VDialog: defineComponent({
     props: {
       modelValue: Boolean,
@@ -147,6 +199,9 @@ export const siteComponentStubs = {
     },
   }),
   VDivider: passthrough('hr'),
+  VExpandTransition: passthrough(),
+  'v-expand-transition': passthrough(),
+  ExpandTransition: passthrough(),
   VFileInput: defineComponent({
     props: {
       label: String,
@@ -203,11 +258,26 @@ export const siteComponentStubs = {
       return () =>
         h(
           props.href ? 'a' : 'button',
-          { ...attrs, 'data-to': props.to, href: props.href, 'data-title': props.title },
+          {
+            ...attrs,
+            'data-to': props.to,
+            href: props.href,
+            'data-title': props.title,
+            onClick: (event: MouseEvent) => {
+              const clickHandler = attrs.onClick
+              if (Array.isArray(clickHandler)) {
+                clickHandler.forEach((handler) => handler(event))
+              } else if (typeof clickHandler === 'function') {
+                clickHandler(event)
+              }
+            },
+          },
           slots.default?.() || props.title,
         )
     },
   }),
+  VListItemTitle: passthrough(),
+  'v-list-item-title': passthrough(),
   VMain: passthrough('main'),
   VMenu: defineComponent({
     setup(_, { slots }) {
@@ -272,6 +342,7 @@ export const siteComponentStubs = {
         ])
     },
   }),
+  VSheet: passthrough(),
   VSkeletonLoader: defineComponent({
     props: {
       type: String,
@@ -281,6 +352,8 @@ export const siteComponentStubs = {
     },
   }),
   VSlideYTransition: passthrough(),
+  'v-slide-y-transition': passthrough(),
+  SlideYTransition: passthrough(),
   VSpacer: passthrough('span'),
   VTab: passthrough('button'),
   VTabs: passthrough(),
