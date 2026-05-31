@@ -989,6 +989,7 @@ describe('remaining site title and navigation components', () => {
       ?.trigger('click')
 
     expect(wrapper.text()).toContain('Overview')
+    expect(wrapper.text()).not.toContain('Chat')
     expect(wrapper.text()).toContain('Team Details')
     expect(mocks.goTo).toHaveBeenCalledWith('#help-content-login')
   })
@@ -1014,7 +1015,7 @@ describe('remaining site content and competition components', () => {
   it('renders help and contact pages with user-only content and contact dialog triggers', async () => {
     const help = mountSite(HelpMain)
     expect(help.text()).toContain('help-content-main')
-    expect(help.text()).toContain('help-content-chat')
+    expect(help.text()).not.toContain('help-content-chat')
     expect(help.text()).toContain('help-content-team')
 
     const contact = mountSite(ContactUsMain, {

@@ -4,8 +4,6 @@
     </v-list-item>
     <v-list-item @click="goTo('#help-content-login')" title="Login" color="blue" rounded="xl">
     </v-list-item>
-    <v-list-item v-if="user" @click="goTo('#help-content-chat')" title="Chat" color="blue" rounded="xl">
-    </v-list-item>
     <v-list-item @click="goTo('#help-content-submit')" title="Submitting Results" color="blue" rounded="xl">
     </v-list-item>
     <v-list-item v-if="user" @click="goTo('#help-content-team')" title="Team Details" color="blue" rounded="xl">

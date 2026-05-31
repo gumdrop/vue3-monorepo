@@ -26,18 +26,6 @@
           </v-card-text>
         </v-card>
 
-        <!-- Chat Section (User Only) -->
-        <v-card v-if="user" class="mb-6 elevation-2 help-card">
-          <v-card-title class="bg-blue-lighten-5 py-3 px-4 d-flex align-center">
-            <v-icon color="primary" start>mdi-chat-processing-outline</v-icon>
-            <span class="text-h6 font-weight-bold primary--text">Chat</span>
-          </v-card-title>
-          <v-divider></v-divider>
-          <v-card-text class="pa-6">
-            <QlNamedText textName="help-content-chat"></QlNamedText>
-          </v-card-text>
-        </v-card>
-
         <!-- Submitting Results Section -->
         <v-card class="mb-6 elevation-2 help-card">
           <v-card-title class="bg-blue-lighten-5 py-3 px-4 d-flex align-center">
