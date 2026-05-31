@@ -5,6 +5,11 @@ export default defineConfig({
     coverage: {
       include: ['src/**/*.ts'],
       exclude: ['src/**/__tests__/**'],
+      thresholds: {
+        perFile: true,
+        statements: 80,
+        lines: 80,
+      },
     },
   },
 })

@@ -32,6 +32,11 @@ export default mergeConfig(
           'src/entity/Text.ts',
           'src/entity/Venue.ts',
         ],
+        thresholds: {
+          perFile: true,
+          statements: 80,
+          lines: 80,
+        },
       },
     },
   }),

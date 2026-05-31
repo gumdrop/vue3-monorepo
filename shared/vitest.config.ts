@@ -22,6 +22,11 @@ export default defineConfig({
         'src/entity/User.ts',
         'src/entity/Venue.ts',
       ],
+      thresholds: {
+        perFile: true,
+        statements: 80,
+        lines: 80,
+      },
     },
   },
 })

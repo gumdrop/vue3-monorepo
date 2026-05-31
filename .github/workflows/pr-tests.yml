@@ -28,8 +28,5 @@ jobs:
       - name: Type-check client
         run: npm --workspace client run type-check
 
-      - name: Run shared unit tests
-        run: npm --workspace shared run test:unit -- --run
-
-      - name: Run client unit tests
-        run: npm --workspace client run test:unit -- --run
+      - name: Run tests and enforce coverage
+        run: npm run test:coverage
