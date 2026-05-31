@@ -73,6 +73,7 @@ import TeamsMain from '../team/TeamsMain.vue'
 import TeamsMenu from '../team/TeamsMenu.vue'
 import TeamsTitle from '../team/TeamsTitle.vue'
 import AllSeasonsAverage from '../team/stats/AllSeasonsAverage.vue'
+import AllSeasonsHighlights from '../team/stats/AllSeasonsHighlights.vue'
 import AllSeasonsLeaguePosition from '../team/stats/AllSeasonsLeaguePosition.vue'
 import AllSeasonsLineChart from '../team/stats/AllSeasonsLineChart.vue'
 import AllSeasonsResultTypes from '../team/stats/AllSeasonsResultTypes.vue'
@@ -101,6 +102,7 @@ import { siteComponentStubs } from './componentStubs'
 const mocks = vi.hoisted(() => ({
   activeFixtures: vi.fn(),
   allSeasonsAverageData: vi.fn(),
+  allSeasonsHighlights: vi.fn(),
   allSeasonsMultipleTeamStats: vi.fn(),
   allSeasonsPositionData: vi.fn(),
   allSeasonsResultTypes: vi.fn(),
@@ -366,6 +368,7 @@ vi.mock('@/services/SeasonService', () => ({
 vi.mock('@/services/TeamService', () => ({
   useTeams: () => ({
     allSeasonsAverageData: mocks.allSeasonsAverageData,
+    allSeasonsHighlights: mocks.allSeasonsHighlights,
     allSeasonsMultipleTeamStats: mocks.allSeasonsMultipleTeamStats,
     allSeasonsPositionData: mocks.allSeasonsPositionData,
     allSeasonsResultTypes: mocks.allSeasonsResultTypes,
@@ -587,6 +590,7 @@ const mountSite = (
       stubs: {
         ...siteComponentStubs,
         AllSeasonsAverage: simpleStub('all-seasons-average'),
+        AllSeasonsHighlights: simpleStub('all-seasons-highlights'),
         AllSeasonsLeaguePosition: simpleStub('all-seasons-league-position'),
         AllSeasonsLineChart: simpleStub('all-seasons-line-chart'),
         AllSeasonsResultTypes: simpleStub('all-seasons-result-types'),
@@ -767,6 +771,9 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.activeFixtures.mockResolvedValue([fixtureSetDoc])
   mocks.allSeasonsAverageData.mockResolvedValue({ labels: [], datasets: [] })
+  mocks.allSeasonsHighlights.mockResolvedValue([
+    { title: 'Highest final league position', value: '1st', detail: '2025/26' },
+  ])
   mocks.allSeasonsMultipleTeamStats.mockResolvedValue([[stats], [{ ...stats, id: 'stats-bravo' }]])
   mocks.allSeasonsPositionData.mockResolvedValue({ labels: [], datasets: [] })
   mocks.allSeasonsResultTypes.mockReturnValue({ labels: ['Won'], datasets: [{ data: [1] }] })
@@ -1701,6 +1708,9 @@ describe('remaining team, venue, and statistics components', () => {
     expect(mountSite(AllSeasonsAverage, { props: allSeasonProps }).text()).toContain(
       'Average Scores',
     )
+    expect(mountSite(AllSeasonsHighlights, { props: allSeasonProps }).text()).toContain(
+      'All Seasons Highlights',
+    )
     const allSeasonsLeaguePosition = mountSite(AllSeasonsLeaguePosition, { props: allSeasonProps })
     await flushPromises()
     expect(allSeasonsLeaguePosition.text()).toContain('League Position')
@@ -1721,11 +1731,13 @@ describe('remaining team, venue, and statistics components', () => {
         stubs: {
           ...siteComponentStubs,
           AllSeasonsAverage: simpleStub('all-seasons-average'),
+          AllSeasonsHighlights: simpleStub('all-seasons-highlights'),
           AllSeasonsLeaguePosition: simpleStub('all-seasons-league-position'),
           AllSeasonsResultTypes: simpleStub('all-seasons-result-types'),
         },
       },
     })
+    expect(allSeasonsStats.get('[data-test="all-seasons-highlights"]').exists()).toBe(true)
     expect(allSeasonsStats.get('[data-test="all-seasons-average"]').exists()).toBe(true)
 
     const headToHead = mountSite(HeadToHead, {

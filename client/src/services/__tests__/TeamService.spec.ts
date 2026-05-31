@@ -331,6 +331,53 @@ describe('TeamService', () => {
     })
   })
 
+  it('builds all-season highlights from final league positions and match scores', async () => {
+    const week = (pointsFor: number, pointsAgainst: number) => ({
+      leaguePosition: 1,
+      pointsFor,
+      pointsAgainst,
+      pointsDifference: pointsFor - pointsAgainst,
+      cumuPointsFor: pointsFor,
+      cumuPointsAgainst: pointsAgainst,
+      cumuPointsDifference: pointsFor - pointsAgainst,
+      ignorable: false,
+    })
+    const stats = [
+      {
+        ...stat('season-1', 'alpha'),
+        seasonStats: {
+          ...stat('season-1', 'alpha').seasonStats,
+          currentLeaguePosition: 2,
+        },
+        weekStats: {
+          '2025-01-01': week(30, 20),
+          '2025-01-08': week(5, 10),
+          '2025-01-15': { ...week(100, 0), ignorable: true },
+        },
+      },
+      {
+        ...stat('season-2', 'alpha'),
+        seasonStats: {
+          ...stat('season-2', 'alpha').seasonStats,
+          currentLeaguePosition: 4,
+        },
+        weekStats: {
+          '2026-01-01': week(50, 20),
+          '2026-01-08': week(0, 25),
+        },
+      },
+    ]
+
+    await expect(useTeams().allSeasonsHighlights(stats as never)).resolves.toEqual([
+      { title: 'Highest final league position', value: '2nd', detail: '2024/25' },
+      { title: 'Lowest final league position', value: '4th', detail: '2025/26' },
+      { title: 'Highest score', value: '50', detail: '50-20, 1 Jan, 2025/26' },
+      { title: 'Lowest score', value: '0', detail: '0-25, 8 Jan, 2025/26' },
+      { title: 'Biggest margin of victory', value: '30', detail: '50-20, 1 Jan, 2025/26' },
+      { title: 'Biggest margin of defeat', value: '25', detail: '0-25, 8 Jan, 2025/26' },
+    ])
+  })
+
   it('sorts every team statistics series by season', async () => {
     mocks.statisticsDAO.allTeamStats.mockImplementation((teamId: string) => `stats/${teamId}`)
     mocks.statisticsDAO.entities

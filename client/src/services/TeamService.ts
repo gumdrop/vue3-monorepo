@@ -223,6 +223,22 @@ export const useTeams = () => {
     }
   }
 
+  const ordinal = (value: number) => {
+    const remainder = value % 100
+    if (remainder >= 11 && remainder <= 13) return `${value}th`
+
+    switch (value % 10) {
+      case 1:
+        return `${value}st`
+      case 2:
+        return `${value}nd`
+      case 3:
+        return `${value}rd`
+      default:
+        return `${value}th`
+    }
+  }
+
   const sortStats = (stats: Statistics[], seasons: Season[]) => {
     return stats.sort((a, b) => {
       const ayear = seasons.find((s) => a.season.id == s.id)?.startYear
@@ -328,6 +344,107 @@ export const useTeams = () => {
       ],
       labels: seasons.map(formatSeason).sort((a, b) => a.localeCompare(b)),
     }
+  }
+
+  const allSeasonsHighlights = async (stats: Statistics[]) => {
+    const seasons = await SeasonDAO.entities(SeasonDAO.collection())
+    const sortedStats = sortStats([...stats], seasons)
+    const seasonLabel = (seasonId: string) => {
+      const season = seasons.find((s) => s.id === seasonId)
+      return season ? formatSeason(season) : seasonId
+    }
+    const fallback = (title: string) => ({ title, value: 'No data', detail: '' })
+    const matchDetail = (match: {
+      date: string
+      season: string
+      pointsFor: number
+      pointsAgainst: number
+    }) => `${match.pointsFor}-${match.pointsAgainst}, ${formatDate(match.date)}, ${match.season}`
+    const minBy = <T>(items: T[], getValue: (item: T) => number) =>
+      items.reduce<T | undefined>(
+        (best, item) => (!best || getValue(item) < getValue(best) ? item : best),
+        undefined,
+      )
+    const maxBy = <T>(items: T[], getValue: (item: T) => number) =>
+      items.reduce<T | undefined>(
+        (best, item) => (!best || getValue(item) > getValue(best) ? item : best),
+        undefined,
+      )
+
+    const leaguePositions = sortedStats
+      .filter((stat) => stat.seasonStats?.currentLeaguePosition)
+      .map((stat) => ({
+        season: seasonLabel(stat.season.id),
+        position: stat.seasonStats.currentLeaguePosition,
+      }))
+
+    const matches = sortedStats.flatMap((stat) =>
+      sortedWeekStats(stat).map(([date, weekStats]) => ({
+        date,
+        season: seasonLabel(stat.season.id),
+        pointsFor: weekStats.pointsFor,
+        pointsAgainst: weekStats.pointsAgainst,
+        pointsDifference: weekStats.pointsDifference,
+      })),
+    )
+
+    const bestLeaguePosition = minBy(leaguePositions, (position) => position.position)
+    const worstLeaguePosition = maxBy(leaguePositions, (position) => position.position)
+    const highestScore = maxBy(matches, (match) => match.pointsFor)
+    const lowestScore = minBy(matches, (match) => match.pointsFor)
+    const biggestVictory = maxBy(
+      matches.filter((match) => match.pointsDifference > 0),
+      (match) => match.pointsDifference,
+    )
+    const biggestDefeat = minBy(
+      matches.filter((match) => match.pointsDifference < 0),
+      (match) => match.pointsDifference,
+    )
+
+    return [
+      bestLeaguePosition
+        ? {
+            title: 'Highest final league position',
+            value: ordinal(bestLeaguePosition.position),
+            detail: bestLeaguePosition.season,
+          }
+        : fallback('Highest final league position'),
+      worstLeaguePosition
+        ? {
+            title: 'Lowest final league position',
+            value: ordinal(worstLeaguePosition.position),
+            detail: worstLeaguePosition.season,
+          }
+        : fallback('Lowest final league position'),
+      highestScore
+        ? {
+            title: 'Highest score',
+            value: `${highestScore.pointsFor}`,
+            detail: matchDetail(highestScore),
+          }
+        : fallback('Highest score'),
+      lowestScore
+        ? {
+            title: 'Lowest score',
+            value: `${lowestScore.pointsFor}`,
+            detail: matchDetail(lowestScore),
+          }
+        : fallback('Lowest score'),
+      biggestVictory
+        ? {
+            title: 'Biggest margin of victory',
+            value: `${biggestVictory.pointsDifference}`,
+            detail: matchDetail(biggestVictory),
+          }
+        : fallback('Biggest margin of victory'),
+      biggestDefeat
+        ? {
+            title: 'Biggest margin of defeat',
+            value: `${Math.abs(biggestDefeat.pointsDifference)}`,
+            detail: matchDetail(biggestDefeat),
+          }
+        : fallback('Biggest margin of defeat'),
+    ]
   }
 
   const allSeasonsMultipleTeamStats = async (teams: string[]) => {
@@ -473,6 +590,7 @@ export const useTeams = () => {
     allSeasonsPositionData,
     allSeasonsResultTypes,
     allSeasonsAverageData,
+    allSeasonsHighlights,
     allSeasonsMultipleTeamStats,
     multipleTeamsAllSeasonsPositionData,
     multipleTeamsAllSeasonsAverageData,

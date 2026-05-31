@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { siteComponentStubs } from './componentStubs'
+import AllSeasonsHighlights from '../team/stats/AllSeasonsHighlights.vue'
 import HeadToHeadLeaders from '../team/stats/HeadToHeadLeaders.vue'
 import SeasonLeaguePosition from '../team/stats/SeasonLeaguePosition.vue'
 import SeasonStats from '../team/stats/SeasonStats.vue'
@@ -13,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   stats: [] as unknown[],
   teamStats: vi.fn(),
   teamCount: vi.fn(),
+  allSeasonsHighlights: vi.fn(),
   headToHeadLeaders: vi.fn(),
 }))
 
@@ -30,6 +32,7 @@ vi.mock('@/services/TeamService', () => ({
     cumulativePointsDifferenceData: vi.fn(),
     singleSeasonResultTypes: vi.fn(),
     teamCount: mocks.teamCount,
+    allSeasonsHighlights: mocks.allSeasonsHighlights,
     headToHeadLeaders: mocks.headToHeadLeaders,
   }),
 }))
@@ -126,6 +129,7 @@ beforeEach(() => {
   mocks.stats = [stats]
   mocks.positionData.mockReturnValue({ datasets: [], labels: [] })
   mocks.teamCount.mockResolvedValue(4)
+  mocks.allSeasonsHighlights.mockResolvedValue([])
   mocks.headToHeadLeaders.mockResolvedValue({
     mostBeaten: [],
     mostLostTo: [],
@@ -194,6 +198,32 @@ describe('team statistics components', () => {
     expect(wrapper.get('[data-test="line-chart"]').attributes('data-y-axis-tick-count')).toBe('4')
     expect(wrapper.get('[data-test="line-chart"]').attributes('data-y-axis-integer-tick')).toBe('1')
     expect(wrapper.get('[data-test="line-chart"]').attributes('data-y-axis-decimal-tick')).toBe('')
+  })
+
+  it('renders all-season highlights', async () => {
+    mocks.allSeasonsHighlights.mockResolvedValue([
+      { title: 'Highest final league position', value: '1st', detail: '2024/25' },
+      { title: 'Biggest margin of victory', value: '30', detail: '50-20, 1 Jan, 2025/26' },
+    ])
+
+    const wrapper = mount(AllSeasonsHighlights, {
+      props: {
+        stats: [stats],
+      },
+      global: {
+        stubs: siteComponentStubs,
+      },
+    })
+
+    await flushPromises()
+
+    expect(mocks.allSeasonsHighlights).toHaveBeenCalledWith([stats])
+    expect(wrapper.text()).toContain('All Seasons Highlights')
+    expect(wrapper.text()).toContain('Highest final league position')
+    expect(wrapper.text()).toContain('1st')
+    expect(wrapper.text()).toContain('2024/25')
+    expect(wrapper.text()).toContain('Biggest margin of victory')
+    expect(wrapper.text()).toContain('50-20, 1 Jan, 2025/26')
   })
 
   it('renders all-season head-to-head leaders', async () => {
