@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "test:unit": "vitest"
+    "test:unit": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "author": "David Good",
   "license": "ISC",

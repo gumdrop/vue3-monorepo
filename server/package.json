@@ -6,6 +6,7 @@
   "main": "./src/index.ts",
   "scripts": {
     "test:unit": "vitest",
+    "test:coverage": "vitest run --coverage",
     "build": "esbuild src/index.ts --bundle --outfile=deploy/main.cjs --platform=node",
     "local": "npx tsx ./src/index.ts",
     "start": "node deploy/main.cjs"
