@@ -1110,6 +1110,30 @@ describe('remaining site content and competition components', () => {
     }
   })
 
+  it('does not render singleton competition venue links when the venue reference has no id', () => {
+    mocks.competitionsByPath.set(singletonCompetition.path, {
+      ...singletonCompetition,
+      event: {
+        ...singletonCompetition.event,
+        venue: { path: 'venue/town-hall' },
+      },
+    })
+
+    const wrapper = mountSite(SingletonCompetition, {
+      props: { path: singletonCompetition.path.replaceAll('/', '|') },
+      global: {
+        stubs: {
+          ...siteComponentStubs,
+          QlText: qlTextStub,
+          VenueLink: simpleStub('venue-link'),
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain('2026/05/31 starting at 19:30')
+    expect(wrapper.find('[data-test="venue-link"]').exists()).toBe(false)
+  })
+
   it('renders competition fixture wrappers and passes through fetch functions', async () => {
     const fetchFunction = vi.fn().mockResolvedValue([fixtureSetDoc])
     const wrapper = mountSite(CompetitionFixturesSet, {

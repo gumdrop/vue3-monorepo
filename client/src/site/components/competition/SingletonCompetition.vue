@@ -20,7 +20,7 @@
                 <v-icon color="primary" class="mr-3">mdi-map-marker-radius</v-icon>
                 <div>
                   <div class="text-caption text-uppercase font-weight-bold grey--text">Venue</div>
-                  <VenueLink v-if="event.venue" :id="event.venue.id" class="text-subtitle-1 font-weight-medium text-primary text-decoration-none" />
+                  <VenueLink v-if="event.venue?.id" :id="event.venue.id" class="text-subtitle-1 font-weight-medium text-primary text-decoration-none" />
                 </div>
               </div>
               <div class="d-flex align-center">
@@ -64,7 +64,7 @@ const { date } = useDateTime()
 const props = defineProps<{ path: string }>()
 const path = computed(() => decode(props.path))
 const item = useDocument(() => CompetitionDAO.getByPath(path.value))
-type CompetitionEvent = { date: string; time: string; venue?: { id: string } }
+type CompetitionEvent = { date: string; time: string; venue?: { id?: string } }
 
 const itemTextName = computed<string>(() => {
   const competition = item.value as { textName?: string; text?: { id?: string } } | undefined
