@@ -47,4 +47,17 @@ describe('TextService', () => {
 
     await expect(useText().getNamedTextId('rules')).resolves.toBeUndefined()
   })
+
+  it('returns undefined when the current text set does not contain the requested name', async () => {
+    mocks.applicationContextDAO.getAppContext.mockResolvedValue({
+      textSet: { id: 'global-text', path: 'globaltext/global-text' },
+    })
+    mocks.globalTextDAO.getData.mockResolvedValue({
+      text: {
+        login: { id: 'login-text', path: 'text/login-text' },
+      },
+    })
+
+    await expect(useText().getNamedTextId('help-content-mobiles')).resolves.toBeUndefined()
+  })
 })
