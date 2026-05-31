@@ -1,6 +1,7 @@
 <template>
   <v-app class="ql-app">
-    <v-app-bar color="primary" dark fixed app clipped-left scroll-behavior="hide" class="app-header">
+    <v-app-bar color="primary" dark fixed app clipped-left scroll-behavior="hide" class="app-header"
+      :extended="lgAndUp">
       <v-app-bar-nav-icon @click.stop="drawer = !drawer" v-show="mdAndDown"></v-app-bar-nav-icon>
       <v-toolbar-title>
         <div v-if="appData" class="d-flex align-center">
