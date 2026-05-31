@@ -10,6 +10,14 @@
             :rules="[rules.required('League Name')]"
           ></v-text-field>
           <EntitySelect v-model="appContext.textSet" :dao="GlobalTextDAO" label="Global Text" />
+          <EntitySelect
+            v-model="appContext.currentSeason"
+            :dao="SeasonDAO"
+            label="Current Season"
+            :item-title="formatSeason"
+            :sort-items="sortSeasonsDescending"
+            data-test="current-season"
+          />
           <v-text-field
             v-model="appContext.senderEmail"
             label="Sender Email"
@@ -75,12 +83,20 @@
 import { ref, onMounted } from 'vue'
 import ApplicationContextDAO from '@/dao/ApplicationContextDAO'
 import GlobalTextDAO from '@/dao/GlobalTextDAO'
+import SeasonDAO from '@/dao/SeasonDAO'
 import UserDAO from '@/dao/UserDAO'
 import type { ApplicationContext } from '@quizleague/shared'
+import type Season from '@/entity/Season'
+import { useSeason } from '@/services/SeasonService'
 import { useValidations } from '@/site/components/Validation'
 import EntitySelect from '../../components/EntitySelect.vue'
 
 const rules = useValidations()
+const { formatSeason } = useSeason()
+
+const sortSeasonsDescending = (seasons: Season[]) => {
+  return seasons.sort((left, right) => Number(right.startYear) - Number(left.startYear))
+}
 
 const appContext = ref<ApplicationContext | null>(null)
 const valid = ref(false)

@@ -1261,6 +1261,41 @@ describe('maintenance edit views', () => {
     )
   })
 
+  it('saves the selected current season on the application context', async () => {
+    mocks.applicationContextDAO.getAppContext.mockResolvedValue({
+      id: 'applicationcontext',
+      path: 'applicationcontext/applicationcontext',
+      leagueName: 'Chiltern Quiz League',
+      textSet: { id: 'site', path: 'globaltext/site' },
+      currentSeason: { id: '2024-2025', path: 'season/2024-2025' },
+      emailAliases: [],
+      senderEmail: 'sender@example.com',
+      cloudStoreBucket: 'bucket',
+    })
+    mocks.seasonDAO.list.mockResolvedValue([
+      { id: '2024-2025', path: 'season/2024-2025', startYear: 2024, endYear: 2025 },
+      { id: '2025-2026', path: 'season/2025-2026', startYear: 2025, endYear: 2026 },
+    ])
+    const wrapper = await mountMaintenance(ApplicationContextEdit, {
+      ...maintenanceComponentStubs,
+      EntitySelect: false,
+    })
+
+    expect(
+      wrapper.findAll('select[data-test="current-season"] option').map((option) => option.text()),
+    ).toEqual(['', '2025/2026', '2024/2025'])
+
+    await wrapper.get('select[data-test="current-season"]').setValue('2025-2026')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.seasonDAO.list).toHaveBeenCalled()
+    expect(mocks.applicationContextDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        currentSeason: { id: '2025-2026', path: 'season/2025-2026' },
+      }),
+    )
+  })
+
   it('saves edited email aliases on the application context', async () => {
     mocks.applicationContextDAO.getAppContext.mockResolvedValue({
       id: 'applicationcontext',

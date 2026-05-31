@@ -1,6 +1,7 @@
 import { defineComponent, h, onMounted, type PropType } from 'vue'
 
 type SelectItem = Record<string, unknown>
+type SelectItemKey = string | ((item: SelectItem) => unknown)
 
 const passthrough = (tag = 'div') =>
   defineComponent({
@@ -10,7 +11,10 @@ const passthrough = (tag = 'div') =>
     },
   })
 
-const itemValue = (item: SelectItem, key: string) => item[key] as string
+const itemValue = (item: SelectItem, key: SelectItemKey) => {
+  const value = typeof key === 'function' ? key(item) : item[key]
+  return value == null ? '' : String(value)
+}
 
 export const maintenanceComponentStubs = {
   RouterView: passthrough(),
@@ -181,7 +185,7 @@ export const maintenanceComponentStubs = {
         default: () => [],
       },
       itemTitle: {
-        type: String,
+        type: [String, Function] as PropType<SelectItemKey>,
         default: 'title',
       },
       itemValue: {
