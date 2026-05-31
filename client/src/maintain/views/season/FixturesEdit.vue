@@ -83,6 +83,17 @@
             {{ nameFor(fix.home?.id) }} vs {{ nameFor(fix.away?.id) }}
           </v-list-item-title>
           <template v-slot:append>
+            <v-chip
+              v-if="fixtureVenueDiffersFromHomeVenue(fix, teams)"
+              data-test="fixture-venue-warning"
+              class="mr-2"
+              color="warning"
+              size="small"
+              title="Fixture venue differs from home team venue"
+              variant="tonal"
+            >
+              Venue differs
+            </v-chip>
             <v-btn
               icon="mdi-delete"
               variant="text"
@@ -191,6 +202,7 @@ import {
   applyHomeTeamSelection,
   availableTeamsForFixtureSlot,
   canSaveFixtureEdit,
+  fixtureVenueDiffersFromHomeVenue,
   toFixtureEntity,
   type FixtureEdit,
   unallocatedFixtureTeams,

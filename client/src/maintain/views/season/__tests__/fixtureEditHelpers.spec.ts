@@ -5,6 +5,7 @@ import {
   applyHomeTeamSelection,
   availableTeamsForFixtureSlot,
   canSaveFixtureEdit,
+  fixtureVenueDiffersFromHomeVenue,
   toFixtureEntity,
   unallocatedFixtureTeams,
 } from '../fixtureEditHelpers'
@@ -26,6 +27,7 @@ const fixture = (id: string, homeId: string, awayId: string): Partial<Fixture> =
   path: `fixtures/${id}`,
   home: { id: homeId, path: `team/${homeId}` } as Fixture['home'],
   away: { id: awayId, path: `team/${awayId}` } as Fixture['away'],
+  venue: { id: `${homeId}-venue`, path: `venue/${homeId}-venue` } as Fixture['venue'],
 })
 
 describe('fixture edit helpers', () => {
@@ -78,6 +80,27 @@ describe('fixture edit helpers', () => {
     expect(canSaveFixtureEdit({ homePath: 'team/alpha', awayPath: 'team/bravo' })).toBe(true)
     expect(canSaveFixtureEdit({ homePath: 'team/alpha', awayPath: 'team/alpha' })).toBe(false)
     expect(canSaveFixtureEdit({ homePath: 'team/alpha' })).toBe(false)
+  })
+
+  it('detects fixtures played away from the home team venue', () => {
+    expect(fixtureVenueDiffersFromHomeVenue(fixture('fixture-1', 'alpha', 'bravo'), teams)).toBe(
+      false,
+    )
+    expect(
+      fixtureVenueDiffersFromHomeVenue(
+        {
+          ...fixture('fixture-1', 'alpha', 'bravo'),
+          venue: { id: 'neutral-venue', path: 'venue/neutral-venue' } as Fixture['venue'],
+        },
+        teams,
+      ),
+    ).toBe(true)
+    expect(
+      fixtureVenueDiffersFromHomeVenue(
+        { ...fixture('fixture-1', 'alpha', 'bravo'), venue: undefined },
+        teams,
+      ),
+    ).toBe(false)
   })
 
   it('removes edit-only path fields from saved fixture entities', () => {

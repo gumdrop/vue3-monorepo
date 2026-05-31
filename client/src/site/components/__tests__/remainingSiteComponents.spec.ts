@@ -1211,7 +1211,13 @@ describe('remaining fixture, home, and result components', () => {
 
     const line = mountSite(FixtureLine, {
       props: {
-        fixture,
+        fixture: {
+          ...fixture,
+          result: {
+            ...fixture.result,
+            note: 'Score adjusted after review.',
+          },
+        },
         inlineDetails: true,
       },
       global: {
@@ -1230,6 +1236,8 @@ describe('remaining fixture, home, and result components', () => {
     expect(line.text()).toContain(team.name)
     expect(line.text()).toContain('44')
     expect(line.text()).toContain('41')
+    expect(line.get('button[aria-label="Show result note"]').exists()).toBe(true)
+    expect(line.text()).toContain('Score adjusted after review.')
   })
 
   it('renders fixture cards and fixture pages', async () => {

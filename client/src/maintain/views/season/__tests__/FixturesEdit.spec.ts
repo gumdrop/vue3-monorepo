@@ -278,6 +278,28 @@ describe('FixturesEdit', () => {
     expect(awayOptions).toEqual(['', 'team/bravo', 'team/echo'])
   })
 
+  it('flags fixture list rows whose venue differs from the home team venue', async () => {
+    mocks.fixtureDAO.entities.mockResolvedValue([
+      fixture('fixture-1', 'alpha', 'bravo'),
+      {
+        ...fixture('fixture-2', 'charlie', 'delta'),
+        venue: { id: 'neutral-venue', path: 'venue/neutral-venue' },
+      },
+    ])
+    mocks.venueDAO.list.mockResolvedValue([
+      venue('alpha-venue'),
+      venue('bravo-venue'),
+      venue('charlie-venue'),
+      venue('delta-venue'),
+      venue('neutral-venue'),
+    ])
+
+    const wrapper = await mountFixturesEdit()
+
+    expect(wrapper.findAll('[data-test="fixture-venue-warning"]')).toHaveLength(1)
+    expect(wrapper.get('[data-test="fixture-venue-warning"]').text()).toContain('Venue differs')
+  })
+
   it('allows an existing AI summary to be edited and saved with the fixture group', async () => {
     mocks.fixturesDAO.getDataByPath.mockResolvedValueOnce({
       id: 'fixture-set-1',

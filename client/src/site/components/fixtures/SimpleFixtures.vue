@@ -53,7 +53,7 @@ const list = computed(() => props.fixtures)
 }
 
 .score-column {
-  width: 88px;
+  width: 112px;
 }
 
 .actions-column {
@@ -66,7 +66,7 @@ const list = computed(() => props.fixtures)
   }
 
   .score-column {
-    width: 64px;
+    width: 92px;
   }
 }
 </style>

@@ -46,18 +46,39 @@
 
     <!-- Score/VS -->
     <td class="score-cell">
-      <div v-if="fixture.result" class="score-display">
-        <span
-          class="score-num"
-          :class="nameClass(fixture.result.homeScore, fixture.result.awayScore)"
-          >{{ fixture.result.homeScore }}</span
-        >
-        <span class="score-divider">-</span>
-        <span
-          class="score-num"
-          :class="nameClass(fixture.result.awayScore, fixture.result.homeScore)"
-          >{{ fixture.result.awayScore }}</span
-        >
+      <div v-if="fixture.result" class="score-with-note">
+        <div class="score-display">
+          <span
+            class="score-num"
+            :class="nameClass(fixture.result.homeScore, fixture.result.awayScore)"
+            >{{ fixture.result.homeScore }}</span
+          >
+          <span class="score-divider">-</span>
+          <span
+            class="score-num"
+            :class="nameClass(fixture.result.awayScore, fixture.result.homeScore)"
+            >{{ fixture.result.awayScore }}</span
+          >
+        </div>
+        <v-menu v-if="resultNote" location="top" open-on-hover>
+          <template v-slot:activator="{ props }">
+            <v-btn
+              v-bind="props"
+              aria-label="Show result note"
+              class="result-note-btn"
+              color="info"
+              density="compact"
+              icon
+              size="x-small"
+              variant="text"
+            >
+              <v-icon size="16">mdi-information-outline</v-icon>
+            </v-btn>
+          </template>
+          <v-card class="result-note-popover" max-width="260">
+            <v-card-text class="pa-3 result-note-text">{{ resultNote }}</v-card-text>
+          </v-card>
+        </v-menu>
       </div>
       <div v-else class="vs-label">vs</div>
     </td>
@@ -136,7 +157,7 @@ import type { Fixture } from '@/entity/Fixtures'
 import { useDateTime } from '@/services/DateService'
 import { useDialog } from '@/services/DialogService'
 import { useKey } from '@/services/KeyService'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useCollection, useDocument } from 'vuefire'
 import ResponsiveTeamName from '../common/ResponsiveTeamName.vue'
 import MatchReports from './MatchReports.vue'
@@ -151,6 +172,7 @@ const { date } = useDateTime()
 const showReports = ref(false)
 
 const nameClass = (score1: number, score2: number) => (score1 > score2 ? 'winner' : '')
+const resultNote = computed(() => props.fixture.result?.note?.trim() || undefined)
 
 const { parseParent } = useKey()
 
@@ -265,8 +287,15 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
 .score-cell {
   padding: 12px 4px;
   text-align: center;
-  min-width: 88px;
-  width: 88px;
+  min-width: 112px;
+  width: 112px;
+}
+
+.score-with-note {
+  align-items: center;
+  display: inline-flex;
+  gap: 2px;
+  justify-content: center;
 }
 
 .score-display {
@@ -296,6 +325,17 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
   margin: 0 4px;
   color: #94a3b8;
   font-weight: 400;
+}
+
+.result-note-btn {
+  flex: 0 0 auto;
+}
+
+.result-note-text {
+  color: #334155;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
 }
 
 .vs-label {
@@ -352,8 +392,8 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
   }
 
   .score-cell {
-    min-width: 64px;
-    width: 64px;
+    min-width: 92px;
+    width: 92px;
   }
 
   .score-display {

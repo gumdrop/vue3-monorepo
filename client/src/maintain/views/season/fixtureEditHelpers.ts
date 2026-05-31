@@ -30,6 +30,18 @@ export const canSaveFixtureEdit = (fixture: FixtureEdit) => {
   return Boolean(fixture.homePath && fixture.awayPath && fixture.homePath !== fixture.awayPath)
 }
 
+export const fixtureVenueDiffersFromHomeVenue = (fixture: Partial<Fixture>, teams: Team[]) => {
+  const fixtureVenuePath = fixture.venue?.path
+  if (!fixture.home?.path || !fixtureVenuePath) return false
+
+  const homeTeam = teams.find(
+    (team) => team.path === fixture.home?.path || team.id === fixture.home?.id,
+  )
+  const homeVenuePath = homeTeam?.venue?.path
+
+  return Boolean(homeVenuePath && fixtureVenuePath !== homeVenuePath)
+}
+
 export const allocatedTeamPathsForOtherFixtures = (fixtures: Partial<Fixture>[], fixtureId?: string) => {
   return new Set(
     fixtures
