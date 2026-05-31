@@ -47,7 +47,6 @@ export const siteComponentStubs = {
         })
     },
   }),
-  QlChat: passthrough(),
   VAlert: defineComponent({
     props: {
       modelValue: {

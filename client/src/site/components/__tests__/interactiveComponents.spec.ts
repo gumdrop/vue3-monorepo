@@ -290,7 +290,6 @@ describe('interactive site components', () => {
       global: {
         stubs: {
           ...siteComponentStubs,
-          ChatNotifications: true,
           Notifications: true,
           PageTitle: true,
           RouterView: routerViewSlotStub,

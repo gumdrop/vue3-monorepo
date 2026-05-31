@@ -13,7 +13,6 @@ export default function configure(app: Application) {
   //.post(`$root/save-site-user`, postSaveSiteUser _)
   // .post(`$root/email/team`, postEmailTeam)
   // .post(`$root/email/alias`, postEmailAlias)
-  // .post(`$root/chat/notifications`, postChatNotifications)
 }
 
 function postResultSubmit(req: Request, res: Response) {
@@ -37,4 +36,3 @@ function getSiteUserForEmail(req: Request, res: Response) {
 // function postSaveSiteUser(req: Request, res: Response){ send(saveSiteUser(parse[SiteUser](req)), res)}
 // function postEmailTeam(req: Request, res: Response){ send(contactTeam(parse[TeamEmailCommand](req)), res)}
 // function postEmailAlias(req: Request, res: Response){ send(contactPerson(parse[AliasEmailCommand](req)), res)}
-// function postChatNotifications(req:Request, res: Response){ send(chatNotifications(parse[ChatNotificationCommand](req)), res)}

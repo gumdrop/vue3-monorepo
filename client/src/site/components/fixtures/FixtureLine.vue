@@ -2,9 +2,13 @@
   <!-- Mobile Inline Details Row -->
   <tr v-if="inlineDetails && $vuetify.display.smAndDown" class="details-row">
     <td colspan="6" class="inline-details-cell">
-      <v-skeleton-loader v-if="!(parent && competition)" type="text" width="12em"></v-skeleton-loader>
+      <v-skeleton-loader
+        v-if="!(parent && competition)"
+        type="text"
+        width="12em"
+      ></v-skeleton-loader>
       <div v-if="parent && competition" class="details-content">
-        <span class="details-date">{{ date(parent.date, "d MMM yyyy") }}</span>
+        <span class="details-date">{{ date(parent.date, 'd MMM yyyy') }}</span>
         <span class="details-sep">•</span>
         <span class="details-comp">{{ competition.name }}</span>
         <span v-if="parent.description" class="details-desc">{{ parent.description }}</span>
@@ -16,18 +20,25 @@
   <tr v-if="fixture && home && away" class="match-row" :class="{ 'has-result': fixture.result }">
     <!-- Desktop Inline Details Column -->
     <td v-if="inlineDetails && !$vuetify.display.smAndDown" class="inline-details-col">
-      <v-skeleton-loader v-if="!(parent && competition)" type="text" width="10em"></v-skeleton-loader>
+      <v-skeleton-loader
+        v-if="!(parent && competition)"
+        type="text"
+        width="10em"
+      ></v-skeleton-loader>
       <div v-if="parent && competition" class="details-content-stacked">
-        <div class="details-date">{{ date(parent.date, "d MMM yyyy") }}</div>
+        <div class="details-date">{{ date(parent.date, 'd MMM yyyy') }}</div>
         <div class="details-comp">{{ competition.name }}</div>
       </div>
     </td>
 
     <!-- Home Team -->
-    <td class="team-cell home-team" :class="[
-      (inlineDetails && $vuetify.display.smAndDown) ? 'is-inline' : '',
-      fixture.result && nameClass(fixture.result.homeScore, fixture.result.awayScore)
-    ]">
+    <td
+      class="team-cell home-team"
+      :class="[
+        inlineDetails && $vuetify.display.smAndDown ? 'is-inline' : '',
+        fixture.result && nameClass(fixture.result.homeScore, fixture.result.awayScore),
+      ]"
+    >
       <div class="team-name-wrapper">
         <ResponsiveTeamName :team="home" />
       </div>
@@ -36,17 +47,26 @@
     <!-- Score/VS -->
     <td class="score-cell">
       <div v-if="fixture.result" class="score-display">
-        <span class="score-num" :class="nameClass(fixture.result.homeScore, fixture.result.awayScore)">{{
-          fixture.result.homeScore }}</span>
+        <span
+          class="score-num"
+          :class="nameClass(fixture.result.homeScore, fixture.result.awayScore)"
+          >{{ fixture.result.homeScore }}</span
+        >
         <span class="score-divider">-</span>
-        <span class="score-num" :class="nameClass(fixture.result.awayScore, fixture.result.homeScore)">{{
-          fixture.result.awayScore }}</span>
+        <span
+          class="score-num"
+          :class="nameClass(fixture.result.awayScore, fixture.result.homeScore)"
+          >{{ fixture.result.awayScore }}</span
+        >
       </div>
       <div v-else class="vs-label">vs</div>
     </td>
 
     <!-- Away Team -->
-    <td class="team-cell away-team" :class="fixture.result && nameClass(fixture.result.awayScore, fixture.result.homeScore)">
+    <td
+      class="team-cell away-team"
+      :class="fixture.result && nameClass(fixture.result.awayScore, fixture.result.homeScore)"
+    >
       <div class="team-name-wrapper">
         <ResponsiveTeamName :team="away" />
       </div>
@@ -57,8 +77,15 @@
       <div v-if="reports && reports.length > 0" class="reports-action">
         <v-tooltip location="top" text="Match Reports">
           <template v-slot:activator="{ props }">
-            <v-btn density="comfortable" icon variant="text" color="primary" @click.stop="showReports = true"
-              v-bind="props" class="report-btn">
+            <v-btn
+              density="comfortable"
+              icon
+              variant="text"
+              color="primary"
+              @click.stop="showReports = true"
+              v-bind="props"
+              class="report-btn"
+            >
               <v-icon size="20">mdi-file-document-outline</v-icon>
             </v-btn>
           </template>
@@ -70,7 +97,8 @@
         <v-card class="reports-dialog-card">
           <v-toolbar color="primary" density="compact" flat>
             <v-toolbar-title class="text-subtitle-1 font-weight-bold d-flex align-center">
-              Match Report: <ResponsiveTeamName v-if="home" :team="home" class="mx-1" /> vs <ResponsiveTeamName v-if="away" :team="away" class="mx-1" />
+              Match Report: <ResponsiveTeamName v-if="home" :team="home" class="mx-1" /> vs
+              <ResponsiveTeamName v-if="away" :team="away" class="mx-1" />
             </v-toolbar-title>
             <v-spacer></v-spacer>
             <v-btn icon @click="showReports = false">
@@ -81,20 +109,19 @@
           <v-card-text class="pa-0">
             <div class="match-summary-banner pa-4 text-center">
               <div class="d-flex align-center justify-center ga-4 flex-wrap">
-                <div class="text-h6 font-weight-bold"><ResponsiveTeamName v-if="home" :team="home" /></div>
+                <div class="text-h6 font-weight-bold">
+                  <ResponsiveTeamName v-if="home" :team="home" />
+                </div>
                 <div class="text-h4 font-weight-black mx-4" v-if="fixture.result">
                   {{ fixture.result.homeScore }} - {{ fixture.result.awayScore }}
                 </div>
-                <div class="text-h6 font-weight-bold"><ResponsiveTeamName v-if="away" :team="away" /></div>
+                <div class="text-h6 font-weight-bold">
+                  <ResponsiveTeamName v-if="away" :team="away" />
+                </div>
               </div>
             </div>
 
             <MatchReports :keyval="`${fixture.key}`" />
-
-            <div v-if="parent" class="match-chat-container pa-4 border-t">
-              <ql-chat :lockedFilter="filter(home, away)" name="homepagechat" :outlined="false"
-                displayName="Match Chat"></ql-chat>
-            </div>
           </v-card-text>
         </v-card>
       </v-dialog>
@@ -102,18 +129,17 @@
   </tr>
 </template>
 <script setup lang="ts">
-import CompetitionDAO from '@/dao/CompetitionDAO';
-import FixturesDAO, { reportDAO } from '@/dao/FixturesDAO';
-import TeamDAO from '@/dao/TeamDAO';
-import type { Fixture } from '@/entity/Fixtures';
-import type Team from '@/entity/Team';
-import { useDateTime } from '@/services/DateService';
-import { useDialog } from '@/services/DialogService';
-import { useKey } from '@/services/KeyService';
-import { ref } from 'vue';
-import { useCollection, useDocument } from 'vuefire';
-import ResponsiveTeamName from '../common/ResponsiveTeamName.vue';
-import MatchReports from './MatchReports.vue';
+import CompetitionDAO from '@/dao/CompetitionDAO'
+import FixturesDAO, { reportDAO } from '@/dao/FixturesDAO'
+import TeamDAO from '@/dao/TeamDAO'
+import type { Fixture } from '@/entity/Fixtures'
+import { useDateTime } from '@/services/DateService'
+import { useDialog } from '@/services/DialogService'
+import { useKey } from '@/services/KeyService'
+import { ref } from 'vue'
+import { useCollection, useDocument } from 'vuefire'
+import ResponsiveTeamName from '../common/ResponsiveTeamName.vue'
+import MatchReports from './MatchReports.vue'
 
 const props = defineProps<{
   fixture: Fixture
@@ -124,15 +150,11 @@ const { date } = useDateTime()
 
 const showReports = ref(false)
 
-const nameClass = (score1: number, score2: number) => (score1 > score2) ? "winner" : ""
-
-const filter = (home: Team, away: Team) => `#${home.handle}vs${away.handle}`
+const nameClass = (score1: number, score2: number) => (score1 > score2 ? 'winner' : '')
 
 const { parseParent } = useKey()
 
 const { dialogSize } = useDialog()
-
-
 
 const fixsPath = parseParent(props.fixture.key)
 
@@ -141,7 +163,6 @@ const competition = useDocument(CompetitionDAO.getByPath(parseParent(fixsPath)))
 const reports = useCollection(reportDAO.subCollection(`${props.fixture.key}`))
 const home = useDocument(() => TeamDAO.getById(props.fixture.home.id))
 const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
-
 </script>
 <style lang="css" scoped>
 .match-row {
@@ -294,7 +315,9 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
 
 .report-btn {
   opacity: 0.6;
-  transition: opacity 0.2s, transform 0.2s;
+  transition:
+    opacity 0.2s,
+    transform 0.2s;
 }
 
 .match-row:hover .report-btn {

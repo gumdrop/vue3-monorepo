@@ -66,7 +66,6 @@
         </v-row>
 
         <notifications></notifications>
-        <chat-notifications></chat-notifications>
       </v-container>
     </v-main>
 

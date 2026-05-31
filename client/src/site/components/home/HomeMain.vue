@@ -15,10 +15,6 @@
         </div>
 
         <LatestResultsSummary :season-id="season.id" class="mt-4" />
-
-        <div class="chat-section mt-6">
-          <ql-chat name="homepagechat" displayName="League Chat"></ql-chat>
-        </div>
       </v-col>
     </v-row>
   </v-container>
@@ -54,11 +50,5 @@ setSidemenu(false)
   background-color: white;
   border-radius: 12px;
   padding: 8px;
-}
-
-.chat-section {
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 </style>
