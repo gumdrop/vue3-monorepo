@@ -2,7 +2,7 @@
   <v-list v-model:opened="open" density="compact">
     <v-list-group :value="title">
       <template v-slot:activator="{ props }">
-        <v-list-item v-bind="props" :prepend-icon="icon" :title="title" density="compact" :active="true" active-color="blue"></v-list-item>
+        <v-list-item v-bind="props" :prepend-icon="icon" :title="title" density="compact" :active="true" color="blue"></v-list-item>
       </template>
       <slot></slot>
     </v-list-group>
