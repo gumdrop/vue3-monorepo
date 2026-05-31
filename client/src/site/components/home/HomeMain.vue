@@ -10,7 +10,7 @@
         <div class="content-section">
           <QlTextBox>
             <QlNamedText textName="front-page" />
-            <QlText v-if="season.id && season.text" :id="season.text.id" />
+            <QlText v-if="season.id && season.text?.id" :id="season.text.id" />
           </QlTextBox>
         </div>
 

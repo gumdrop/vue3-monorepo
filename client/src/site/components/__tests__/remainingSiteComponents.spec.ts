@@ -1280,6 +1280,29 @@ describe('remaining fixture, home, and result components', () => {
     expect(summary.text()).toContain('Alpha opened the season with a win.')
   })
 
+  it('does not render season text on the home page when the text reference has no id', () => {
+    mocks.seasonsById.set(mocks.seasonId, {
+      ...season,
+      text: { path: 'text/season-text' },
+    })
+
+    const wrapper = mountSite(HomeMain, {
+      global: {
+        stubs: {
+          ...siteComponentStubs,
+          HomeTabs: simpleStub('home-tabs'),
+          LatestResultsSummary: simpleStub('latest-results-summary'),
+          QlNamedText: namedTextStub,
+          QlText: qlTextStub,
+          QlTextBox,
+        },
+      },
+    })
+
+    expect(wrapper.find('[data-test="ql-text"]').exists()).toBe(false)
+    expect(wrapper.get('[data-test="named-text"]').text()).toBe('front-page')
+  })
+
   it('renders all results and result submission states', async () => {
     const allResults = mountSite(AllResults, {
       global: { stubs: { ...siteComponentStubs, FixturesCard: simpleStub('fixtures-card') } },
