@@ -17,10 +17,10 @@ const router = createRouter({
   routes: [
     {
       path: '/competition',
-      name: 'competitions',
       children: [
         {
           path: '',
+          name: 'competitions',
           components: {
             title: () => import('../components/competition/CompetitionsTitle.vue'),
             sidenav: () => import('../components/competition/CompetitionsMenu.vue'),
@@ -132,10 +132,10 @@ const router = createRouter({
 
     {
       path: '/team',
-      name: 'teams',
       children: [
         {
           path: '',
+          name: 'teams',
           components: {
             default: () => import('../components/team/TeamsMain.vue'),
             title: () => import('../components/team/TeamsTitle.vue'),
@@ -185,10 +185,10 @@ const router = createRouter({
     },
     {
       path: '/venue',
-      name: 'venues',
       children: [
         {
           path: '',
+          name: 'venues',
           components: {
             title: () => import('../components/venue/VenuesTitle.vue'),
             default: () => import('../components/venue/VenuesMain.vue'),
