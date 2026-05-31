@@ -1,4 +1,10 @@
 <template>
+  <v-row v-if="teamId && allSeasons && allSeasons.length > 0" class="mb-4">
+    <v-col cols="12">
+      <HeadToHeadLeaders :stats="allSeasons[0]" />
+    </v-col>
+  </v-row>
+
   <v-combobox v-model="chips" :items="teams" label="Teams" chips clearable solo multiple>
     <template v-slot:selection="data">
       <v-chip>
@@ -8,9 +14,6 @@
   </v-combobox>
 
   <v-row wrap v-if="teamId && allSeasons && allSeasons.length > 0" justify="space-around" j>
-    <v-col cols="12">
-      <HeadToHeadLeaders :stats="allSeasons[0]" />
-    </v-col>
     <v-col>
       <HeadToHeadLeaguePosition :stats="allSeasons" />
     </v-col>
