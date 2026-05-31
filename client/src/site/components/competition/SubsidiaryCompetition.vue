@@ -5,7 +5,7 @@
         <div class="content-wrapper mb-6">
           <QlTextBox>
             <QlNamedText :textName="itemTextName" />
-            <QlText :id="item?.text.id" v-if="item.text" />
+            <QlText :id="item.text.id" v-if="item.text?.id" />
           </QlTextBox>
         </div>
       </v-col>
@@ -33,7 +33,7 @@ const props = defineProps<{ path: string }>()
 const key = computed(() => decode(props.path))
 const item = useDocument(() => CompetitionDAO.getByPath(key.value))
 const itemTextName = computed<string>(() => {
-  const competition = item.value as { textName?: string; text?: { id: string } } | undefined
+  const competition = item.value as { textName?: string; text?: { id?: string } } | undefined
   return competition?.textName ?? competition?.text?.id ?? ''
 })
 </script>

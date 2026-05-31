@@ -1078,6 +1078,36 @@ describe('remaining site content and competition components', () => {
     expect(singleton.text()).toContain('town-hall')
   })
 
+  it('does not render competition text when the text reference has no id', () => {
+    mocks.competitionsByPath.set(leagueCompetition.path, {
+      ...leagueCompetition,
+      text: { path: 'text/league-text' },
+    })
+    mocks.competitionsByPath.set(cupCompetition.path, {
+      ...cupCompetition,
+      text: { path: 'text/cup-text' },
+    })
+    mocks.competitionsByPath.set(singletonCompetition.path, {
+      ...singletonCompetition,
+      text: { path: 'text/finals-text' },
+    })
+
+    const competitionPages = [
+      [LeagueCompetiton, leagueCompetition.path],
+      [SubsidiaryCompetition, leagueCompetition.path],
+      [CupCompetiton, cupCompetition.path],
+      [SingletonCompetition, singletonCompetition.path],
+    ] as const
+
+    for (const [component, path] of competitionPages) {
+      const wrapper = mountSite(component, {
+        props: { path: path.replaceAll('/', '|') },
+      })
+
+      expect(wrapper.find('[data-test="ql-text"]').exists()).toBe(false)
+    }
+  })
+
   it('renders competition fixture wrappers and passes through fetch functions', async () => {
     const fetchFunction = vi.fn().mockResolvedValue([fixtureSetDoc])
     const wrapper = mountSite(CompetitionFixturesSet, {

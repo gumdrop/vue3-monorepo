@@ -34,9 +34,9 @@
               </div>
             </div>
             
-            <v-divider v-if="item.text" class="mb-6"></v-divider>
+            <v-divider v-if="item.text?.id" class="mb-6"></v-divider>
             
-            <div v-if="item.text" class="additional-info">
+            <div v-if="item.text?.id" class="additional-info">
               <QlText :id="item.text.id" />
             </div>
           </v-card-text>
@@ -67,7 +67,7 @@ const item = useDocument(() => CompetitionDAO.getByPath(path.value))
 type CompetitionEvent = { date: string; time: string; venue?: { id: string } }
 
 const itemTextName = computed<string>(() => {
-  const competition = item.value as { textName?: string; text?: { id: string } } | undefined
+  const competition = item.value as { textName?: string; text?: { id?: string } } | undefined
   return competition?.textName ?? competition?.text?.id ?? ''
 })
 const event = computed<CompetitionEvent | undefined>(() => {
