@@ -35,7 +35,11 @@ const props = defineProps<{ fixtures: DocumentReference<Fixtures> }>()
 const fixtures = useDocument(() => props.fixtures)
 
 
-const fixtureList = usePromise(() => fixtureDAO.collectionToDocuments(fixtureDAO.subCollection(`${fixtures?.value?.path}`)))
+const fixtureList = usePromise(() =>
+  props.fixtures.path
+    ? fixtureDAO.collectionToDocuments(fixtureDAO.subCollection(props.fixtures.path))
+    : Promise.resolve(undefined),
+)
 
 </script>
 <style scoped>

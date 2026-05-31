@@ -1,6 +1,7 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed, defineComponent, h, ref } from 'vue'
+import { fixtureDAO } from '@/dao/FixturesDAO'
 import LoginTitle from '../auth/LoginTitle.vue'
 import LoggedOnMenu from '../auth/LoggedOnMenu.vue'
 import SubTitle from '../common/SubTitle.vue'
@@ -1233,6 +1234,20 @@ describe('remaining fixture, home, and result components', () => {
       global: { stubs: { ...siteComponentStubs, AllFixtures: simpleStub('all-fixtures') } },
     })
     expect(allFixturesPage.get('[data-test="all-fixtures"]').exists()).toBe(true)
+  })
+
+  it('loads fixture card children from the fixture set document reference path', async () => {
+    const unresolvedFixtureSetDoc = docRef(`${leagueCompetition.path}/fixtures/week-2`)
+
+    mountSite(CompetitionFixturesCard, {
+      props: { fixtures: unresolvedFixtureSetDoc },
+      global: { stubs: { ...siteComponentStubs, SimpleFixtures: simpleStub('simple-fixtures') } },
+    })
+    await flushPromises()
+
+    expect(vi.mocked(fixtureDAO.collectionToDocuments)).toHaveBeenCalledWith(
+      expect.objectContaining({ path: `${unresolvedFixtureSetDoc.path}/fixture` }),
+    )
   })
 
   it('renders match reports and report items', () => {
