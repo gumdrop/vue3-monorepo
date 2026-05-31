@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, h } from 'vue'
 import { siteComponentStubs } from './componentStubs'
+import HeadToHeadLeaders from '../team/stats/HeadToHeadLeaders.vue'
 import SeasonLeaguePosition from '../team/stats/SeasonLeaguePosition.vue'
 import SeasonStats from '../team/stats/SeasonStats.vue'
 
@@ -12,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   stats: [] as unknown[],
   teamStats: vi.fn(),
   teamCount: vi.fn(),
+  headToHeadLeaders: vi.fn(),
 }))
 
 vi.mock('@/dao/StatisticsDAO', () => ({
@@ -28,6 +30,7 @@ vi.mock('@/services/TeamService', () => ({
     cumulativePointsDifferenceData: vi.fn(),
     singleSeasonResultTypes: vi.fn(),
     teamCount: mocks.teamCount,
+    headToHeadLeaders: mocks.headToHeadLeaders,
   }),
 }))
 
@@ -123,6 +126,10 @@ beforeEach(() => {
   mocks.stats = [stats]
   mocks.positionData.mockReturnValue({ datasets: [], labels: [] })
   mocks.teamCount.mockResolvedValue(4)
+  mocks.headToHeadLeaders.mockResolvedValue({
+    mostBeaten: [],
+    mostLostTo: [],
+  })
   mocks.teamStats.mockImplementation(() => ({ __data: mocks.stats }))
 })
 
@@ -185,9 +192,36 @@ describe('team statistics components', () => {
     expect(mocks.teamStats).toHaveBeenCalledWith('alpha', 'season-1')
     expect(wrapper.get('[data-test="line-chart"]').attributes('data-y-axis-max')).toBe('4')
     expect(wrapper.get('[data-test="line-chart"]').attributes('data-y-axis-tick-count')).toBe('4')
-    expect(wrapper.get('[data-test="line-chart"]').attributes('data-y-axis-integer-tick')).toBe(
-      '1',
-    )
+    expect(wrapper.get('[data-test="line-chart"]').attributes('data-y-axis-integer-tick')).toBe('1')
     expect(wrapper.get('[data-test="line-chart"]').attributes('data-y-axis-decimal-tick')).toBe('')
+  })
+
+  it('renders all-season head-to-head leaders', async () => {
+    mocks.headToHeadLeaders.mockResolvedValue({
+      mostBeaten: [{ team: 'Bravo', win: 3, lose: 1 }],
+      mostLostTo: [
+        { team: 'Charlie', win: 0, lose: 4 },
+        { team: 'Delta', win: 1, lose: 4 },
+      ],
+    })
+
+    const wrapper = mount(HeadToHeadLeaders, {
+      props: {
+        stats: [stats],
+      },
+      global: {
+        stubs: siteComponentStubs,
+      },
+    })
+
+    await flushPromises()
+
+    expect(mocks.headToHeadLeaders).toHaveBeenCalledWith([stats])
+    expect(wrapper.text()).toContain('Head-to-Head Highlights')
+    expect(wrapper.text()).toContain('Teams beaten most often')
+    expect(wrapper.text()).toContain('Bravo (3 wins)')
+    expect(wrapper.text()).toContain('Teams who beat this team most often')
+    expect(wrapper.text()).toContain('Charlie (4 losses)')
+    expect(wrapper.text()).toContain('Delta (4 losses)')
   })
 })

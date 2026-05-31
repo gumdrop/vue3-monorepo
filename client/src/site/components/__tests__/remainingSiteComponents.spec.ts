@@ -113,6 +113,7 @@ const mocks = vi.hoisted(() => ({
   fixturesForResultSubmission: vi.fn(),
   getNamedTextId: vi.fn(),
   goTo: vi.fn(),
+  headToHeadLeaders: vi.fn(),
   headToHeadResultsData: vi.fn(),
   latestResults: vi.fn(),
   logoff: vi.fn(),
@@ -370,6 +371,7 @@ vi.mock('@/services/TeamService', () => ({
     allSeasonsResultTypes: mocks.allSeasonsResultTypes,
     cumulativePointsDifferenceData: mocks.cumulativePointsDifferenceData,
     cumulativeScoresData: mocks.cumulativeScoresData,
+    headToHeadLeaders: mocks.headToHeadLeaders,
     headToHeadResultsData: mocks.headToHeadResultsData,
     matchScoresData: mocks.matchScoresData,
     multipleTeamsAllSeasonsAverageData: mocks.multipleTeamsAllSeasonsAverageData,
@@ -776,6 +778,10 @@ beforeEach(() => {
   mocks.fixtureSets = [fixtureSet]
   mocks.fixturesForResultSubmission.mockResolvedValue([fixtureDoc])
   mocks.getNamedTextId.mockResolvedValue('named-text')
+  mocks.headToHeadLeaders.mockResolvedValue({
+    mostBeaten: [{ team: 'Bravo', win: 2, lose: 0 }],
+    mostLostTo: [{ team: 'Charlie', win: 0, lose: 2 }],
+  })
   mocks.headToHeadResultsData.mockResolvedValue([{ team: 'Alpha', win: 1, lose: 0, draw: 0 }])
   mocks.latestResults.mockResolvedValue([fixtureSetDoc])
   mocks.matchScoresData.mockReturnValue({ labels: [], datasets: [] })

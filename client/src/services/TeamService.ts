@@ -259,7 +259,9 @@ export const useTeams = () => {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {}
 
-    const seasonStatistics = await StatisticsDAO.entities(StatisticsDAO.seasonStats(stats.season.id))
+    const seasonStatistics = await StatisticsDAO.entities(
+      StatisticsDAO.seasonStats(stats.season.id),
+    )
 
     return Math.max(tableRows, seasonStatistics.length)
   }
@@ -418,6 +420,43 @@ export const useTeams = () => {
     return results
   }
 
+  const headToHeadLeaders = async (stats: Statistics[]) => {
+    const totals = new Map<string, { win: number; lose: number }>()
+
+    stats
+      .filter((stat) => stat.seasonStats?.headToHead)
+      .flatMap((stat) => stat.seasonStats.headToHead)
+      .forEach((headToHead) => {
+        const teamId = headToHead.team.id
+        const total = totals.get(teamId) ?? { win: 0, lose: 0 }
+
+        totals.set(teamId, {
+          win: total.win + headToHead.win,
+          lose: total.lose + headToHead.lose,
+        })
+      })
+
+    const rows = await Promise.all(
+      [...totals.entries()].map(async ([teamId, total]) => {
+        const team = await TeamDAO.getDataById(teamId)
+
+        return {
+          team: team?.shortName || team?.name || teamId,
+          win: total.win,
+          lose: total.lose,
+        }
+      }),
+    )
+
+    const maxWins = Math.max(0, ...rows.map((row) => row.win))
+    const maxLosses = Math.max(0, ...rows.map((row) => row.lose))
+
+    return {
+      mostBeaten: maxWins ? rows.filter((row) => row.win === maxWins) : [],
+      mostLostTo: maxLosses ? rows.filter((row) => row.lose === maxLosses) : [],
+    }
+  }
+
   async function teamForUser(userId: string | undefined) {
     return (await TeamDAO.list())?.find((t) => t.users.find((u) => u.id === userId))
   }
@@ -438,6 +477,7 @@ export const useTeams = () => {
     multipleTeamsAllSeasonsPositionData,
     multipleTeamsAllSeasonsAverageData,
     headToHeadResultsData,
+    headToHeadLeaders,
     teamForUser,
   }
 }

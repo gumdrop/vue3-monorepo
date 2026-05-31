@@ -406,6 +406,43 @@ describe('TeamService', () => {
     ).resolves.toEqual([{ team: 'BRAVO', win: 1, draw: 1, lose: 0 }])
   })
 
+  it('finds tied all-season head-to-head leaders for wins and losses', async () => {
+    const stats = [
+      {
+        ...stat('season-1', 'alpha'),
+        seasonStats: {
+          ...stat('season-1', 'alpha').seasonStats,
+          headToHead: [
+            { team: { id: 'bravo', path: 'team/bravo' }, win: 2, draw: 0, lose: 0 },
+            { team: { id: 'charlie', path: 'team/charlie' }, win: 0, draw: 0, lose: 2 },
+          ],
+        },
+      },
+      {
+        ...stat('season-2', 'alpha'),
+        seasonStats: {
+          ...stat('season-2', 'alpha').seasonStats,
+          headToHead: [
+            { team: { id: 'bravo', path: 'team/bravo' }, win: 0, draw: 0, lose: 1 },
+            { team: { id: 'charlie', path: 'team/charlie' }, win: 2, draw: 0, lose: 1 },
+            { team: { id: 'delta', path: 'team/delta' }, win: 0, draw: 0, lose: 3 },
+          ],
+        },
+      },
+    ]
+
+    await expect(useTeams().headToHeadLeaders(stats as never)).resolves.toEqual({
+      mostBeaten: [
+        { team: 'BRAVO', win: 2, lose: 1 },
+        { team: 'CHARLIE', win: 2, lose: 3 },
+      ],
+      mostLostTo: [
+        { team: 'CHARLIE', win: 2, lose: 3 },
+        { team: 'DELTA', win: 0, lose: 3 },
+      ],
+    })
+  })
+
   it('finds the team linked to a user', async () => {
     mocks.teamDAO.list.mockResolvedValue([
       { id: 'alpha', users: [{ id: 'user-1', path: 'user/user-1' }] },
