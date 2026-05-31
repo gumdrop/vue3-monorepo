@@ -1349,6 +1349,11 @@ describe('remaining team, venue, and statistics components', () => {
         props: { standing: { name: 'League', standing: '1st' } },
       }).text(),
     ).toContain('League')
+    expect(
+      mountSite(TeamStandingLine, {
+        props: { standing: { name: '', standing: 'No standings available' } },
+      }).text(),
+    ).toContain('No standings available')
 
     const standings = mountSite(TeamStandings, {
       props: { teamId: team.id },

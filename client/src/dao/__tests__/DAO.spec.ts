@@ -4,9 +4,11 @@ import { SINGLETON_ID, toPath } from '@quizleague/shared'
 import type Entity from '@/entity/Entity'
 import DAO from '../DAO'
 import ApplicationContextDAO from '../ApplicationContextDAO'
+import { chatDAO, chatMessageDAO } from '../ChatDAO'
 import CompetitionStatisticsDAO from '../CompetitionStatisticsDAO'
 import FixturesDAO, { fixtureDAO, reportDAO } from '../FixturesDAO'
 import { GenericConverter } from '../GenericConverter'
+import LeagueTableDAO from '../LeagueTableDAO'
 import SiteUserDAO from '../SiteUserDAO'
 import StatisticsDAO from '../StatisticsDAO'
 import UserDAO from '../UserDAO'
@@ -474,6 +476,12 @@ describe('specific DAO helpers', () => {
     expect(CompetitionStatisticsDAO.collection()).toMatchObject({
       path: 'competitionstatistics',
     })
+  })
+
+  it('creates chat and league table DAO collection references', () => {
+    expect(chatDAO.collection()).toMatchObject({ path: 'chat' })
+    expect(chatMessageDAO.collection()).toMatchObject({ path: 'chatmessage' })
+    expect(LeagueTableDAO.collection()).toMatchObject({ path: 'leaguetable' })
   })
 
   it('creates a new user entity with a generated id and path', () => {

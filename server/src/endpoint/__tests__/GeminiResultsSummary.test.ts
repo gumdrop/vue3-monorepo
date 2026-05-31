@@ -143,6 +143,41 @@ describe('GeminiResultsSummary', () => {
     expect(body.generationConfig.thinkingConfig).toEqual({ thinkingBudget: 0 })
   })
 
+  it('omits thinking config for older models and includes no-report fixture text', async () => {
+    process.env['GEMINI_MODEL'] = 'models/gemini-1.5-flash'
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            finishReason: 'STOP',
+            content: {
+              parts: [{ text: 'No reports were submitted.' }],
+            },
+          },
+        ],
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      generateFixtureSetResultsSummary({
+        ...input,
+        fixtures: [{ ...input.fixtures[0], reports: [] }],
+      }),
+    ).resolves.toEqual({
+      text: 'No reports were submitted.',
+      model: 'models/gemini-1.5-flash',
+    })
+
+    expect(fetchMock.mock.calls[0][0]).toBe(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+    )
+    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string)
+    expect(body.contents[0].parts[0].text).toContain('Report: none submitted')
+    expect(body.generationConfig).not.toHaveProperty('thinkingConfig')
+  })
+
   it('returns undefined for failed or empty Gemini responses', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     vi.stubGlobal(

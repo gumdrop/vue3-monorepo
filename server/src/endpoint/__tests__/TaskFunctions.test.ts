@@ -32,7 +32,11 @@ vi.mock('../StatisticsUtils', () => ({
   updateForFixture: mocks.updateForFixture,
 }))
 
-import { regenerateFixtureSetResultsSummary, resultSubmission, statsRegenerate } from '../TaskFunctions'
+import {
+  regenerateFixtureSetResultsSummary,
+  resultSubmission,
+  statsRegenerate,
+} from '../TaskFunctions'
 
 const fixtureSetPath = 'season/season-1/competition/league/fixtures/week-1'
 const fixturePath = (id: string) => `${fixtureSetPath}/fixture/${id}`
@@ -234,6 +238,60 @@ describe('TaskFunctions', () => {
     expect(mocks.generateFixtureSetResultsSummary).not.toHaveBeenCalled()
   })
 
+  it('leaves completed fixture set summaries unchanged when Gemini returns empty text', async () => {
+    const user = { id: 'user-1', path: 'user/user-1' }
+    const teamA = {
+      id: 'team-a',
+      path: 'team/team-a',
+      users: [user],
+    }
+    const fixture = {
+      id: 'fixture-1',
+      path: fixturePath('fixture-1'),
+      home: { id: 'team-a', path: 'team/team-a' },
+      away: { id: 'team-b', path: 'team/team-b' },
+    }
+    const fixtureSet = {
+      id: 'week-1',
+      path: fixtureSetPath,
+      description: 'Week 1',
+      date: '2026-05-31',
+      start: '19:30',
+    }
+
+    mocks.load.mockImplementation(async (pathish) => {
+      const path = typeof pathish === 'string' ? pathish : pathish.path
+      if (path === 'user/user-1') return user
+      if (path === 'season/season-1/competition/league') {
+        return { id: 'league', path, name: 'League', _name: 'league' }
+      }
+      if (path === fixture.path) return fixture
+      if (path === fixtureSetPath) return fixtureSet
+      return undefined
+    })
+    mocks.list.mockImplementation(async (type, parent) => {
+      if (type === 'team') return [teamA]
+      if (type === 'fixture' && parent === fixtureSetPath) return [fixture]
+      if (type === 'report') return []
+      return []
+    })
+    mocks.generateFixtureSetResultsSummary.mockResolvedValue(undefined)
+
+    await resultSubmission({
+      fixtures: [{ fixturePath: fixture.path, homeScore: 43, awayScore: 42 }],
+      reportText: undefined,
+      userID: 'user-1',
+    })
+
+    expect(mocks.generateFixtureSetResultsSummary).toHaveBeenCalled()
+    expect(fixtureSet).not.toHaveProperty('resultsSummary')
+    expect(mocks.save).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: expect.stringMatching(/^text\//),
+      }),
+    )
+  })
+
   it('regenerates a completed fixture set summary using an existing text document', async () => {
     const fixtureSet = {
       id: 'week-1',
@@ -314,6 +372,109 @@ describe('TaskFunctions', () => {
         resultsSummaryGeneratedAt: expect.any(String),
       }),
     )
+  })
+
+  it('regenerates a completed fixture set summary from an existing string text path', async () => {
+    const fixtureSet = {
+      id: 'week-1',
+      path: fixtureSetPath,
+      description: 'Week 1',
+      date: '2026-05-31',
+      start: '19:30',
+      resultsSummary: '/text/summary-existing/',
+    }
+    const existingSummary = {
+      id: 'summary-existing',
+      path: 'text/summary-existing',
+      text: 'Old summary',
+      mimeType: 'text/markdown',
+    }
+    const fixture = {
+      id: 'fixture-1',
+      path: fixturePath('fixture-1'),
+      home: { id: 'team-a', path: 'team/team-a' },
+      away: { id: 'team-b', path: 'team/team-b' },
+      result: { homeScore: 43, awayScore: 42 },
+    }
+
+    mocks.load.mockImplementation(async (pathish) => {
+      const path = typeof pathish === 'string' ? pathish : pathish.path
+      if (path === fixtureSetPath) return fixtureSet
+      if (path === 'season/season-1/competition/league') {
+        return { id: 'league', path, _name: 'league' }
+      }
+      if (path === 'team/team-a') return { id: 'team-a', path }
+      if (path === 'team/team-b') return { id: 'team-b', path }
+      if (path === 'text/summary-existing') return existingSummary
+      return undefined
+    })
+    mocks.list.mockImplementation(async (type, parent) => {
+      if (type === 'fixture' && parent === fixtureSetPath) return [fixture]
+      if (type === 'report') return []
+      return []
+    })
+    mocks.generateFixtureSetResultsSummary.mockResolvedValue({
+      text: 'Updated summary.',
+      model: 'gemini-test',
+    })
+
+    await expect(regenerateFixtureSetResultsSummary(fixtureSetPath)).resolves.toBe(fixtureSet)
+
+    expect(mocks.generateFixtureSetResultsSummary).toHaveBeenCalledWith(
+      expect.objectContaining({
+        competitionName: 'league',
+        fixtures: [
+          expect.objectContaining({
+            homeTeam: 'team-a',
+            awayTeam: 'team-b',
+          }),
+        ],
+      }),
+    )
+    expect(mocks.save).toHaveBeenCalledWith({
+      ...existingSummary,
+      text: 'Updated summary.',
+      mimeType: 'text/markdown',
+    })
+  })
+
+  it('rejects summary regeneration when Gemini returns empty text for a completed fixture set', async () => {
+    const fixtureSet = {
+      id: 'week-1',
+      path: fixtureSetPath,
+      description: 'Week 1',
+      date: '2026-05-31',
+      start: '19:30',
+    }
+    const fixture = {
+      id: 'fixture-1',
+      path: fixturePath('fixture-1'),
+      home: { id: 'team-a', path: 'team/team-a' },
+      away: { id: 'team-b', path: 'team/team-b' },
+      result: { homeScore: 43, awayScore: 42 },
+    }
+
+    mocks.load.mockImplementation(async (pathish) => {
+      const path = typeof pathish === 'string' ? pathish : pathish.path
+      if (path === fixtureSetPath) return fixtureSet
+      if (path === 'season/season-1/competition/league') {
+        return { id: 'league', path, name: 'League', _name: 'league' }
+      }
+      if (path === 'team/team-a') return { id: 'team-a', path, name: 'Alpha' }
+      if (path === 'team/team-b') return { id: 'team-b', path, name: 'Bravo' }
+      return undefined
+    })
+    mocks.list.mockImplementation(async (type, parent) => {
+      if (type === 'fixture' && parent === fixtureSetPath) return [fixture]
+      if (type === 'report') return []
+      return []
+    })
+    mocks.generateFixtureSetResultsSummary.mockResolvedValue(undefined)
+
+    await expect(regenerateFixtureSetResultsSummary(fixtureSetPath)).rejects.toThrow(
+      'Gemini did not return a fixture set results summary',
+    )
+    expect(mocks.save).not.toHaveBeenCalledWith(fixtureSet)
   })
 
   it('rejects summary regeneration for missing, empty, or incomplete fixture sets', async () => {

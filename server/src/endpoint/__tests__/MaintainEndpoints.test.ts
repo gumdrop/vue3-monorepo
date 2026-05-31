@@ -29,7 +29,9 @@ vi.mock('../../storage/Storage', () => ({
 vi.mock('../util', () => ({
   param: vi.fn((name: string, req: Request) => req.params[name]),
   send: vi.fn((result: unknown, res: Response) => {
-    Promise.resolve(result).then((value) => res.json(value))
+    Promise.resolve(result)
+      .then((value) => res.json(value))
+      .catch((error) => res.status(500).json({ error: (error as Error).message }))
   }),
 }))
 
@@ -125,6 +127,41 @@ describe('MaintainEndpoints', () => {
       resultsSummaryText: 'Fresh AI summary',
       resultsSummaryGeneratedAt: '2026-05-31T09:00:00.000Z',
       resultsSummaryModel: 'gemini-test',
+    })
+  })
+
+  it('accepts parsed regenerate commands and reports empty generated summaries', async () => {
+    vi.mocked(regenerateFixtureSetResultsSummary).mockResolvedValueOnce({
+      path: 'season/season-1/competition/league/fixtures/week-1',
+      resultsSummary: undefined,
+      resultsSummaryGeneratedAt: undefined,
+      resultsSummaryModel: undefined,
+    } as never)
+    const { app, routes } = createApp()
+    configure(app)
+
+    const response = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as unknown as Response
+
+    routes.get('POST /rest/maintain/fixtures/results-summary/regenerate')?.(
+      {
+        body: {
+          fixtureSetPath: 'season/season-1/competition/league/fixtures/week-1',
+        },
+      } as Request,
+      response,
+    )
+    await flushPromises()
+
+    expect(regenerateFixtureSetResultsSummary).toHaveBeenCalledWith(
+      'season/season-1/competition/league/fixtures/week-1',
+    )
+    expect(response.status).toHaveBeenCalledWith(500)
+    expect(response.json).toHaveBeenCalledWith({
+      error: 'Gemini did not return a fixture set results summary',
     })
   })
 })

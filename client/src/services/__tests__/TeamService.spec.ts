@@ -180,6 +180,14 @@ describe('TeamService', () => {
     )
   })
 
+  it('returns no standings when the current season has no league or cup entries', async () => {
+    mocks.competitionsService.firstClassCompetitions.mockResolvedValue([])
+
+    await expect(useTeams().standings('alpha')).resolves.toEqual([])
+    expect(mocks.leagueTableDAO.entities).not.toHaveBeenCalled()
+    expect(mocks.competitionsService.fixtures).not.toHaveBeenCalled()
+  })
+
   it('builds chart datasets from non-ignorable weekly stats in date order', () => {
     const teams = useTeams()
 
@@ -195,6 +203,54 @@ describe('TeamService', () => {
       ],
       labels: ['Won', 'Drawn', 'Lost'],
     })
+    expect(teams.matchScoresData(stat() as never)).toEqual({
+      datasets: [
+        expect.objectContaining({
+          label: 'For',
+          data: [10, 30, 0],
+        }),
+        expect.objectContaining({
+          label: 'Against',
+          data: [10, 20, 20],
+        }),
+      ],
+      labels: ['1 Jan', '8 Jan', '15 Jan'],
+    })
+    expect(teams.cumulativeScoresData(stat() as never)).toEqual({
+      datasets: [
+        expect.objectContaining({
+          label: 'For',
+          data: [10, 30, 30],
+        }),
+        expect.objectContaining({
+          label: 'Against',
+          data: [10, 20, 40],
+        }),
+      ],
+      labels: ['1 Jan', '8 Jan', '15 Jan'],
+    })
+    expect(teams.cumulativePointsDifferenceData(stat() as never)).toEqual({
+      datasets: [
+        expect.objectContaining({
+          label: 'Difference',
+          data: [0, 10, -10],
+        }),
+      ],
+      labels: ['1 Jan', '8 Jan', '15 Jan'],
+    })
+  })
+
+  it('builds all-season result type totals across supplied statistics', () => {
+    expect(useTeams().allSeasonsResultTypes([stat('season-1'), stat('season-2')] as never)).toEqual(
+      {
+        datasets: [
+          expect.objectContaining({
+            data: [2, 2, 2],
+          }),
+        ],
+        labels: ['Won', 'Drawn', 'Lost'],
+      },
+    )
   })
 
   it('pads all-seasons position data for missing seasons', async () => {
@@ -234,6 +290,31 @@ describe('TeamService', () => {
     await expect(useTeams().teamCount(stat('season-1', 'alpha') as never)).resolves.toBe(4)
   })
 
+  it('uses the largest team count across multiple seasons', async () => {
+    mocks.leagueTableDAO.getDataByPath
+      .mockResolvedValueOnce({
+        rows: [{ team: { id: 'alpha' } }, { team: { id: 'bravo' } }],
+      })
+      .mockResolvedValueOnce({
+        rows: [{ team: { id: 'alpha' } }, { team: { id: 'bravo' } }, { team: { id: 'charlie' } }],
+      })
+    mocks.statisticsDAO.entities
+      .mockResolvedValueOnce([stat('season-1', 'alpha')])
+      .mockResolvedValueOnce([
+        stat('season-2', 'alpha'),
+        stat('season-2', 'bravo'),
+        stat('season-2', 'charlie'),
+        stat('season-2', 'delta'),
+      ])
+
+    await expect(
+      useTeams().teamCountAllSeasons([
+        stat('season-1', 'alpha'),
+        stat('season-2', 'alpha'),
+      ] as never),
+    ).resolves.toBe(4)
+  })
+
   it('calculates all-seasons averages from non-ignorable fixtures', async () => {
     await expect(useTeams().allSeasonsAverageData([stat('season-1') as never])).resolves.toEqual({
       datasets: [
@@ -271,6 +352,35 @@ describe('TeamService', () => {
       datasets: [
         expect.objectContaining({ label: 'ALPHA', data: [2, null] }),
         expect.objectContaining({ label: 'BRAVO', data: [null, 2] }),
+      ],
+      labels: ['2024/25', '2025/26'],
+    })
+  })
+
+  it('treats zero league positions as missing when building all-season position data', async () => {
+    const missingPosition = {
+      ...stat('season-1', 'alpha'),
+      seasonStats: {
+        ...stat('season-1', 'alpha').seasonStats,
+        currentLeaguePosition: 0,
+      },
+    }
+
+    await expect(
+      useTeams().multipleTeamsAllSeasonsPositionData([[missingPosition]] as never),
+    ).resolves.toEqual({
+      datasets: [expect.objectContaining({ label: 'ALPHA', data: [null, null] })],
+      labels: ['2024/25', '2025/26'],
+    })
+  })
+
+  it('builds multi-team all-season average graph data', async () => {
+    const stats = [[stat('season-1', 'alpha')], [stat('season-2', 'bravo')]]
+
+    await expect(useTeams().multipleTeamsAllSeasonsAverageData(stats as never)).resolves.toEqual({
+      datasets: [
+        expect.objectContaining({ label: 'ALPHA', data: [40 / 3, null] }),
+        expect.objectContaining({ label: 'BRAVO', data: [null, 40 / 3] }),
       ],
       labels: ['2024/25', '2025/26'],
     })
