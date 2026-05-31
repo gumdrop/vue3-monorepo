@@ -17,7 +17,7 @@
   </tr>
 
   <!-- Main Fixture/Result Row -->
-  <tr v-if="fixture && home && away" class="match-row" :class="{ 'has-result': fixture.result }">
+  <tr v-if="fixture && home && away" class="match-row" :class="{ 'has-result': fixtureResult }">
     <!-- Desktop Inline Details Column -->
     <td v-if="inlineDetails && !$vuetify.display.smAndDown" class="inline-details-col">
       <v-skeleton-loader
@@ -36,7 +36,7 @@
       class="team-cell home-team"
       :class="[
         inlineDetails && $vuetify.display.smAndDown ? 'is-inline' : '',
-        fixture.result && nameClass(fixture.result.homeScore, fixture.result.awayScore),
+        fixtureResult && nameClass(fixtureResult.homeScore, fixtureResult.awayScore),
       ]"
     >
       <div class="team-name-wrapper">
@@ -46,18 +46,18 @@
 
     <!-- Score/VS -->
     <td class="score-cell">
-      <div v-if="fixture.result" class="score-with-note">
+      <div v-if="fixtureResult" class="score-with-note">
         <div class="score-display">
           <span
             class="score-num"
-            :class="nameClass(fixture.result.homeScore, fixture.result.awayScore)"
-            >{{ fixture.result.homeScore }}</span
+            :class="nameClass(fixtureResult.homeScore, fixtureResult.awayScore)"
+            >{{ fixtureResult.homeScore }}</span
           >
           <span class="score-divider">-</span>
           <span
             class="score-num"
-            :class="nameClass(fixture.result.awayScore, fixture.result.homeScore)"
-            >{{ fixture.result.awayScore }}</span
+            :class="nameClass(fixtureResult.awayScore, fixtureResult.homeScore)"
+            >{{ fixtureResult.awayScore }}</span
           >
         </div>
         <v-menu v-if="resultNote" location="top" open-on-hover>
@@ -86,7 +86,7 @@
     <!-- Away Team -->
     <td
       class="team-cell away-team"
-      :class="fixture.result && nameClass(fixture.result.awayScore, fixture.result.homeScore)"
+      :class="fixtureResult && nameClass(fixtureResult.awayScore, fixtureResult.homeScore)"
     >
       <div class="team-name-wrapper">
         <ResponsiveTeamName :team="away" />
@@ -95,22 +95,45 @@
 
     <!-- Actions (Reports) -->
     <td class="actions-cell">
-      <div v-if="reports && reports.length > 0" class="reports-action">
-        <v-tooltip location="top" text="Match Reports">
-          <template v-slot:activator="{ props }">
-            <v-btn
-              density="comfortable"
-              icon
-              variant="text"
-              color="primary"
-              @click.stop="showReports = true"
-              v-bind="props"
-              class="report-btn"
-            >
-              <v-icon size="20">mdi-file-document-outline</v-icon>
-            </v-btn>
-          </template>
-        </v-tooltip>
+      <div class="actions-content">
+        <div v-if="showVenueDifference" class="venue-action">
+          <v-menu location="top" open-on-hover>
+            <template v-slot:activator="{ props }">
+              <v-btn
+                v-bind="props"
+                aria-label="Show fixture venue"
+                class="venue-btn"
+                color="warning"
+                density="comfortable"
+                icon
+                variant="text"
+              >
+                <v-icon size="20">mdi-map-marker-alert-outline</v-icon>
+              </v-btn>
+            </template>
+            <v-card class="fixture-venue-popover" max-width="260">
+              <v-card-text class="pa-3 fixture-venue-text">{{ fixtureVenueName }}</v-card-text>
+            </v-card>
+          </v-menu>
+        </div>
+
+        <div v-if="reports && reports.length > 0" class="reports-action">
+          <v-tooltip location="top" text="Match Reports">
+            <template v-slot:activator="{ props }">
+              <v-btn
+                density="comfortable"
+                icon
+                variant="text"
+                color="primary"
+                @click.stop="showReports = true"
+                v-bind="props"
+                class="report-btn"
+              >
+                <v-icon size="20">mdi-file-document-outline</v-icon>
+              </v-btn>
+            </template>
+          </v-tooltip>
+        </div>
       </div>
 
       <!-- Reports Dialog -->
@@ -133,8 +156,8 @@
                 <div class="text-h6 font-weight-bold">
                   <ResponsiveTeamName v-if="home" :team="home" />
                 </div>
-                <div class="text-h4 font-weight-black mx-4" v-if="fixture.result">
-                  {{ fixture.result.homeScore }} - {{ fixture.result.awayScore }}
+                <div class="text-h4 font-weight-black mx-4" v-if="fixtureResult">
+                  {{ fixtureResult.homeScore }} - {{ fixtureResult.awayScore }}
                 </div>
                 <div class="text-h6 font-weight-bold">
                   <ResponsiveTeamName v-if="away" :team="away" />
@@ -153,6 +176,7 @@
 import CompetitionDAO from '@/dao/CompetitionDAO'
 import FixturesDAO, { reportDAO } from '@/dao/FixturesDAO'
 import TeamDAO from '@/dao/TeamDAO'
+import VenueDAO from '@/dao/VenueDAO'
 import type { Fixture } from '@/entity/Fixtures'
 import { useDateTime } from '@/services/DateService'
 import { useDialog } from '@/services/DialogService'
@@ -172,7 +196,13 @@ const { date } = useDateTime()
 const showReports = ref(false)
 
 const nameClass = (score1: number, score2: number) => (score1 > score2 ? 'winner' : '')
-const resultNote = computed(() => props.fixture.result?.note?.trim() || undefined)
+const fixtureResult = computed(() => {
+  const result = props.fixture.result
+  return result && Number.isFinite(result.homeScore) && Number.isFinite(result.awayScore)
+    ? result
+    : undefined
+})
+const resultNote = computed(() => fixtureResult.value?.note?.trim() || undefined)
 
 const { parseParent } = useKey()
 
@@ -185,6 +215,38 @@ const competition = useDocument(CompetitionDAO.getByPath(parseParent(fixsPath)))
 const reports = useCollection(reportDAO.subCollection(`${props.fixture.key}`))
 const home = useDocument(() => TeamDAO.getById(props.fixture.home.id))
 const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
+type VenueLike = { id?: string; path?: string; name?: string }
+const fixtureVenueValue = computed(() => props.fixture.venue as VenueLike | undefined)
+const venueIdentity = (venue?: VenueLike) => ({
+  id: venue?.id ?? venue?.path?.split('/').pop(),
+  path: venue?.path,
+})
+const fixtureVenueIdentity = computed(() => venueIdentity(fixtureVenueValue.value))
+const homeVenueIdentity = computed(() => venueIdentity(home.value?.venue))
+const fixtureVenuePath = computed(() => fixtureVenueIdentity.value.path)
+const fixtureVenueId = computed(() => fixtureVenueIdentity.value.id)
+const homeVenuePath = computed(() => homeVenueIdentity.value.path)
+const homeVenueId = computed(() => homeVenueIdentity.value.id)
+const venueDiffersFromHomeVenue = computed(() =>
+  fixtureVenueId.value && homeVenueId.value
+    ? fixtureVenueId.value !== homeVenueId.value
+    : Boolean(
+        fixtureVenuePath.value &&
+          homeVenuePath.value &&
+          fixtureVenuePath.value !== homeVenuePath.value,
+      ),
+)
+const showVenueDifference = computed(() => !fixtureResult.value && venueDiffersFromHomeVenue.value)
+const fixtureVenue = useDocument(() =>
+  fixtureVenuePath.value
+    ? VenueDAO.getByPath(fixtureVenuePath.value)
+    : fixtureVenueId.value
+      ? VenueDAO.getById(fixtureVenueId.value)
+      : undefined,
+)
+const fixtureVenueName = computed(
+  () => fixtureVenueValue.value?.name ?? fixtureVenue.value?.name ?? fixtureVenueId.value,
+)
 </script>
 <style lang="css" scoped>
 .match-row {
@@ -349,23 +411,39 @@ const away = useDocument(() => TeamDAO.getById(props.fixture.away.id))
 /* Actions Styling */
 .actions-cell {
   padding: 8px;
-  width: 40px;
+  width: 80px;
   text-align: center;
 }
 
-.report-btn {
+.actions-content {
+  align-items: center;
+  display: inline-flex;
+  gap: 2px;
+  justify-content: center;
+}
+
+.report-btn,
+.venue-btn {
   opacity: 0.6;
   transition:
     opacity 0.2s,
     transform 0.2s;
 }
 
-.match-row:hover .report-btn {
+.match-row:hover .report-btn,
+.match-row:hover .venue-btn {
   opacity: 1;
 }
 
-.report-btn:hover {
+.report-btn:hover,
+.venue-btn:hover {
   transform: scale(1.1);
+}
+
+.fixture-venue-text {
+  color: #334155;
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
 /* Dialog Styling */

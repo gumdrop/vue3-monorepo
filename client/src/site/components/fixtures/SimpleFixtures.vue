@@ -57,7 +57,7 @@ const list = computed(() => props.fixtures)
 }
 
 .actions-column {
-  width: 40px;
+  width: 80px;
 }
 
 @media (max-width: 600px) {

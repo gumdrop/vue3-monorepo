@@ -153,6 +153,7 @@ const mocks = vi.hoisted(() => ({
   teamsByPath: new Map<string, unknown>(),
   textsByPath: new Map<string, unknown>(),
   venuesById: new Map<string, unknown>(),
+  venuesByPath: new Map<string, unknown>(),
   seasonId: 'season-2025',
   smAndDown: false,
   user: undefined as
@@ -286,6 +287,7 @@ vi.mock('@/dao/UserDAO', () => ({
 vi.mock('@/dao/VenueDAO', () => ({
   default: {
     getById: (id: string) => docRef(`venue/${id}`, mocks.venuesById.get(id)),
+    getByPath: (path: string) => docRef(path, mocks.venuesByPath.get(path)),
     sortedActive: () => ({ __data: mocks.collections.get('venue') ?? [] }),
   },
 }))
@@ -715,6 +717,13 @@ const venue = {
   imageURL: '/venue.jpg',
 }
 
+const neutralVenue = {
+  id: 'neutral-hall',
+  path: 'venue/neutral-hall',
+  name: 'Neutral Hall',
+  address: '2 Side Street\nTown',
+}
+
 const fixtureSet = {
   id: 'week-1',
   path: `${leagueCompetition.path}/fixtures/week-1`,
@@ -805,6 +814,7 @@ beforeEach(() => {
   mocks.teamsByPath.clear()
   mocks.textsByPath.clear()
   mocks.venuesById.clear()
+  mocks.venuesByPath.clear()
   mocks.user = {
     siteUser: {
       id: 'site-user-1',
@@ -861,6 +871,9 @@ beforeEach(() => {
     mimeType: 'text/markdown',
   })
   mocks.venuesById.set(venue.id, venue)
+  mocks.venuesById.set(neutralVenue.id, neutralVenue)
+  mocks.venuesByPath.set(venue.path, venue)
+  mocks.venuesByPath.set(neutralVenue.path, neutralVenue)
 })
 
 describe('remaining site title and navigation components', () => {
@@ -1213,6 +1226,7 @@ describe('remaining fixture, home, and result components', () => {
       props: {
         fixture: {
           ...fixture,
+          venue: { id: neutralVenue.id, path: neutralVenue.path },
           result: {
             ...fixture.result,
             note: 'Score adjusted after review.',
@@ -1238,6 +1252,34 @@ describe('remaining fixture, home, and result components', () => {
     expect(line.text()).toContain('41')
     expect(line.get('button[aria-label="Show result note"]').exists()).toBe(true)
     expect(line.text()).toContain('Score adjusted after review.')
+    expect(line.find('button[aria-label="Show fixture venue"]').exists()).toBe(false)
+
+    const fixtureAtDifferentVenue = mountSite(FixtureLine, {
+      props: {
+        fixture: {
+          ...fixture,
+          venue: { id: neutralVenue.id },
+          result: undefined,
+        },
+        inlineDetails: true,
+      },
+      global: {
+        stubs: {
+          ...siteComponentStubs,
+          MatchReports: simpleStub('match-reports'),
+          ResponsiveTeamName: defineComponent({
+            props: { team: Object },
+            setup(props) {
+              return () => h('span', (props.team as { name?: string })?.name)
+            },
+          }),
+        },
+      },
+    })
+    expect(fixtureAtDifferentVenue.get('button[aria-label="Show fixture venue"]').exists()).toBe(
+      true,
+    )
+    expect(fixtureAtDifferentVenue.text()).toContain('Neutral Hall')
   })
 
   it('renders fixture cards and fixture pages', async () => {
