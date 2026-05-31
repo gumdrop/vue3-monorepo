@@ -1,5 +1,6 @@
 import Express, { type Request, type Response } from 'express'
 import Path from 'node:path'
+import { existsSync } from 'node:fs'
 import configureSite from './endpoint/SiteEndpoints'
 import configureCalendar from './endpoint/CalendarEndpoints'
 import configureMaintain from './endpoint/MaintainEndpoints'
@@ -8,7 +9,11 @@ export const isLocal = () => true && process.env['FIRESTORE_EMULATOR_HOST']
 export const emulatorAddr = () => process.env['FIRESTORE_EMULATOR_HOST']
 
 const app = Express()
-const builtRoot = Path.join(process.cwd(), 'deploy', 'built')
+const builtRootCandidates = [
+  Path.join(process.cwd(), 'deploy', 'built'),
+  Path.join(process.cwd(), 'built'),
+]
+const builtRoot = builtRootCandidates.find((path) => existsSync(path)) ?? builtRootCandidates[0]
 
 const bodyParser = (req: Request, res: Response, next: () => void) => {
   let data = ''
@@ -38,6 +43,10 @@ const port = process.env['PORT'] || '8000'
 configureSite(app)
 configureCalendar(app)
 configureMaintain(app)
+
+app.use('/rest', (req: Request, res: Response) => {
+  res.status(404).json({ error: `Unknown REST endpoint: ${req.method} ${req.originalUrl}` })
+})
 
 app.use('/', indexMapping).listen(port)
 

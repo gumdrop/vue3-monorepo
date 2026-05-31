@@ -1,5 +1,6 @@
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { defineComponent, h } from 'vue'
 import type Team from '@/entity/Team'
 import type Venue from '@/entity/Venue'
 import type { Fixture } from '@/entity/Fixtures'
@@ -19,6 +20,14 @@ const mocks = vi.hoisted(() => ({
     getDataByPath: vi.fn(),
     save: vi.fn(),
   },
+  textDAO: {
+    getByPath: vi.fn((pathish: { id?: string; path: string } | string) => {
+      const path = typeof pathish === 'string' ? pathish : pathish.path
+      return { id: path.split('/').at(-1), path }
+    }),
+    getData: vi.fn(),
+    save: vi.fn(),
+  },
   fixtureDAO: {
     entities: vi.fn(),
     subCollection: vi.fn((path: string) => `${path}/fixture`),
@@ -33,7 +42,14 @@ const mocks = vi.hoisted(() => ({
     list: vi.fn(),
     getByPath: vi.fn((path: string) => ({ id: path.split('/').at(-1), path })),
   },
+  axiosPost: vi.fn(),
   uuid: vi.fn(),
+}))
+
+vi.mock('axios', () => ({
+  default: {
+    post: mocks.axiosPost,
+  },
 }))
 
 vi.mock('vue-router', () => ({
@@ -44,6 +60,10 @@ vi.mock('vue-router', () => ({
 vi.mock('@/dao/FixturesDAO', () => ({
   default: mocks.fixturesDAO,
   fixtureDAO: mocks.fixtureDAO,
+}))
+
+vi.mock('@/dao/TextDAO', () => ({
+  default: mocks.textDAO,
 }))
 
 vi.mock('@/dao/TeamDAO', () => ({
@@ -89,12 +109,47 @@ const fixture = (id: string, homeId: string, awayId: string): Fixture =>
 const mountFixturesEdit = async () => {
   const wrapper = mount(FixturesEdit, {
     global: {
-      stubs: maintenanceComponentStubs,
+      stubs: {
+        ...maintenanceComponentStubs,
+        TextEdit: summaryTextEditStub,
+      },
     },
   })
   await flushPromises()
   return wrapper
 }
+
+const summaryTextEditStub = defineComponent({
+  props: {
+    modelValue: Object,
+  },
+  emits: ['save', 'update:modelValue'],
+  setup(props, { emit }) {
+    return () =>
+      props.modelValue
+        ? h('div', { 'data-test': 'summary-text-edit' }, [
+            h('textarea', {
+              'aria-label': 'Markdown',
+              'data-test': 'summary-markdown-textarea',
+              value: (props.modelValue as { text?: string }).text ?? '',
+              onInput: (event: Event) =>
+                emit('update:modelValue', {
+                  ...(props.modelValue as object),
+                  text: (event.target as HTMLTextAreaElement).value,
+                }),
+            }),
+            h(
+              'button',
+              {
+                'data-test': 'summary-text-save',
+                onClick: () => emit('save', props.modelValue),
+              },
+              'Save Text',
+            ),
+          ])
+        : h('div', 'No text selected')
+  },
+})
 
 const clickButton = async (wrapper: VueWrapper, text: string) => {
   const button = wrapper.findAll('button').find((candidate) => candidate.text().includes(text))
@@ -136,6 +191,9 @@ describe('FixturesEdit', () => {
       venue('echo-venue'),
     ])
     mocks.fixtureDAO.entities.mockResolvedValue([])
+    mocks.textDAO.getData.mockResolvedValue(undefined)
+    mocks.textDAO.save.mockResolvedValue(undefined)
+    mocks.axiosPost.mockResolvedValue({ data: {} })
     let uuidCounter = 0
     mocks.uuid.mockImplementation(() => `uuid-${++uuidCounter}`)
   })
@@ -218,5 +276,114 @@ describe('FixturesEdit', () => {
 
     expect(homeOptions).toEqual(['', 'team/alpha', 'team/echo'])
     expect(awayOptions).toEqual(['', 'team/bravo', 'team/echo'])
+  })
+
+  it('allows an existing AI summary to be edited and saved with the fixture group', async () => {
+    mocks.fixturesDAO.getDataByPath.mockResolvedValueOnce({
+      id: 'fixture-set-1',
+      path: 'season/season-1/competition/competition-1/fixtures/fixture-set-1',
+      description: 'Week 1',
+      date: '2026-01-01',
+      start: '20:00',
+      resultsSummary: { id: 'summary-text', path: 'text/summary-text' },
+    })
+    mocks.textDAO.getData.mockResolvedValueOnce({
+      id: 'summary-text',
+      path: 'text/summary-text',
+      text: 'Original summary',
+      mimeType: 'text/markdown',
+    })
+    const wrapper = await mountFixturesEdit()
+
+    await wrapper.get('[data-test="summary-markdown-textarea"]').setValue('Edited summary')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.textDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'summary-text',
+        path: 'text/summary-text',
+        text: 'Edited summary',
+      }),
+    )
+    expect(mocks.fixturesDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'fixture-set-1',
+        resultsSummary: { id: 'summary-text', path: 'text/summary-text' },
+      }),
+    )
+  })
+
+  it('saves AI summary edits from the normal text editor', async () => {
+    mocks.fixturesDAO.getDataByPath.mockResolvedValueOnce({
+      id: 'fixture-set-1',
+      path: 'season/season-1/competition/competition-1/fixtures/fixture-set-1',
+      description: 'Week 1',
+      date: '2026-01-01',
+      start: '20:00',
+      resultsSummary: { id: 'summary-text', path: 'text/summary-text' },
+    })
+    mocks.textDAO.getData.mockResolvedValueOnce({
+      id: 'summary-text',
+      path: 'text/summary-text',
+      text: 'Original summary',
+      mimeType: 'text/markdown',
+    })
+    const wrapper = await mountFixturesEdit()
+
+    await wrapper.get('[data-test="summary-markdown-textarea"]').setValue('Saved text edit')
+    await wrapper.get('[data-test="summary-text-save"]').trigger('click')
+
+    expect(mocks.textDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'summary-text',
+        path: 'text/summary-text',
+        text: 'Saved text edit',
+      }),
+    )
+    expect(mocks.fixturesDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'fixture-set-1',
+        resultsSummary: { id: 'summary-text', path: 'text/summary-text' },
+      }),
+    )
+    expect(wrapper.text()).toContain('AI summary saved')
+  })
+
+  it('regenerates the AI summary from the fixture group page', async () => {
+    mocks.axiosPost.mockResolvedValue({
+      data: {
+        resultsSummary: { id: 'summary-text', path: 'text/summary-text' },
+        resultsSummaryText: 'Fresh AI summary',
+        resultsSummaryGeneratedAt: '2026-05-31T09:00:00.000Z',
+        resultsSummaryModel: 'gemini-test',
+      },
+    })
+    const wrapper = await mountFixturesEdit()
+
+    await wrapper.find('[data-test="regenerate-summary-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mocks.axiosPost).toHaveBeenCalledWith(
+      '/rest/maintain/fixtures/results-summary/regenerate',
+      {
+        fixtureSetPath: 'season/season-1/competition/competition-1/fixtures/fixture-set-1',
+      },
+    )
+    expect(wrapper.get('[data-test="summary-markdown-textarea"]').element).toHaveProperty(
+      'value',
+      'Fresh AI summary',
+    )
+    expect(wrapper.text()).toContain('AI summary regenerated')
+  })
+
+  it('reports an error when summary regeneration returns no summary text', async () => {
+    mocks.axiosPost.mockResolvedValue({ data: '<!doctype html><html></html>' })
+    const wrapper = await mountFixturesEdit()
+
+    await wrapper.find('[data-test="regenerate-summary-button"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('AI summary regeneration failed')
+    expect(wrapper.find('[data-test="results-summary-text"]').exists()).toBe(false)
   })
 })

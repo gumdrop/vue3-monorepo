@@ -4,7 +4,8 @@
   "description": "Quizleague Website",
   "type": "module",
   "scripts": {
-    "deployToProd": "npm run build-only -w client && cp -r client/dist ./server/deploy/built && npm run build -w server",
+    "deployToProd": "npm run build-only -w client && rm -rf ./server/deploy/built && cp -r client/dist ./server/deploy/built && npm run build -w server && node scripts/write-gcp-app-yaml.mjs",
+    "deployToGcp": "npm run deployToProd && gcloud app deploy server/deploy",
     "emulators:start": "npx firebase-tools@15.17.0 emulators:start --only firestore --import=./emulator-data --export-on-exit=./emulator-data",
     "emulators:export": "npx firebase-tools@15.17.0 emulators:export ./emulator-data --force",
     "seed:emulator": "node scripts/seed-firestore-emulator.mjs"

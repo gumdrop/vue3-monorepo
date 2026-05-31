@@ -1,7 +1,7 @@
 <template>
   <v-container :class="gridSize" v-if="season" class="home-container pa-0">
     <PageTitle title="Home" />
-    
+
     <v-row class="mt-2" no-gutters>
       <v-col cols="12" md="5">
         <HomeTabs />
@@ -13,7 +13,9 @@
             <QlText v-if="season.id && season.text" :id="season.text.id" />
           </QlTextBox>
         </div>
-        
+
+        <LatestResultsSummary :season-id="season.id" class="mt-4" />
+
         <div class="chat-section mt-6">
           <ql-chat name="homepagechat" displayName="League Chat"></ql-chat>
         </div>
@@ -22,15 +24,16 @@
   </v-container>
 </template>
 <script setup lang="ts">
-import { useAppContextStore, useSideMenuStore } from '@/stores/app';
-import PageTitle from '../common/PageTitle.vue';
-import QlText from '../text/QlText.vue';
-import { useLayout } from '@/services/LayoutService';
-import { useDocument } from 'vuefire';
-import SeasonDAO from '@/dao/SeasonDAO';
-import QlNamedText from '../text/QlNamedText.vue';
-import QlTextBox from '../text/QlTextBox.vue';
-import HomeTabs from './HomeTabs.vue';
+import { useAppContextStore, useSideMenuStore } from '@/stores/app'
+import PageTitle from '../common/PageTitle.vue'
+import QlText from '../text/QlText.vue'
+import { useLayout } from '@/services/LayoutService'
+import { useDocument } from 'vuefire'
+import SeasonDAO from '@/dao/SeasonDAO'
+import QlNamedText from '../text/QlNamedText.vue'
+import QlTextBox from '../text/QlTextBox.vue'
+import HomeTabs from './HomeTabs.vue'
+import LatestResultsSummary from './LatestResultsSummary.vue'
 
 const { gridSize } = useLayout()
 const { seasonId } = useAppContextStore()
@@ -56,6 +59,6 @@ setSidemenu(false)
 .chat-section {
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 </style>

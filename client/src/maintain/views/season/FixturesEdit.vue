@@ -31,6 +31,36 @@
     </v-form>
 
     <v-card class="mt-4" v-if="!isNew">
+      <v-card-title>AI Results Summary</v-card-title>
+      <v-card-text>
+        <v-alert v-if="summarySuccessMessage" type="success" class="mb-4">
+          {{ summarySuccessMessage }}
+        </v-alert>
+        <v-alert v-if="summaryErrorMessage" type="error" class="mb-4">
+          {{ summaryErrorMessage }}
+        </v-alert>
+        <div v-if="hasResultsSummary" data-test="results-summary-text">
+          <TextEdit v-model="summaryText" @save="saveSummaryText" />
+        </div>
+        <div v-else class="text-body-2 text-medium-emphasis">
+          No AI summary has been generated for this fixture group yet.
+        </div>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+          data-test="regenerate-summary-button"
+          color="primary"
+          :loading="regeneratingSummary"
+          :disabled="regeneratingSummary"
+          @click="regenerateSummary"
+        >
+          Regenerate AI Summary
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+
+    <v-card class="mt-4" v-if="!isNew">
       <v-card-title>
         Fixtures
         <v-spacer></v-spacer>
@@ -141,18 +171,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import axios from 'axios'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import FixturesDAO from '@/dao/FixturesDAO'
 import { fixtureDAO } from '@/dao/FixturesDAO'
+import TextDAO from '@/dao/TextDAO'
 import TeamDAO from '@/dao/TeamDAO'
 import VenueDAO from '@/dao/VenueDAO'
 import type Team from '@/entity/Team'
 import type Fixtures from '@/entity/Fixtures'
 import type { Fixture } from '@/entity/Fixtures'
+import type Text from '@/entity/Text'
 import type Venue from '@/entity/Venue'
 import { newEntityIdentity } from '@/maintain/utils/entityIds'
 import { useValidations } from '@/site/components/Validation'
+import TextEdit from '@/site/components/text/TextEdit.vue'
 import {
   applyHomeTeamSelection,
   availableTeamsForFixtureSlot,
@@ -170,12 +204,17 @@ const fixtures = ref<Fixtures | null>(null)
 const fixtureList = ref<Fixture[]>([])
 const teams = ref<Team[]>([])
 const venues = ref<Venue[]>([])
+const summaryText = ref<Text | undefined>()
 const valid = ref(false)
+const regeneratingSummary = ref(false)
+const summarySuccessMessage = ref('')
+const summaryErrorMessage = ref('')
 
 const isNew = computed(() => route.params.id === 'new')
 const seasonId = computed(() => route.params.seasonId as string)
 const competitionId = computed(() => route.params.competitionId as string)
 const unallocatedTeams = computed(() => unallocatedFixtureTeams(teams.value, fixtureList.value))
+const hasResultsSummary = computed(() => summaryText.value !== undefined)
 
 onMounted(async () => {
   const compPath = `season/${seasonId.value}/competition/${competitionId.value}`
@@ -193,6 +232,7 @@ onMounted(async () => {
     const path = `${compPath}/fixtures/${id}`
     fixtures.value = (await FixturesDAO.getDataByPath(path)) || null
     if (fixtures.value) {
+      await loadSummaryText()
       fixtureList.value = await fixtureDAO.entities(fixtureDAO.subCollection(path))
       teams.value = (await TeamDAO.list()) || []
       venues.value = (await VenueDAO.list()) || []
@@ -210,6 +250,15 @@ const nameFor = (id?: string) => {
   const t = teams.value.find((x) => x.id === id)
   return t ? t.name : id
 }
+
+watch(
+  summaryText,
+  (value) => {
+    if (!fixtures.value || !value) return
+    fixtures.value.resultsSummary = TextDAO.getByPath(value)
+  },
+  { deep: true },
+)
 
 const showFixtureDialog = ref(false)
 const fixtureToEdit = ref<FixtureEdit>({} as FixtureEdit)
@@ -300,6 +349,10 @@ const saveFixture = async () => {
 
 const save = async () => {
   if (fixtures.value) {
+    if (summaryText.value) {
+      await TextDAO.save(summaryText.value)
+      fixtures.value.resultsSummary = TextDAO.getByPath(summaryText.value)
+    }
     if (isNew.value) {
       fixtures.value = {
         ...fixtures.value,
@@ -313,9 +366,79 @@ const save = async () => {
   }
 }
 
+const regenerateSummary = async () => {
+  if (!fixtures.value) return
+
+  regeneratingSummary.value = true
+  summarySuccessMessage.value = ''
+  summaryErrorMessage.value = ''
+
+  try {
+    const response = await axios.post('/rest/maintain/fixtures/results-summary/regenerate', {
+      fixtureSetPath: fixtures.value.path,
+    })
+    if (!isSummaryResponse(response.data)) {
+      throw new Error('AI summary response did not include summary text')
+    }
+    fixtures.value.resultsSummary = TextDAO.getByPath(response.data.resultsSummary)
+    fixtures.value.resultsSummaryGeneratedAt = response.data.resultsSummaryGeneratedAt
+    fixtures.value.resultsSummaryModel = response.data.resultsSummaryModel
+    summaryText.value = {
+      ...response.data.resultsSummary,
+      text: response.data.resultsSummaryText,
+      mimeType: 'text/markdown',
+    }
+    summarySuccessMessage.value = 'AI summary regenerated'
+  } catch {
+    summaryErrorMessage.value = 'AI summary regeneration failed'
+  } finally {
+    regeneratingSummary.value = false
+  }
+}
+
+const saveSummaryText = async (textEntity: Text) => {
+  if (!fixtures.value) return
+
+  summaryText.value = textEntity
+  await TextDAO.save(textEntity)
+  fixtures.value.resultsSummary = TextDAO.getByPath(textEntity)
+  await FixturesDAO.save(fixtures.value)
+  summaryErrorMessage.value = ''
+  summarySuccessMessage.value = 'AI summary saved'
+}
+
+const isSummaryResponse = (
+  value: unknown,
+): value is {
+  resultsSummary: { id: string; path: string }
+  resultsSummaryText: string
+  resultsSummaryGeneratedAt?: string
+  resultsSummaryModel?: string
+} =>
+  value !== null &&
+  typeof value === 'object' &&
+  isTextReference((value as { resultsSummary?: unknown }).resultsSummary) &&
+  typeof (value as { resultsSummaryText?: unknown }).resultsSummaryText === 'string' &&
+  (value as { resultsSummaryText: string }).resultsSummaryText.trim().length > 0
+
 const back = () => {
   router.push(`/season/${seasonId.value}/competition/${competitionId.value}`)
 }
+
+const loadSummaryText = async () => {
+  if (!fixtures.value?.resultsSummary) {
+    summaryText.value = undefined
+    return
+  }
+
+  summaryText.value = await TextDAO.getData(fixtures.value.resultsSummary)
+}
+
+const isTextReference = (value: unknown): value is { id: string; path: string } =>
+  value !== null &&
+  typeof value === 'object' &&
+  typeof (value as { id?: unknown }).id === 'string' &&
+  typeof (value as { path?: unknown }).path === 'string'
 
 // duplicate addFixture removed; using dialog-based addFixture defined above
 

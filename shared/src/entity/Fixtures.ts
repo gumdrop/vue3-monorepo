@@ -10,6 +10,9 @@ export interface Fixtures extends Entity {
   date: string
   start: string
   questionsUrl?: string
+  resultsSummary?: PathAndId<Text>
+  resultsSummaryGeneratedAt?: string
+  resultsSummaryModel?: string
 }
 
 export interface Fixture extends Entity {

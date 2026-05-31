@@ -505,6 +505,7 @@ describe('fixture DAO converters', () => {
           date: '2026-01-01',
           start: '19:30',
           questionsUrl: 'https://example.com/questions',
+          resultsSummary: legacyRef('text', 'week-1-summary'),
         },
         fixturesPath,
       ) as never,
@@ -515,6 +516,7 @@ describe('fixture DAO converters', () => {
       description: 'Week 1',
       path: fixturesPath,
       questionsUrl: 'https://example.com/questions',
+      resultsSummary: expect.objectContaining({ path: 'text/week-1-summary' }),
     })
     expect(fixtures.fixture.get()).toMatchObject({ path: `${fixturesPath}/fixture` })
   })

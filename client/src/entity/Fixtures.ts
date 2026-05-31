@@ -15,6 +15,9 @@ export default class Fixtures implements Entity {
     public fixture: CollectionProxy<Fixture>,
     public questionsUrl?: string,
     public readonly key?: string,
+    public resultsSummary?: DocumentReference<Text>,
+    public resultsSummaryGeneratedAt?: string,
+    public resultsSummaryModel?: string,
   ) {}
   path: string = ''
 }

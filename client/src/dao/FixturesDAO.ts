@@ -87,6 +87,9 @@ class FixturesConverter extends DataConverter<Fixtures> {
       fixtureDAO.collectionProxy(key),
       data.questionsUrl,
       key,
+      this.makeDocumentRef(data.resultsSummary, TextDAO.converter) ?? undefined,
+      data.resultsSummaryGeneratedAt,
+      data.resultsSummaryModel,
     )
   }
 }

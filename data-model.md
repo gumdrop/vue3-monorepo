@@ -390,13 +390,16 @@ WeekStats is an embedded value in a Statistics document's `weekStats` map. The m
 
 Fixtures exist within a competition.
 
-| Field          | Type     | Required | Notes                                                 |
-| -------------- | -------- | -------- | ----------------------------------------------------- |
-| `id`           | `UUID`   | Yes      | Canonical fixtures identifier within its competition. |
-| `description`  | `string` | Yes      | Fixtures description.                                 |
-| `date`         | `string` | Yes      | Fixtures date.                                        |
-| `start`        | `string` | Yes      | Fixtures start time.                                  |
-| `questionsUrl` | `string` | No       | Optional link to fixture questions.                   |
+| Field                       | Type     | Required | Notes                                                                                             |
+| --------------------------- | -------- | -------- | ------------------------------------------------------------------------------------------------- |
+| `id`                        | `UUID`   | Yes      | Canonical fixtures identifier within its competition.                                             |
+| `description`               | `string` | Yes      | Fixtures description.                                                                             |
+| `date`                      | `string` | Yes      | Fixtures date.                                                                                    |
+| `start`                     | `string` | Yes      | Fixtures start time.                                                                              |
+| `questionsUrl`              | `string` | No       | Optional link to fixture questions.                                                               |
+| `resultsSummary`            | `text` reference | No       | Reference to the normal Markdown text document containing the public AI-generated summary of a completed fixture set's results and match reports. |
+| `resultsSummaryGeneratedAt` | `string` | No       | UTC timestamp string for when the public summary was generated.                                   |
+| `resultsSummaryModel`       | `string` | No       | Gemini model name used for the public summary. Raw prompts and provider responses are not stored. |
 
 ## Fixture
 
