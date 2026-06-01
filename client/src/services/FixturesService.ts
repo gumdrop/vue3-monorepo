@@ -24,6 +24,12 @@ export const useFixtures = () => {
       .map((f) => FixturesDAO.getByPath(`${f.path}`))
   }
 
+  const questionPapers = async (seasonId: string) => {
+    return (await seasonFixtures(seasonId))
+      .filter((fixtures) => fixtures.questionsUrl?.trim())
+      .sort((a, b) => b.date.localeCompare(a.date))
+  }
+
   const seasonFixtures = async (seasonId: string) => {
     const competitions = await firstClassCompetitions(seasonId)
 
@@ -38,7 +44,7 @@ export const useFixtures = () => {
     return interim
   }
 
-  return { activeFixtures, seasonFixtures, spentFixtures }
+  return { activeFixtures, questionPapers, seasonFixtures, spentFixtures }
 }
 
 // def activeFixtures(seasonId: String, take:Int = Integer.MAX_VALUE) = {

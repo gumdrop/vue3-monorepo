@@ -51,6 +51,8 @@ import LinksTitle from '../other/LinksTitle.vue'
 import RulesMain from '../other/RulesMain.vue'
 import RulesTitle from '../other/RulesTitle.vue'
 import AllResults from '../results/AllResults.vue'
+import QuestionsPage from '../results/QuestionsPage.vue'
+import QuestionsTitle from '../results/QuestionsTitle.vue'
 import ResultsMenu from '../results/ResultsMenu.vue'
 import ResultsTitle from '../results/ResultsTitle.vue'
 import SubmitResult from '../results/SubmitResult.vue'
@@ -124,6 +126,7 @@ const mocks = vi.hoisted(() => ({
   multipleTeamsAllSeasonsPositionData: vi.fn(),
   nextFixtures: vi.fn(),
   positionData: vi.fn(),
+  questionPapers: vi.fn(),
   route: { query: {} as Record<string, unknown> },
   routerPush: vi.fn(),
   saveSiteUser: vi.fn(),
@@ -337,6 +340,7 @@ vi.mock('@/services/FixtureService', () => ({
 vi.mock('@/services/FixturesService', () => ({
   useFixtures: () => ({
     activeFixtures: mocks.activeFixtures,
+    questionPapers: mocks.questionPapers,
     spentFixtures: mocks.spentFixtures,
   }),
 }))
@@ -739,6 +743,15 @@ const fixtureSet = {
   resultsSummary: { id: 'summary', path: 'text/summary' },
 }
 
+const questionFixtureSet = {
+  ...fixtureSet,
+  id: 'week-2',
+  path: `${leagueCompetition.path}/fixtures/week-2`,
+  date: '2026-06-07',
+  description: 'Week 2',
+  questionsUrl: 'https://example.com/questions/week-2.pdf',
+}
+
 const fixture = {
   id: 'fixture-1',
   key: `${fixtureSet.path}/fixture/fixture-1`,
@@ -796,6 +809,7 @@ beforeEach(() => {
   mocks.multipleTeamsAllSeasonsPositionData.mockResolvedValue({ labels: [], datasets: [] })
   mocks.nextFixtures.mockResolvedValue([fixtureSetDoc])
   mocks.positionData.mockReturnValue({ labels: [], datasets: [] })
+  mocks.questionPapers.mockResolvedValue([questionFixtureSet])
   mocks.saveSiteUser.mockResolvedValue(undefined)
   mocks.singleSeasonResultTypes.mockReturnValue({ labels: ['Won'], datasets: [{ data: [1] }] })
   mocks.spentFixtures.mockResolvedValue([fixtureSetDoc])
@@ -977,11 +991,16 @@ describe('remaining site title and navigation components', () => {
     const results = mountSite(ResultsTitle)
     expect(results.text()).toContain('All Results')
     expect(results.text()).toContain('2025/2026')
+
+    const questions = mountSite(QuestionsTitle)
+    expect(questions.text()).toContain('Questions')
+    expect(questions.text()).toContain('2025/2026')
   })
 
   it('renders menus from loaded collections and user state', async () => {
     const resultsMenu = mountSite(ResultsMenu)
     expect(resultsMenu.text()).toContain('All Results')
+    expect(resultsMenu.text()).toContain('Questions')
     expect(resultsMenu.text()).toContain('Submit Results')
 
     const teamsMenu = mountSite(TeamsMenu)
@@ -1442,6 +1461,12 @@ describe('remaining fixture, home, and result components', () => {
     })
     await flushPromises()
     expect(allResults.get('[data-test="fixtures-card"]').exists()).toBe(true)
+
+    const questionsPage = mountSite(QuestionsPage)
+    await flushPromises()
+    expect(mocks.questionPapers).toHaveBeenCalledWith(mocks.seasonId)
+    expect(questionsPage.get('a').attributes('href')).toBe(questionFixtureSet.questionsUrl)
+    expect(questionsPage.text()).toContain('2026/06/07 : Week 2')
 
     const submitResults = mountSite(SubmitResults, {
       global: { stubs: { ...siteComponentStubs, SubmitResult: simpleStub('submit-result') } },

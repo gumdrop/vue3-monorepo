@@ -108,6 +108,15 @@ const router = createRouter({
           },
         },
         {
+          path: 'questions',
+          name: 'questions',
+          components: {
+            default: () => import('../components/results/QuestionsPage.vue'),
+            title: () => import('../components/results/QuestionsTitle.vue'),
+            sidenav: () => import('../components/results/ResultsMenu.vue'),
+          },
+        },
+        {
           path: 'submit/instructions',
           name: 'submit instructions',
           components: {
