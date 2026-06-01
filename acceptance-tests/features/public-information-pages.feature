@@ -9,6 +9,7 @@ Feature: Public information pages
     Then I should be on the "/venue" page
     And I should see the "Venues" title
     And I should see text matching "Venues used by active teams and fixtures"
+    And the page should have no detectable accessibility violations
     And the venues menu includes:
       | Ashridge Arms     |
       | Beaconsfield Hall |

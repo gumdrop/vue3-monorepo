@@ -9,6 +9,7 @@ Feature: Maintenance team pages
     Then I should be on the maintenance "/team" page
     And I should see text matching "Chiltern Quiz League Maintenance"
     And I should see text matching "Teams"
+    And the page should have no detectable accessibility violations
     And the maintain team list includes:
       | Ashridge Arms     | Ashridge    |
       | Beaconsfield Bees | Beaconsfield |

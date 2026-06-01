@@ -9,6 +9,7 @@ Feature: Maintenance site user pages
     Then I should be on the maintenance "/siteuser" page
     And I should see text matching "Chiltern Quiz League Maintenance"
     And I should see text matching "Site Users"
+    And the page should have no detectable accessibility violations
     And the maintain site user list includes:
       | alice-ashridge |
       | ella-secretary |

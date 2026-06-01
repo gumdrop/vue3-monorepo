@@ -17,6 +17,7 @@ Feature: Results submission access
       | Links        |
       | Contact      |
       | Help         |
+    And the page should have no detectable accessibility violations
 
   Scenario: Public results visitors are offered submission instructions
     When I open the results page

@@ -9,6 +9,7 @@ Feature: Maintenance user pages
     Then I should be on the maintenance "/user" page
     And I should see text matching "Chiltern Quiz League Maintenance"
     And I should see text matching "Users"
+    And the page should have no detectable accessibility violations
     And the maintain user list includes:
       | Alice Ashridge   | alice.ashridge@example.test   |
       | Ben Beaconsfield | ben.beaconsfield@example.test |

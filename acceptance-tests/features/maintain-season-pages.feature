@@ -9,6 +9,7 @@ Feature: Maintenance season pages
     Then I should be on the maintenance "/season" page
     And I should see text matching "Chiltern Quiz League Maintenance"
     And I should see text matching "Seasons"
+    And the page should have no detectable accessibility violations
     And the maintain season list includes:
       | 2025/2026 |
       | 2024/2025 |

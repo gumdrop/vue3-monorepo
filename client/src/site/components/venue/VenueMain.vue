@@ -13,6 +13,7 @@
                     <p></p>
                     <iframe
                       :src="embeddedUrl(venue)"
+                      :title="`${venue.name} map`"
                       width="400"
                       height="300"
                       frameborder="0"
@@ -37,7 +38,11 @@
                 v-if="venue.imageURL"
                 class="hidden-xs-only text-xs-left text-sm-left text-md-right text-lg-right text-xl-right"
               >
-                <img :src="venue.imageURL" style="max-width: 275px; max-height: 200px" />
+                <img
+                  :src="venue.imageURL"
+                  :alt="`${venue.name} venue`"
+                  style="max-width: 275px; max-height: 200px"
+                />
               </v-col>
             </v-row>
           </v-container>

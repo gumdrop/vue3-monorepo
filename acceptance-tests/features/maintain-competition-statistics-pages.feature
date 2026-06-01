@@ -9,6 +9,7 @@ Feature: Maintenance competition statistics pages
     Then I should be on the maintenance "/competitionstatistics" page
     And I should see text matching "Chiltern Quiz League Maintenance"
     And I should see text matching "Competition Statistics"
+    And the page should have no detectable accessibility violations
     And the maintain competition statistics list includes:
       | League Roll Of Honour | 1 results |
     And the "Add Competition Statistics" button should be visible

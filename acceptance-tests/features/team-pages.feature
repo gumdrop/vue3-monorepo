@@ -9,6 +9,7 @@ Feature: Team pages
     Then I should be on the "/team" page
     And I should see the "Teams" title
     And I should see text matching "Active public teams in the league"
+    And the page should have no detectable accessibility violations
     And the teams menu includes:
       | Start a team        |
       | Ashridge Arms       |

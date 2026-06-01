@@ -9,6 +9,7 @@ Feature: Maintenance statistics page
     Then I should be on the maintenance "/statistics" page
     And I should see text matching "Chiltern Quiz League Maintenance"
     And I should see text matching "Statistics"
+    And the page should have no detectable accessibility violations
     And the "Season" field should be visible
     And the "Recalculate Statistics" button should be visible
     And the "Recalculate Statistics" button should be disabled
