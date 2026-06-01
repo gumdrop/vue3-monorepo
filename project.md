@@ -29,10 +29,11 @@ APIs & public surface
 
 Testing & verification
 
-- After code changes, run TypeScript checks and unit tests for the affected package:
+- After code changes, run TypeScript checks, unit tests, and a test coverage check for the affected package:
   - Client: `cd client && npm install && npm run dev` (or `npm run test` for tests)
   - Server: `cd server && npm install && npm run dev` (or run tests similarly)
   - Type-check: `npx tsc -p client/tsconfig.json` (or the relevant tsconfig)
+- If a coverage check cannot be run, explicitly document the reason and any residual risk.
 
 Style preferences
 

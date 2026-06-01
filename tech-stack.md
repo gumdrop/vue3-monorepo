@@ -29,6 +29,7 @@ This repository is a TypeScript monorepo for the QuizLeague website.
 - `client/src/services/` — business logic and app services
 - `client/src/stores/` — Pinia stores
 - `client/src/site/` — site-level components and router
+- `client/src/maintain/` — secondary client-side maintenance app entry point at `/maintain`, providing direct CRUD access to Firestore entities through the existing DAOs
 
 ## Server (`server/`)
 

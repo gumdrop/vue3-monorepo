@@ -14,15 +14,15 @@ This repository does not currently include custom agent configuration files beyo
 
 ## Repo structure
 
-- `client/` — Vue 3 + TypeScript frontend
+- `client/` — frontend package
   - `/` - Main application
-  - `/maintain` - Data maintenance application (client-side only, CRUD via Firestore)
-- `server/` — Node + TypeScript backend
-- `shared/` — shared TypeScript types and utilities
+  - `/maintain` - Data maintenance application
+- `server/` — backend package
+- `shared/` — shared types and utilities
 
 ## Data Maintenance App
 
-A dedicated data maintenance application is available at `/maintain`. It is built with Vue 3 and Vuetify 3 and provides direct CRUD access to Firestore entities.
+A dedicated data maintenance application is available at `/maintain`.
 - Root: `client/src/maintain/index.ts`
 - Views: `client/src/maintain/views/`
 - All subcollection entities (e.g., Competitions under Seasons) must be editable via their parent entity views.
