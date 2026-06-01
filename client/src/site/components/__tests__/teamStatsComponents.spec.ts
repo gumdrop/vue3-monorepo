@@ -254,4 +254,22 @@ describe('team statistics components', () => {
     expect(wrapper.text()).toContain('Charlie (4 losses)')
     expect(wrapper.text()).toContain('Delta (4 losses)')
   })
+
+  it('renders all-season head-to-head empty states', async () => {
+    const wrapper = mount(HeadToHeadLeaders, {
+      props: {
+        stats: [stats],
+      },
+      global: {
+        stubs: siteComponentStubs,
+      },
+    })
+
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Teams beaten most often')
+    expect(wrapper.text()).toContain('No wins recorded.')
+    expect(wrapper.text()).toContain('Teams who beat this team most often')
+    expect(wrapper.text()).toContain('No losses recorded.')
+  })
 })

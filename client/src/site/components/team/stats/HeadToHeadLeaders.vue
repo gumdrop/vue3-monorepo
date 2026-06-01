@@ -3,36 +3,13 @@
     <v-card-title>Head-to-Head Highlights</v-card-title>
     <v-card-text v-if="leaders">
       <v-row>
-        <v-col cols="12" md="6">
-          <h3 class="text-subtitle-1 mb-2">Teams beaten most often</h3>
-          <v-list v-if="leaders.mostBeaten.length" density="compact">
-            <v-list-item
-              v-for="leader in leaders.mostBeaten"
-              :key="`beaten-${leader.team}`"
-              prepend-icon="mdi-trophy"
-            >
-              <v-list-item-title>{{
-                formatLeader(leader.team, leader.win, 'win')
-              }}</v-list-item-title>
+        <v-col v-for="section in sections" :key="section.title" cols="12" md="6">
+          <h3 class="text-subtitle-1 mb-2">{{ section.title }}</h3>
+          <v-list density="compact">
+            <v-list-item v-for="item in section.items" :key="item" :prepend-icon="section.icon">
+              <v-list-item-title>{{ item }}</v-list-item-title>
             </v-list-item>
           </v-list>
-          <p v-else class="text-body-2 text-medium-emphasis">No wins recorded.</p>
-        </v-col>
-
-        <v-col cols="12" md="6">
-          <h3 class="text-subtitle-1 mb-2">Teams who beat this team most often</h3>
-          <v-list v-if="leaders.mostLostTo.length" density="compact">
-            <v-list-item
-              v-for="leader in leaders.mostLostTo"
-              :key="`lost-to-${leader.team}`"
-              prepend-icon="mdi-alert-circle"
-            >
-              <v-list-item-title>{{
-                formatLeader(leader.team, leader.lose, 'loss', 'losses')
-              }}</v-list-item-title>
-            </v-list-item>
-          </v-list>
-          <p v-else class="text-body-2 text-medium-emphasis">No losses recorded.</p>
         </v-col>
       </v-row>
     </v-card-text>
@@ -43,6 +20,7 @@
 import type Statistics from '@/entity/Statisitics'
 import { useTeams } from '@/services/TeamService'
 import { usePromise } from '@/utils/PromiseRef'
+import { computed } from 'vue'
 
 const props = defineProps<{
   stats: Statistics[]
@@ -57,4 +35,27 @@ const formatCount = (count: number, singular: string, plural = `${singular}s`) =
 
 const formatLeader = (team: string, count: number, singular: string, plural = `${singular}s`) =>
   `${team} (${formatCount(count, singular, plural)})`
+
+const sections = computed(() =>
+  leaders.value
+    ? [
+        {
+          title: 'Teams beaten most often',
+          icon: 'mdi-trophy',
+          items: leaders.value.mostBeaten.length
+            ? leaders.value.mostBeaten.map((leader) => formatLeader(leader.team, leader.win, 'win'))
+            : ['No wins recorded.'],
+        },
+        {
+          title: 'Teams who beat this team most often',
+          icon: 'mdi-alert-circle',
+          items: leaders.value.mostLostTo.length
+            ? leaders.value.mostLostTo.map((leader) =>
+                formatLeader(leader.team, leader.lose, 'loss', 'losses'),
+              )
+            : ['No losses recorded.'],
+        },
+      ]
+    : [],
+)
 </script>
