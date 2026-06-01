@@ -9,6 +9,7 @@ Feature: Maintenance venue pages
     Then I should be on the maintenance "/venue" page
     And I should see text matching "Chiltern Quiz League Maintenance"
     And I should see text matching "Venues"
+    And the page should have no detectable accessibility violations
     And the maintain venue list includes:
       | Ashridge Arms      | 1 High Street, Ashridge HP1 1AA          |
       | Beaconsfield Hall  | 2 Station Road, Beaconsfield HP9 1BB     |

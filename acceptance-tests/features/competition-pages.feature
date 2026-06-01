@@ -10,6 +10,7 @@ Feature: Competition pages
     And I should see the "Competitions" title
     And I should see text matching "2025/2026"
     And I should see text matching "Current season competitions"
+    And the page should have no detectable accessibility violations
     And the competitions menu includes:
       | Challenge Cup         |
       | Individual Quiz Night |

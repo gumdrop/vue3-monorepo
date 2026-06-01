@@ -9,6 +9,7 @@ Feature: Maintenance global text pages
     Then I should be on the maintenance "/globaltext" page
     And I should see text matching "Chiltern Quiz League Maintenance"
     And I should see text matching "Global Text"
+    And the page should have no detectable accessibility violations
     And the maintain global text list includes:
       | site |
     And the "Add Global Text" button should be visible

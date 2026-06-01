@@ -17,6 +17,7 @@ Feature: Maintenance application context
       | Global Text         |
       | Application Context |
     And I should see text matching "Application Context"
+    And the page should have no detectable accessibility violations
     And the "League Name" field should contain "Chiltern Quiz League"
     And the "Global Text" selection should display "site"
     And the "Current Season" selection should display "2025/2026"

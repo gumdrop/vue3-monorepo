@@ -11,6 +11,7 @@ Feature: Home page
     And I should see text matching "Current Season:\s+2025/2026"
     And I should see text matching "Welcome to the Chiltern Quiz League local development data set"
     And I should see text matching "The 2025-2026 season includes league, cup, subsidiary, and singleton competitions"
+    And the page should have no detectable accessibility violations
     And the home page tabs include:
       | Tables   |
       | Results  |

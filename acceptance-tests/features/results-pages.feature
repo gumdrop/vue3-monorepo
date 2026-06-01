@@ -9,6 +9,7 @@ Feature: Results pages
     Then I should be on the "/results/all" page
     And I should see the "All Results" title
     And I should see text matching "2025/2026"
+    And the page should have no detectable accessibility violations
     And the results menu includes:
       | All Results    |
       | All Fixtures   |
