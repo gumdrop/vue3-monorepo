@@ -1,7 +1,9 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { computed, defineComponent, h, ref } from 'vue'
+import axe from 'axe-core'
+import { computed, defineComponent, h, ref, type Component } from 'vue'
 import { fixtureDAO } from '@/dao/FixturesDAO'
+import LoginMain from '../auth/LoginMain.vue'
 import LoginTitle from '../auth/LoginTitle.vue'
 import LoggedOnMenu from '../auth/LoggedOnMenu.vue'
 import SubTitle from '../common/SubTitle.vue'
@@ -19,8 +21,10 @@ import CompetitionLeagueTables from '../competition/LeagueTables.vue'
 import CompetitionNextFixtures from '../competition/NextFixtures.vue'
 import SingletonCompetition from '../competition/SingletonCompetition.vue'
 import SubsidiaryCompetition from '../competition/SubsidiaryCompetition.vue'
+import CompetitionStatisticsPage from '../competition/statistics/CompetitionStatisticsPage.vue'
 import CompetitionStatisticsResultSeason from '../competition/statistics/CompetitionStatisticsResultSeason.vue'
 import CompetitionStatisticsResultTeam from '../competition/statistics/CompetitionStatisticsResultTeam.vue'
+import CompetitionStatisticsTitle from '../competition/statistics/CompetitionStatisticsTitle.vue'
 import AllFixtures from '../fixtures/AllFixtures.vue'
 import AllFixturesPage from '../fixtures/AllFixturesPage.vue'
 import AllFixturesTitle from '../fixtures/AllFixturesTitle.vue'
@@ -120,6 +124,7 @@ const mocks = vi.hoisted(() => ({
   headToHeadLeaders: vi.fn(),
   headToHeadResultsData: vi.fn(),
   latestResults: vi.fn(),
+  logonWithGoogle: vi.fn(),
   logoff: vi.fn(),
   matchScoresData: vi.fn(),
   multipleTeamsAllSeasonsAverageData: vi.fn(),
@@ -149,8 +154,10 @@ const mocks = vi.hoisted(() => ({
   userEntityList: vi.fn(),
   userNewInstance: vi.fn(),
   userSave: vi.fn(),
+  verifyEmail: vi.fn(),
   collections: new Map<string, unknown[]>(),
   competitionsByPath: new Map<string, unknown>(),
+  competitionStatistics: [] as unknown[],
   fixturesByPath: new Map<string, unknown>(),
   leagueTablesByPath: new Map<string, unknown>(),
   seasonsById: new Map<string, unknown>(),
@@ -209,6 +216,14 @@ vi.mock('@/dao/ApplicationContextDAO', () => ({
 vi.mock('@/dao/CompetitionDAO', () => ({
   default: {
     getByPath: (path: string) => docRef(path, mocks.competitionsByPath.get(path)),
+  },
+}))
+
+vi.mock('@/dao/CompetitionStatisticsDAO', () => ({
+  default: {
+    collection: () => ({
+      __data: mocks.competitionStatistics,
+    }),
   },
 }))
 
@@ -300,7 +315,9 @@ vi.mock('@/dao/VenueDAO', () => ({
 
 vi.mock('@/services/AuthService', () => ({
   default: () => ({
+    logonWithGoogle: mocks.logonWithGoogle,
     logout: mocks.logoff,
+    verifyEmail: mocks.verifyEmail,
   }),
 }))
 
@@ -584,6 +601,62 @@ const simpleStub = (name: string) =>
     },
   })
 
+const remainingSiteStubs = {
+  ...siteComponentStubs,
+  AllSeasonsAverage: simpleStub('all-seasons-average'),
+  AllSeasonsHighlights: simpleStub('all-seasons-highlights'),
+  AllSeasonsLeaguePosition: simpleStub('all-seasons-league-position'),
+  AllSeasonsLineChart: simpleStub('all-seasons-line-chart'),
+  AllSeasonsResultTypes: simpleStub('all-seasons-result-types'),
+  AllSeasonsStats: simpleStub('all-seasons-stats'),
+  CompetitionLink: simpleStub('competition-link'),
+  CompetitionStatisticsMenu: simpleStub('competition-statistics-menu'),
+  EventsTab: simpleStub('events-tab'),
+  FetchActions: simpleStub('fetch-actions'),
+  FixtureLine: simpleStub('fixture-line'),
+  FixtureLineWrapper: simpleStub('fixture-line-wrapper'),
+  FixturesCard: simpleStub('fixtures-card'),
+  FixturesSet: simpleStub('fixtures-set'),
+  HeadToHead: simpleStub('head-to-head'),
+  HeadToHeadAverageScore: simpleStub('head-to-head-average-score'),
+  HeadToHeadLeaguePosition: simpleStub('head-to-head-league-position'),
+  HeadToHeadLineChart: simpleStub('head-to-head-line-chart'),
+  HeadToHeadResults: simpleStub('head-to-head-results'),
+  HomeTabs: simpleStub('home-tabs'),
+  LatestResults: simpleStub('latest-results'),
+  LatestResultsSummary: simpleStub('latest-results-summary'),
+  LeagueTable: simpleStub('league-table'),
+  LineChart: simpleStub('line-chart-wrapper'),
+  MatchReportItem: simpleStub('match-report-item'),
+  MatchReports: simpleStub('match-reports'),
+  NextFixtures: simpleStub('next-fixtures'),
+  PageTitle: simpleStub('page-title'),
+  QlMarkdown: simpleStub('ql-markdown'),
+  QlNamedText: namedTextStub,
+  QlText: qlTextStub,
+  QlTextBox,
+  ResultTypes: simpleStub('result-types'),
+  SeasonCumulativePointsDiff: simpleStub('season-cumulative-points-diff'),
+  SeasonCumulativeScores: simpleStub('season-cumulative-scores'),
+  SeasonMatchScores: simpleStub('season-match-scores'),
+  SeasonSelect: simpleStub('season-select'),
+  SideMenu: simpleStub('side-menu'),
+  SideMenuItem: simpleStub('side-menu-item'),
+  SimpleFixtures: simpleStub('simple-fixtures'),
+  StatisticsTeamTitle: simpleStub('statistics-team-title'),
+  SubTitle: subTitleStub,
+  TeamFixtures: simpleStub('team-fixtures'),
+  TeamInfo: simpleStub('team-info'),
+  TeamResults: simpleStub('team-results'),
+  TeamStandings: simpleStub('team-standings'),
+  VenueLink: simpleStub('venue-link'),
+}
+
+const sitePageAccessibilityStubs = {
+  ...remainingSiteStubs,
+  SubTitle: false,
+}
+
 const mountSite = (
   component: Parameters<typeof mount>[0],
   options: Parameters<typeof mount>[1] = {},
@@ -591,56 +664,7 @@ const mountSite = (
   mount(component, {
     ...options,
     global: {
-      stubs: {
-        ...siteComponentStubs,
-        AllSeasonsAverage: simpleStub('all-seasons-average'),
-        AllSeasonsHighlights: simpleStub('all-seasons-highlights'),
-        AllSeasonsLeaguePosition: simpleStub('all-seasons-league-position'),
-        AllSeasonsLineChart: simpleStub('all-seasons-line-chart'),
-        AllSeasonsResultTypes: simpleStub('all-seasons-result-types'),
-        AllSeasonsStats: simpleStub('all-seasons-stats'),
-        CompetitionLink: simpleStub('competition-link'),
-        CompetitionStatisticsMenu: simpleStub('competition-statistics-menu'),
-        EventsTab: simpleStub('events-tab'),
-        FetchActions: simpleStub('fetch-actions'),
-        FixtureLine: simpleStub('fixture-line'),
-        FixtureLineWrapper: simpleStub('fixture-line-wrapper'),
-        FixturesCard: simpleStub('fixtures-card'),
-        FixturesSet: simpleStub('fixtures-set'),
-        HeadToHead: simpleStub('head-to-head'),
-        HeadToHeadAverageScore: simpleStub('head-to-head-average-score'),
-        HeadToHeadLeaguePosition: simpleStub('head-to-head-league-position'),
-        HeadToHeadLineChart: simpleStub('head-to-head-line-chart'),
-        HeadToHeadResults: simpleStub('head-to-head-results'),
-        HomeTabs: simpleStub('home-tabs'),
-        LatestResults: simpleStub('latest-results'),
-        LatestResultsSummary: simpleStub('latest-results-summary'),
-        LeagueTable: simpleStub('league-table'),
-        LineChart: simpleStub('line-chart-wrapper'),
-        MatchReportItem: simpleStub('match-report-item'),
-        MatchReports: simpleStub('match-reports'),
-        NextFixtures: simpleStub('next-fixtures'),
-        PageTitle: simpleStub('page-title'),
-        QlMarkdown: simpleStub('ql-markdown'),
-        QlNamedText: namedTextStub,
-        QlText: qlTextStub,
-        QlTextBox,
-        ResultTypes: simpleStub('result-types'),
-        SeasonCumulativePointsDiff: simpleStub('season-cumulative-points-diff'),
-        SeasonCumulativeScores: simpleStub('season-cumulative-scores'),
-        SeasonMatchScores: simpleStub('season-match-scores'),
-        SeasonSelect: simpleStub('season-select'),
-        SideMenu: simpleStub('side-menu'),
-        SideMenuItem: simpleStub('side-menu-item'),
-        SimpleFixtures: simpleStub('simple-fixtures'),
-        StatisticsTeamTitle: simpleStub('statistics-team-title'),
-        SubTitle: subTitleStub,
-        TeamFixtures: simpleStub('team-fixtures'),
-        TeamInfo: simpleStub('team-info'),
-        TeamResults: simpleStub('team-results'),
-        TeamStandings: simpleStub('team-standings'),
-        VenueLink: simpleStub('venue-link'),
-      },
+      stubs: remainingSiteStubs,
       mocks: {
         $route: mocks.route,
         $vuetify: {
@@ -780,6 +804,224 @@ const stats = {
   weekStats: {},
 }
 
+type PagePiece = {
+  component: Component
+  props?: Record<string, unknown>
+}
+
+type SitePageCase = {
+  name: string
+  title: PagePiece
+  sidenav?: PagePiece
+  main: PagePiece
+}
+
+type AxeRunResults = Awaited<ReturnType<typeof axe.run>>
+
+const encodedCompetitionPath = (path: string) => path.replaceAll('/', '|')
+
+const pageShell = ({ title, sidenav, main }: SitePageCase) =>
+  defineComponent({
+    name: 'SiteAccessibilityPageShell',
+    setup() {
+      const render = (piece: PagePiece) => h(piece.component, piece.props ?? {})
+
+      return () =>
+        h('div', [
+          h('header', [render(title)]),
+          h('div', [
+            sidenav ? h('nav', { 'aria-label': 'Section navigation' }, [render(sidenav)]) : null,
+            h('main', [render(main)]),
+          ]),
+        ])
+    },
+  })
+
+const axeRunOptions = {
+  iframes: false,
+  rules: {
+    'color-contrast': { enabled: false },
+    'document-title': { enabled: false },
+    'html-has-lang': { enabled: false },
+  },
+}
+
+const axeViolationSummary = (violations: AxeRunResults['violations']) =>
+  violations.map(({ id, impact, nodes }) => ({
+    id,
+    impact,
+    nodes: nodes.map(({ target, failureSummary }) => ({
+      target,
+      failureSummary,
+    })),
+  }))
+
+const sitePageCases: SitePageCase[] = [
+  {
+    name: 'home page',
+    title: { component: HomeTitle },
+    main: { component: HomeMain },
+  },
+  {
+    name: 'competitions page',
+    title: { component: CompetitionsTitle },
+    sidenav: { component: CompetitionsMenu },
+    main: { component: CompetitionsMain },
+  },
+  {
+    name: 'competition roll of honour page',
+    title: { component: CompetitionStatisticsTitle, props: { id: 'league' } },
+    sidenav: { component: CompetitionsMenu },
+    main: { component: CompetitionStatisticsPage, props: { id: 'league' } },
+  },
+  {
+    name: 'league competition page',
+    title: {
+      component: CompetitionTitle,
+      props: { path: encodedCompetitionPath(leagueCompetition.path) },
+    },
+    sidenav: { component: CompetitionsMenu },
+    main: {
+      component: LeagueCompetiton,
+      props: { path: encodedCompetitionPath(leagueCompetition.path) },
+    },
+  },
+  {
+    name: 'cup competition page',
+    title: {
+      component: CompetitionTitle,
+      props: { path: encodedCompetitionPath(cupCompetition.path) },
+    },
+    sidenav: { component: CompetitionsMenu },
+    main: {
+      component: CupCompetiton,
+      props: { path: encodedCompetitionPath(cupCompetition.path) },
+    },
+  },
+  {
+    name: 'singleton competition page',
+    title: {
+      component: CompetitionTitle,
+      props: { path: encodedCompetitionPath(singletonCompetition.path) },
+    },
+    sidenav: { component: CompetitionsMenu },
+    main: {
+      component: SingletonCompetition,
+      props: { path: encodedCompetitionPath(singletonCompetition.path) },
+    },
+  },
+  {
+    name: 'subsidiary competition page',
+    title: {
+      component: CompetitionTitle,
+      props: { path: encodedCompetitionPath(leagueCompetition.path) },
+    },
+    sidenav: { component: CompetitionsMenu },
+    main: {
+      component: SubsidiaryCompetition,
+      props: { path: encodedCompetitionPath(leagueCompetition.path) },
+    },
+  },
+  {
+    name: 'all fixtures page',
+    title: { component: AllFixturesTitle },
+    sidenav: { component: ResultsMenu },
+    main: { component: AllFixturesPage },
+  },
+  {
+    name: 'all results page',
+    title: { component: ResultsTitle },
+    sidenav: { component: ResultsMenu },
+    main: { component: AllResults },
+  },
+  {
+    name: 'questions page',
+    title: { component: QuestionsTitle },
+    sidenav: { component: ResultsMenu },
+    main: { component: QuestionsPage },
+  },
+  {
+    name: 'submit result instructions page',
+    title: { component: SubmitResultsTitle },
+    sidenav: { component: ResultsMenu },
+    main: { component: SubmitResultsInstructions },
+  },
+  {
+    name: 'submit results page',
+    title: { component: SubmitResultsTitle },
+    sidenav: { component: ResultsMenu },
+    main: { component: SubmitResults },
+  },
+  {
+    name: 'teams page',
+    title: { component: TeamsTitle },
+    sidenav: { component: TeamsMenu },
+    main: { component: TeamsMain },
+  },
+  {
+    name: 'team page',
+    title: { component: TeamTitle, props: { id: team.id } },
+    sidenav: { component: TeamsMenu },
+    main: { component: TeamMain, props: { id: team.id } },
+  },
+  {
+    name: 'team statistics page',
+    title: { component: StatisticsTeamTitle, props: { id: team.id } },
+    sidenav: { component: TeamsMenu },
+    main: { component: TeamStats, props: { id: team.id } },
+  },
+  {
+    name: 'start team page',
+    title: { component: StartTeamTitle },
+    sidenav: { component: TeamsMenu },
+    main: { component: StartTeam },
+  },
+  {
+    name: 'team edit page',
+    title: { component: TeamEditTitle, props: { id: team.id } },
+    sidenav: { component: TeamsMenu },
+    main: { component: TeamEdit },
+  },
+  {
+    name: 'venues page',
+    title: { component: VenuesTitle },
+    sidenav: { component: VenuesMenu },
+    main: { component: VenuesMain },
+  },
+  {
+    name: 'venue page',
+    title: { component: VenueTitle, props: { id: venue.id } },
+    sidenav: { component: VenuesMenu },
+    main: { component: VenueMain, props: { id: venue.id } },
+  },
+  {
+    name: 'rules page',
+    title: { component: RulesTitle },
+    main: { component: RulesMain },
+  },
+  {
+    name: 'links page',
+    title: { component: LinksTitle },
+    main: { component: LinksMain },
+  },
+  {
+    name: 'contact page',
+    title: { component: ContactUsTitle },
+    main: { component: ContactUsMain },
+  },
+  {
+    name: 'help page',
+    title: { component: HelpTitle },
+    sidenav: { component: HelpMenu },
+    main: { component: HelpMain },
+  },
+  {
+    name: 'login page',
+    title: { component: LoginTitle },
+    main: { component: LoginMain },
+  },
+]
+
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.activeFixtures.mockResolvedValue([fixtureSetDoc])
@@ -797,6 +1039,21 @@ beforeEach(() => {
   mocks.fixtureRefs = [fixtureDoc]
   mocks.fixtureSets = [fixtureSet]
   mocks.fixturesForResultSubmission.mockResolvedValue([fixtureDoc])
+  mocks.competitionStatistics = [
+    {
+      id: 'league',
+      path: 'competitionstatistics/league',
+      competitionName: 'League',
+      results: [
+        {
+          seasonText: '2025/2026',
+          competition: { path: leagueCompetition.path, withConverter: vi.fn() },
+          teamText: 'Alpha fallback',
+          team: { path: team.path, withConverter: vi.fn() },
+        },
+      ],
+    },
+  ]
   mocks.getNamedTextId.mockResolvedValue('named-text')
   mocks.headToHeadLeaders.mockResolvedValue({
     mostBeaten: [{ team: 'Bravo', win: 2, lose: 0 }],
@@ -809,7 +1066,9 @@ beforeEach(() => {
   mocks.multipleTeamsAllSeasonsPositionData.mockResolvedValue({ labels: [], datasets: [] })
   mocks.nextFixtures.mockResolvedValue([fixtureSetDoc])
   mocks.positionData.mockReturnValue({ labels: [], datasets: [] })
-  mocks.questionPapers.mockResolvedValue([{ fixtures: questionFixtureSet, competition: leagueCompetition }])
+  mocks.questionPapers.mockResolvedValue([
+    { fixtures: questionFixtureSet, competition: leagueCompetition },
+  ])
   mocks.saveSiteUser.mockResolvedValue(undefined)
   mocks.singleSeasonResultTypes.mockReturnValue({ labels: ['Won'], datasets: [{ data: [1] }] })
   mocks.spentFixtures.mockResolvedValue([fixtureSetDoc])
@@ -901,6 +1160,31 @@ beforeEach(() => {
   mocks.venuesById.set(neutralVenue.id, neutralVenue)
   mocks.venuesByPath.set(venue.path, venue)
   mocks.venuesByPath.set(neutralVenue.path, neutralVenue)
+})
+
+describe('site page accessibility', () => {
+  it.each(sitePageCases)('has no detectable axe violations on the $name', async (page) => {
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    const wrapper = mountSite(pageShell(page), {
+      attachTo: host,
+      global: {
+        stubs: sitePageAccessibilityStubs,
+      },
+    })
+
+    try {
+      await flushPromises()
+      await flushPromises()
+
+      const results = await axe.run(wrapper.element, axeRunOptions)
+
+      expect(axeViolationSummary(results.violations)).toEqual([])
+    } finally {
+      wrapper.unmount()
+      host.remove()
+    }
+  })
 })
 
 describe('remaining site title and navigation components', () => {
