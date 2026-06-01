@@ -91,9 +91,12 @@ jobs:
       - name: Seed Firestore emulator
         run: npm run seed:emulator
 
+      - name: Build client app
+        run: npm --workspace client run build-only
+
       - name: Start client app
         run: |
-          npm --workspace client run dev -- --host 127.0.0.1 --port 5173 --strictPort > /tmp/client-vite.log 2>&1 &
+          npm --workspace client run preview -- --host 127.0.0.1 --port 5173 --strictPort > /tmp/client-vite.log 2>&1 &
           echo $! > /tmp/client-vite.pid
 
           for _ in {1..60}; do
