@@ -2,25 +2,28 @@
   "name": "@quizleague/server",
   "version": "1.0.0",
   "description": "Quizleague website server",
-  "main": "index.ts",
+  "type": "module",
+  "main": "./src/index.ts",
   "scripts": {
     "test:unit": "vitest",
-    "build": "tsc ./src/index.ts --esModuleInterop",
+    "test:coverage": "vitest run --coverage",
+    "build": "esbuild src/index.ts --bundle --outfile=deploy/main.cjs --platform=node",
     "local": "npx tsx ./src/index.ts",
-    "start": "node index.ts"
+    "start": "node deploy/main.cjs"
   },
   "author": "David Good",
   "license": "ISC",
   "dependencies": {
-    "@google-cloud/firestore": "^7.11.0",
-    "@sendgrid/mail": "^8.1.4",
-    "express": "^4.21.2",
+    "@google-cloud/firestore": "^7.11.6",
     "@quizleague/shared": "*",
+    "@sendgrid/mail": "^8.1.6",
+    "express": "^4.21.2",
     "lodash": "4.17.21"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/lodash": "^4.17.16",
+    "esbuild": "0.25.11",
     "tsx": "4.19.3"
   }
 }

@@ -43,14 +43,14 @@ export const useTeams = () => {
 
     if (!league) return []
 
-    const tables = await LeagueTableDAO.entities(LeagueTableDAO.subCollection(`${league.key}`))
+    const tables = await LeagueTableDAO.entities(LeagueTableDAO.subCollection(league.path))
 
     return tables
       .map((t) =>
         t.rows
           .filter((r) => r.team.id == teamId)
           .map((r) => {
-            return { name: `League ${t.description}`, standing: ordinal(r.position) }
+            return { name: league.name, standing: ordinal(r.position) }
           }),
       )
       .flatMap((s) => s)
@@ -66,7 +66,7 @@ export const useTeams = () => {
     const fixtureGroup: { fixtures: Fixtures; competition: Competition }[] = []
 
     for (const cup of cups) {
-      const fixs = await fixtures(`${cup.key}`)
+      const fixs = await fixtures(cup.path)
 
       for (const fix of fixs) {
         const fixture = (await fixtureList([fix])).find(
@@ -223,6 +223,22 @@ export const useTeams = () => {
     }
   }
 
+  const ordinal = (value: number) => {
+    const remainder = value % 100
+    if (remainder >= 11 && remainder <= 13) return `${value}th`
+
+    switch (value % 10) {
+      case 1:
+        return `${value}st`
+      case 2:
+        return `${value}nd`
+      case 3:
+        return `${value}rd`
+      default:
+        return `${value}th`
+    }
+  }
+
   const sortStats = (stats: Statistics[], seasons: Season[]) => {
     return stats.sort((a, b) => {
       const ayear = seasons.find((s) => a.season.id == s.id)?.startYear
@@ -239,7 +255,7 @@ export const useTeams = () => {
     const sortedStats = sortAndPadStats(stats, seasons)
 
     const data = sortedStats.map((x) =>
-      !x.seasonStats || x.seasonStats.currentLeaguePosition == 0
+      !x.seasonStats || !x.seasonStats.currentLeaguePosition
         ? null
         : x.seasonStats.currentLeaguePosition,
     )
@@ -251,8 +267,19 @@ export const useTeams = () => {
   }
 
   const teamCount = async (stats: Statistics) => {
-    const table = await LeagueTableDAO.getDataByPath(stats.table.path)
-    return table?.rows.length
+    let tableRows = 0
+
+    try {
+      const table = await LeagueTableDAO.getDataByPath(stats.table.path)
+      tableRows = table?.rows.length ?? 0
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (e) {}
+
+    const seasonStatistics = await StatisticsDAO.entities(
+      StatisticsDAO.seasonStats(stats.season.id),
+    )
+
+    return Math.max(tableRows, seasonStatistics.length)
   }
 
   const teamCountAllSeasons = async (stats: Statistics[]) => {
@@ -319,6 +346,107 @@ export const useTeams = () => {
     }
   }
 
+  const allSeasonsHighlights = async (stats: Statistics[]) => {
+    const seasons = await SeasonDAO.entities(SeasonDAO.collection())
+    const sortedStats = sortStats([...stats], seasons)
+    const seasonLabel = (seasonId: string) => {
+      const season = seasons.find((s) => s.id === seasonId)
+      return season ? formatSeason(season) : seasonId
+    }
+    const fallback = (title: string) => ({ title, value: 'No data', detail: '' })
+    const matchDetail = (match: {
+      date: string
+      season: string
+      pointsFor: number
+      pointsAgainst: number
+    }) => `${match.pointsFor}-${match.pointsAgainst}, ${formatDate(match.date)}, ${match.season}`
+    const minBy = <T>(items: T[], getValue: (item: T) => number) =>
+      items.reduce<T | undefined>(
+        (best, item) => (!best || getValue(item) < getValue(best) ? item : best),
+        undefined,
+      )
+    const maxBy = <T>(items: T[], getValue: (item: T) => number) =>
+      items.reduce<T | undefined>(
+        (best, item) => (!best || getValue(item) > getValue(best) ? item : best),
+        undefined,
+      )
+
+    const leaguePositions = sortedStats
+      .filter((stat) => stat.seasonStats?.currentLeaguePosition)
+      .map((stat) => ({
+        season: seasonLabel(stat.season.id),
+        position: stat.seasonStats.currentLeaguePosition,
+      }))
+
+    const matches = sortedStats.flatMap((stat) =>
+      sortedWeekStats(stat).map(([date, weekStats]) => ({
+        date,
+        season: seasonLabel(stat.season.id),
+        pointsFor: weekStats.pointsFor,
+        pointsAgainst: weekStats.pointsAgainst,
+        pointsDifference: weekStats.pointsDifference,
+      })),
+    )
+
+    const bestLeaguePosition = minBy(leaguePositions, (position) => position.position)
+    const worstLeaguePosition = maxBy(leaguePositions, (position) => position.position)
+    const highestScore = maxBy(matches, (match) => match.pointsFor)
+    const lowestScore = minBy(matches, (match) => match.pointsFor)
+    const biggestVictory = maxBy(
+      matches.filter((match) => match.pointsDifference > 0),
+      (match) => match.pointsDifference,
+    )
+    const biggestDefeat = minBy(
+      matches.filter((match) => match.pointsDifference < 0),
+      (match) => match.pointsDifference,
+    )
+
+    return [
+      bestLeaguePosition
+        ? {
+            title: 'Highest final league position',
+            value: ordinal(bestLeaguePosition.position),
+            detail: bestLeaguePosition.season,
+          }
+        : fallback('Highest final league position'),
+      worstLeaguePosition
+        ? {
+            title: 'Lowest final league position',
+            value: ordinal(worstLeaguePosition.position),
+            detail: worstLeaguePosition.season,
+          }
+        : fallback('Lowest final league position'),
+      highestScore
+        ? {
+            title: 'Highest score',
+            value: `${highestScore.pointsFor}`,
+            detail: matchDetail(highestScore),
+          }
+        : fallback('Highest score'),
+      lowestScore
+        ? {
+            title: 'Lowest score',
+            value: `${lowestScore.pointsFor}`,
+            detail: matchDetail(lowestScore),
+          }
+        : fallback('Lowest score'),
+      biggestVictory
+        ? {
+            title: 'Biggest margin of victory',
+            value: `${biggestVictory.pointsDifference}`,
+            detail: matchDetail(biggestVictory),
+          }
+        : fallback('Biggest margin of victory'),
+      biggestDefeat
+        ? {
+            title: 'Biggest margin of defeat',
+            value: `${Math.abs(biggestDefeat.pointsDifference)}`,
+            detail: matchDetail(biggestDefeat),
+          }
+        : fallback('Biggest margin of defeat'),
+    ]
+  }
+
   const allSeasonsMultipleTeamStats = async (teams: string[]) => {
     const seasons = await SeasonDAO.entities(SeasonDAO.collection())
 
@@ -368,7 +496,7 @@ export const useTeams = () => {
   const multipleTeamsAllSeasonsPositionData = (stats: Statistics[][]) => {
     const mapFn = (x: Statistics) =>
       x.seasonStats
-        ? x.seasonStats.currentLeaguePosition == 0
+        ? !x.seasonStats.currentLeaguePosition
           ? null
           : x.seasonStats.currentLeaguePosition
         : null
@@ -409,6 +537,43 @@ export const useTeams = () => {
     return results
   }
 
+  const headToHeadLeaders = async (stats: Statistics[]) => {
+    const totals = new Map<string, { win: number; lose: number }>()
+
+    stats
+      .filter((stat) => stat.seasonStats?.headToHead)
+      .flatMap((stat) => stat.seasonStats.headToHead)
+      .forEach((headToHead) => {
+        const teamId = headToHead.team.id
+        const total = totals.get(teamId) ?? { win: 0, lose: 0 }
+
+        totals.set(teamId, {
+          win: total.win + headToHead.win,
+          lose: total.lose + headToHead.lose,
+        })
+      })
+
+    const rows = await Promise.all(
+      [...totals.entries()].map(async ([teamId, total]) => {
+        const team = await TeamDAO.getDataById(teamId)
+
+        return {
+          team: team?.shortName || team?.name || teamId,
+          win: total.win,
+          lose: total.lose,
+        }
+      }),
+    )
+
+    const maxWins = Math.max(0, ...rows.map((row) => row.win))
+    const maxLosses = Math.max(0, ...rows.map((row) => row.lose))
+
+    return {
+      mostBeaten: maxWins ? rows.filter((row) => row.win === maxWins) : [],
+      mostLostTo: maxLosses ? rows.filter((row) => row.lose === maxLosses) : [],
+    }
+  }
+
   async function teamForUser(userId: string | undefined) {
     return (await TeamDAO.list())?.find((t) => t.users.find((u) => u.id === userId))
   }
@@ -425,10 +590,12 @@ export const useTeams = () => {
     allSeasonsPositionData,
     allSeasonsResultTypes,
     allSeasonsAverageData,
+    allSeasonsHighlights,
     allSeasonsMultipleTeamStats,
     multipleTeamsAllSeasonsPositionData,
     multipleTeamsAllSeasonsAverageData,
     headToHeadResultsData,
+    headToHeadLeaders,
     teamForUser,
   }
 }

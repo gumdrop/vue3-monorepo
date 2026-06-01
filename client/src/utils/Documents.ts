@@ -1,18 +1,22 @@
 import type Entity from '@/entity/Entity'
-import { DocumentReference } from 'firebase/firestore'
+import { getDoc, type DocumentReference } from 'firebase/firestore'
 import { customRef } from 'vue'
-import { useDocument } from 'vuefire'
 
 export function useDocumentListRef<T extends Entity>(value: Promise<DocumentReference<T>[]>) {
   let refs: T[] = []
 
   return customRef<T[]>((track, trigger) => {
-    function map(newVal: Promise<DocumentReference<T>[]>) {
-      refs = []
-      newVal.then((t) => {
-        t.map((d) => useDocument(d).promise.value.then((e) => refs.push(e)))
-        trigger()
-      })
+    async function map(newVal: Promise<DocumentReference<T>[]>) {
+      const documents = await newVal
+      const entities: T[] = []
+      for (const documentRef of documents) {
+        const entity = (await getDoc(documentRef)).data() as T | undefined
+        if (entity) {
+          entities.push(entity)
+        }
+      }
+      refs = entities
+      trigger()
     }
 
     map(value)
@@ -22,8 +26,8 @@ export function useDocumentListRef<T extends Entity>(value: Promise<DocumentRefe
         track()
         return refs
       },
-      set(newValue: Promise<DocumentReference<T>[]>) {
-        map(newValue)
+      set(newValue: T[]) {
+        refs = newValue
         trigger()
       },
     }

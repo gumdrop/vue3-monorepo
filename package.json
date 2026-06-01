@@ -3,24 +3,33 @@
   "version": "1.0.0",
   "description": "Quizleague Website",
   "type": "module",
+  "scripts": {
+    "test:coverage": "npm run test:coverage --workspaces --if-present",
+    "deployToProd": "npm run build-only -w client && rm -rf ./server/deploy/built && cp -r client/dist ./server/deploy/built && npm run build -w server && node scripts/write-gcp-app-yaml.mjs",
+    "deployToGcp": "npm run deployToProd && gcloud app deploy server/deploy",
+    "emulators:start": "npx firebase-tools@15.17.0 emulators:start --only firestore --import=./emulator-data --export-on-exit=./emulator-data",
+    "emulators:export": "npx firebase-tools@15.17.0 emulators:export ./emulator-data --force",
+    "seed:emulator": "node scripts/seed-firestore-emulator.mjs"
+  },
   "workspaces": [
     "./server",
     "./client",
     "./shared"
   ],
   "dependencies": {
-    "uuid": "^11.1.0",
     "@js-joda/core": "^5.6.4",
     "@js-joda/locale": "^4.15.1",
     "@js-joda/locale_en-gb": "^4.15.1",
     "@js-joda/locale_en-us": "^4.15.1",
-    "@js-joda/timezone": "^2.22.0"
+    "@js-joda/timezone": "^2.22.0",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "typescript": "~5.7.3",
     "@tsconfig/node22": "^22.0.0",
     "@types/node": "^22.10.7",
-    "vitest": "^3.0.2",
-    "@vitest/eslint-plugin": "1.1.25"
+    "@vitest/coverage-v8": "^3.0.4",
+    "@vitest/eslint-plugin": "1.1.25",
+    "typescript": "~5.7.3",
+    "vitest": "^3.0.2"
   }
 }

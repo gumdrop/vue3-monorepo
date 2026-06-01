@@ -1,6 +1,19 @@
-import { User,SiteUser, Team } from '@quizleague/shared'
+import { User, SiteUser, Team } from '@quizleague/shared'
 import { v4 as uuid } from 'uuid'
 import { docRefById, entityPath, list, save } from '../storage/Storage'
+import { HttpError } from './util'
+
+function serializableSiteUser(siteUser: SiteUser): SiteUser {
+  return {
+    ...siteUser,
+    user: siteUser.user
+      ? {
+          id: siteUser.user.id,
+          path: siteUser.user.path,
+        }
+      : undefined,
+  }
+}
 
 export async function siteUserForEmail(email: string) {
   async function createAndSave(user: User) {
@@ -13,7 +26,7 @@ export async function siteUserForEmail(email: string) {
       path: entityPath('siteuser', id),
     }
     await save(siteUser)
-    return siteUser
+    return serializableSiteUser(siteUser)
   }
 
   const lce = email.toLowerCase()
@@ -31,12 +44,12 @@ export async function siteUserForEmail(email: string) {
     if (userHasTeam) {
       const siteUser = siteUsers.find((su) => su.user && su.user.id === user.id)
       if (siteUser) {
-        return siteUser
+        return serializableSiteUser(siteUser)
       } else {
         return createAndSave(user)
       }
     }
   } else {
-    throw new Error('no user found for email')
+    throw new HttpError(404, 'no user found for email', 'Not Found')
   }
 }

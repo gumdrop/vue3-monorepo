@@ -85,6 +85,12 @@ const crossTableHomeWin: Fixture = {
   id: '1',
 }
 
+const reverseOrderTable: LeagueTable = {
+  path: 'table/reverse',
+  id: 'reverse',
+  rows: [...table1.rows].reverse(),
+}
+
 describe('League Table Recalculator', () => {
   describe('Single table', () => {
     it('should calculate a single home win correctly', () => {
@@ -143,6 +149,18 @@ describe('League Table Recalculator', () => {
       expect(row2.leaguePoints).toBe(1)
       expect(row2.matchPointsAgainst).toBe(40)
       expect(row2.matchPointsFor).toBe(30)
+    })
+
+    it('should rank rows by calculated results when the original table order differs', () => {
+      const recalculated = recalculateTables([reverseOrderTable], [homeWin])
+      expect(recalculated[0].rows.map((row) => row.team.id)).toEqual(['1', '2'])
+      expect(recalculated[0].rows.map((row) => row.position)).toEqual(['1', '2'])
+    })
+
+    it('should preserve row order for exact ties', () => {
+      const recalculated = recalculateTables([reverseOrderTable], [])
+      expect(recalculated[0].rows.map((row) => row.team.id)).toEqual(['2', '1'])
+      expect(recalculated[0].rows.map((row) => row.position)).toEqual(['1', '2'])
     })
   })
 

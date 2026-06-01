@@ -1,0 +1,3 @@
+deploy/built/
+deploy/main.cjs
+deploy/app.yaml

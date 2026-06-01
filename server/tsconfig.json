@@ -1,15 +1,18 @@
 {
   "files": [],
   "compilerOptions": {
+    "target": "ES2022",
     "lib": ["ES2022"],
     "noEmit": false,
-    "module": "es2022",
-    "moduleResolution": "bundler",
-    "esModuleInterop": false
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "dist"
   },
   "references": [
     {
-      // "path": "./tsconfig.vitest.json"
+      "path": "./tsconfig.vitest.json"
     },
     {
       "path": "./tsconfig.app.json"

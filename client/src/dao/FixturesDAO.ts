@@ -17,12 +17,13 @@ class ReportDAO extends DAO<Report> {
 
 class ReportConverter extends DataConverter<Report> {
   buildObject(data: DocumentData, key: string): Report {
-    return new Report(
-      data.id,
-      this.makeDocumentRef(data.team, TeamDAO.converter),
-      this.makeDocumentRef(data.text, TextDAO.converter),
-      key,
-    )
+    const team = this.makeDocumentRef(data.team, TeamDAO.converter)
+    const text = this.makeDocumentRef(data.text, TextDAO.converter)
+    if (!team || !text) {
+      throw new Error(`Report ${data.id} is missing required team or text reference`)
+    }
+
+    return new Report(data.id, team, text, key)
   }
 }
 
@@ -39,22 +40,27 @@ class FixtureDAO extends DAO<Fixture> {
 export class FixtureConverter extends DataConverter<Fixture> {
   buildObject(data: DocumentData, key: string): Fixture {
     const result = data.result
+    const home = this.makeDocumentRef(data.home, TeamDAO.converter)
+    const away = this.makeDocumentRef(data.away, TeamDAO.converter)
+    if (!home || !away) {
+      throw new Error(`Fixture ${data.id} is missing required home or away team reference`)
+    }
 
     const resultC = result
       ? new Result(
           result.homeScore,
           result.awayScore,
           reportDAO.collectionProxy(key),
-          this.makeDocumentRef(result.submitter, UserDAO.converter),
+          this.makeDocumentRef(result.submitter, UserDAO.converter) ?? undefined,
           result.note,
         )
       : undefined
 
     return new Fixture(
       data.id,
-      this.makeDocumentRef(data.home, TeamDAO.converter),
-      this.makeDocumentRef(data.away, TeamDAO.converter),
-      this.makeDocumentRef(data.venue, VenueDAO.converter),
+      home,
+      away,
+      this.makeDocumentRef(data.venue, VenueDAO.converter) ?? undefined,
       resultC,
       key,
     )
@@ -81,6 +87,9 @@ class FixturesConverter extends DataConverter<Fixtures> {
       fixtureDAO.collectionProxy(key),
       data.questionsUrl,
       key,
+      this.makeDocumentRef(data.resultsSummary, TextDAO.converter) ?? undefined,
+      data.resultsSummaryGeneratedAt,
+      data.resultsSummaryModel,
     )
   }
 }

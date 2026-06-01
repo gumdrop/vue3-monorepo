@@ -1,0 +1,84 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { useFixtures } from '../FixturesService'
+
+const mocks = vi.hoisted(() => ({
+  firstClassCompetitions: vi.fn(),
+  fixtures: vi.fn(),
+  fixturesDAO: {
+    getByPath: vi.fn(),
+  },
+}))
+
+vi.mock('../CompetitionService', () => ({
+  useCompetitions: () => ({
+    firstClassCompetitions: mocks.firstClassCompetitions,
+    fixtures: mocks.fixtures,
+  }),
+}))
+
+vi.mock('@/dao/FixturesDAO', () => ({
+  default: mocks.fixturesDAO,
+}))
+
+const fixturesSet = (id: string, date: string) => ({
+  id,
+  date,
+  path: `season/season-1/competition/league/fixtures/${id}`,
+})
+
+describe('FixturesService', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.fixturesDAO.getByPath.mockImplementation((path: string) => ({ id: path, path }))
+  })
+
+  it('combines fixture groups from first-class season competitions', async () => {
+    mocks.firstClassCompetitions.mockResolvedValue([
+      { id: 'league', path: 'season/season-1/competition/league' },
+      { id: 'cup', path: 'season/season-1/competition/cup' },
+    ])
+    mocks.fixtures.mockImplementation(async (competitionPath: string) =>
+      competitionPath.endsWith('/league')
+        ? [fixturesSet('league-week', '2999-01-01')]
+        : [fixturesSet('cup-round', '2999-01-02')],
+    )
+
+    await expect(useFixtures().seasonFixtures('season-1')).resolves.toEqual([
+      expect.objectContaining({ id: 'league-week' }),
+      expect.objectContaining({ id: 'cup-round' }),
+    ])
+  })
+
+  it('returns future fixtures sorted ascending and mapped to document references', async () => {
+    mocks.firstClassCompetitions.mockResolvedValue([{ id: 'league', path: 'competition/league' }])
+    mocks.fixtures.mockResolvedValue([
+      fixturesSet('past', '2000-01-01'),
+      fixturesSet('future-2', '2999-01-10'),
+      fixturesSet('future-1', '2999-01-01'),
+    ])
+
+    await expect(useFixtures().activeFixtures('season-1', 1)).resolves.toEqual([
+      {
+        id: 'season/season-1/competition/league/fixtures/future-1',
+        path: 'season/season-1/competition/league/fixtures/future-1',
+      },
+    ])
+  })
+
+  it('returns spent fixtures sorted descending and mapped to document references', async () => {
+    mocks.firstClassCompetitions.mockResolvedValue([{ id: 'league', path: 'competition/league' }])
+    mocks.fixtures.mockResolvedValue([
+      fixturesSet('oldest', '1999-01-01'),
+      fixturesSet('latest', '2000-01-01'),
+      fixturesSet('future', '2999-01-01'),
+    ])
+
+    await expect(useFixtures().spentFixtures('season-1', 1)).resolves.toEqual([
+      {
+        id: 'season/season-1/competition/league/fixtures/latest',
+        path: 'season/season-1/competition/league/fixtures/latest',
+      },
+    ])
+  })
+})

@@ -1,9 +1,13 @@
 import type SiteUser from '@/entity/SiteUser'
+import SiteUserDAO from '@/dao/SiteUserDAO'
 import type Team from '@/entity/Team'
 import { useUserStore } from '@/stores/app'
 import axios from 'axios'
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, type User } from 'firebase/auth'
 import { REST_ROOT } from './constants'
+
+export const EMAIL_NOT_REGISTERED_MESSAGE =
+  'This email does not belong to a registered user.  Please contact your team captain.'
 
 export interface LoggedInUser {
   siteUser: SiteUser
@@ -27,17 +31,18 @@ export default function useAuth() {
 
       if (siteUser) {
         const provider = new GoogleAuthProvider()
+        provider.setCustomParameters({ login_hint: email })
         const auth = getAuth()
 
-        signInWithPopup(auth, provider).then(async (result) => {
-          // This gives you a Google Access Token. You can use it to access the Google API.
-          // const credential = GoogleAuthProvider.credentialFromResult(result)
-          // //const token = credential.accessToken
-          // // The signed-in user info.
-          // setUser(result.user)
-          // IdP data available using getAdditionalUserInfo(result)
-          // ...
-        })
+        const result = await signInWithPopup(auth, provider)
+        if (result.user.email?.toLowerCase() !== email.toLowerCase()) {
+          await signOut(auth)
+          throw new Error('Google account email does not match the requested login email')
+        }
+
+        const savedSiteUser = await bindSiteUserToFirebaseUser(siteUser, result.user)
+        await useUserStore().setUser(result.user)
+        return savedSiteUser
       }
 
       //     .catch((error) => {
@@ -53,8 +58,21 @@ export default function useAuth() {
     }
   }
 
-  function siteUserForEmail(email: string | null) {
-    return axios.get<SiteUser>(`${REST_ROOT}/site-user-for-email/${email}`)
+  async function bindSiteUserToFirebaseUser(siteUser: SiteUser, user: User) {
+    const updatedSiteUser = {
+      ...siteUser,
+      uid: user.uid,
+      avatar: user.photoURL ?? siteUser.avatar,
+      handle: siteUser.handle || user.displayName || user.email || '',
+    }
+
+    await SiteUserDAO.save(updatedSiteUser)
+    return updatedSiteUser
+  }
+
+  async function siteUserForEmail(email: string | null) {
+    const response = await axios.get<SiteUser | string>(`${REST_ROOT}/site-user-for-email/${email}`)
+    return typeof response.data === 'string' ? (JSON.parse(response.data) as SiteUser) : response.data
   }
 
   async function verifyEmail(email: string) {
@@ -64,6 +82,9 @@ export default function useAuth() {
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
+      if (e?.response?.status === 404) {
+        throw new Error(EMAIL_NOT_REGISTERED_MESSAGE)
+      }
       console.error(`Error getting site user : ${e.message}`)
       return false
     }
@@ -71,12 +92,12 @@ export default function useAuth() {
 
   function authGuard() {
     const { user } = useUserStore()
-    return user.value !== undefined
+    return user !== undefined
   }
 
   function unauthGuard() {
     const { user } = useUserStore()
-    return user.value === undefined
+    return user === undefined
   }
 
   return { logout, logonWithGoogle, verifyEmail, authGuard, unauthGuard }

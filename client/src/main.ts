@@ -1,9 +1,9 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
-import App from './App.vue'
-import router from './router'
-import { createVuetify } from 'vuetify'
+import App from './site/components/App.vue'
+import router from './site/router'
+import vuetify from './plugins/vuetify'
 
 import { VueFire, VueFireAuth } from 'vuefire'
 import { initializeApp } from '@firebase/app'
@@ -12,6 +12,7 @@ import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 import '@/assets/main.css'
 import { VueShowdownPlugin } from 'vue-showdown'
+import { isLocalHost } from './utils/localHost'
 
 const firebaseApp = initializeApp({
   // your application settings object Connection{
@@ -27,8 +28,10 @@ console.log('got firestore')
 
 const firestore = getFirestore(firebaseApp)
 
-if (window.location.hostname == 'localhost') {
-  connectFirestoreEmulator(firestore, 'localhost', 8080)
+if (isLocalHost(window.location.hostname)) {
+  const emulatorHost = import.meta.env.VITE_FIRESTORE_EMULATOR_HOST ?? '127.0.0.1'
+  const emulatorPort = Number(import.meta.env.VITE_FIRESTORE_EMULATOR_PORT ?? '18080')
+  connectFirestoreEmulator(firestore, emulatorHost, emulatorPort)
 }
 
 const app = createApp(App)
@@ -43,7 +46,7 @@ app.use(VueFire, {
 
 app.use(createPinia())
 app.use(router)
-app.use(createVuetify())
+app.use(vuetify)
 app.use(VueShowdownPlugin, { flavor: 'github' })
 
 app.mount('#app')

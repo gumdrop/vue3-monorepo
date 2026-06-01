@@ -30,7 +30,7 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
-  const user = computed(() => _user)
+  const user = computed(() => _user.value)
 
   if (_auth) {
     onAuthStateChanged(_auth, async (fbUser: User | null) => {

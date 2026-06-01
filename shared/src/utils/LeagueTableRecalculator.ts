@@ -54,10 +54,14 @@ export function recalculateTables(tables: LeagueTable[], fixtures: Fixture[]): L
     }
 
     return (table: LeagueTable) => {
-      let index = 1
-      function compare(a: number, b: number) {
-        index = index * 2
-        return (a > b ? 1 : 0) * index
+      function compareRows(a: LeagueTableRow, b: LeagueTableRow) {
+        return (
+          b.leaguePoints - a.leaguePoints ||
+          b.matchPointsFor - a.matchPointsFor ||
+          a.matchPointsAgainst - b.matchPointsAgainst ||
+          b.won - a.won ||
+          b.drawn - a.drawn
+        )
       }
 
       const newRows = table.rows
@@ -65,15 +69,7 @@ export function recalculateTables(tables: LeagueTable[], fixtures: Fixture[]): L
           const filtered = rows.filter((row) => row.team.id === r.team.id)
           return filtered.reduce((a, b) => addRows(a, b), r)
         })
-        .sort((a, b) => {
-          return (
-            compare(a.drawn, b.drawn) +
-            compare(a.won, b.won) +
-            compare(b.matchPointsAgainst, a.matchPointsAgainst) +
-            compare(a.matchPointsFor, b.matchPointsFor) +
-            compare(a.leaguePoints, b.leaguePoints)
-          )
-        })
+        .sort(compareRows)
         .map((row, i) => {
           return { ...row, position: `${i + 1}` }
         })

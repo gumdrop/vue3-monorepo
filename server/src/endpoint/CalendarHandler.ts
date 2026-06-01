@@ -102,7 +102,7 @@ async function makeICal(team: Team) {
   }
 
   for (const event of currentSeason.calendar) {
-    builder += formatEvent(event, event.description)
+    builder += await formatEvent(event, event.description)
   }
 
   return builder + 'END:VCALENDAR\n'

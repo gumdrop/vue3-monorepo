@@ -17,7 +17,7 @@ import {
 import { v4 as uuid } from 'uuid'
 import { deleteAll, docRef, entityPath, list, load, saveAll } from '../storage/Storage'
 
-export async function uppdateForFixture(fixture: Fixture, season: Season) {
+export async function updateForFixture(fixture: Fixture, season: Season) {
   const fixtures = await load<Fixtures>(parseParent(fixture.path))
   const competition = await load<Competition>(parseParent(fixtures.path))
   const tables = await list<LeagueTable>('leaguetable', competition.path)
@@ -89,15 +89,33 @@ async function updateStats(
     }
 
     const homeStats = addToHeadToHead(
-      addWeekStats(hs, date, fixture.result?.homeScore, fixture.result?.awayScore),
+      addWeekStats(
+        hs,
+        date,
+        fixture.result?.homeScore,
+        fixture.result?.awayScore,
+        getPosition(hs.team.id, tables),
+      ),
       fixture,
     )
     const awayStats = addToHeadToHead(
-      addWeekStats(as, date, fixture.result?.awayScore, fixture.result?.homeScore),
+      addWeekStats(
+        as,
+        date,
+        fixture.result?.awayScore,
+        fixture.result?.homeScore,
+        getPosition(as.team.id, tables),
+      ),
       fixture,
     )
 
-    return [homeStats, awayStats, ...allStats]
+    return [homeStats, awayStats, ...allStats].map((s) => ({
+      ...s,
+      seasonStats: {
+        ...s.seasonStats,
+        currentLeaguePosition: getPosition(s.team.id, tables),
+      },
+    }))
   } else return statistics
 }
 
@@ -106,6 +124,7 @@ function addWeekStats(
   date: LocalDate,
   pointsFor: number,
   pointsAgainst: number,
+  leaguePosition: number,
 ) {
   const newStats: WeekStats = {
     date,
@@ -115,7 +134,7 @@ function addWeekStats(
     cumuPointsAgainst: 0,
     cumuPointsDifference: 0,
     cumuPointsFor: 0,
-    leaguePosition: 0,
+    leaguePosition,
     ignorable: false,
   }
 
@@ -142,6 +161,7 @@ function updateFromCurrent(
     runningPointsFor: week.cumuPointsFor,
     runningPointsAgainst: week.cumuPointsAgainst,
     runningPointsDifference: week.cumuPointsDifference,
+    currentLeaguePosition: week.leaguePosition,
   }
 
   return {
@@ -149,6 +169,11 @@ function updateFromCurrent(
     seasonStats: season,
     weekStats: { ...statistics.weekStats, [week.date.toString()]: week },
   }
+}
+
+function getPosition(teamId: string, tables: LeagueTable[]): number {
+  const row = tables.flatMap((t) => t.rows).find((r) => r.team.id === teamId)
+  return row?.position ? parseInt(row.position) : 0
 }
 
 function addToHeadToHead(statistics: Statistics, fixture: Fixture) {
@@ -201,7 +226,7 @@ async function seasonStats(season: Season) {
 }
 
 export async function calculateStats(season: Season) {
-  const ss = await list<Statistics>('season')
+  const ss = await list<Statistics>('statistics')
   const seasonStats = ss.filter((s) => s.season.id === season.id)
   await deleteAll(seasonStats)
   const c = await leagueComp(season)
@@ -241,6 +266,6 @@ export async function calculateStats(season: Season) {
       )
     }
 
-    saveAll(startingStats)
+    await saveAll(startingStats)
   }
 }
