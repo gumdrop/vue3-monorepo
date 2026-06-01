@@ -30,7 +30,6 @@ const { formatSeason } = useSeason()
 }
 
 .season-select-wrapper {
-  background-color: rgba(255, 255, 255, 0.1);
   padding: 4px 12px;
   border-radius: 8px;
 }
