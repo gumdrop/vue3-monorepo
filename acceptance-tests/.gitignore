@@ -1,5 +1,7 @@
 node_modules/
+.features-gen/
 reports/
+playwright-report/
 test-results/
 screenshots/
 traces/

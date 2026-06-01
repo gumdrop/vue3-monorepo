@@ -1,6 +1,6 @@
 # Acceptance Tests
 
-Playwright + Cucumber acceptance tests for the QuizLeague browser app.
+Playwright-BDD acceptance tests for the QuizLeague browser app.
 
 ## Run locally
 
@@ -25,6 +25,14 @@ npm install
 npm test
 ```
 
+`npm test` generates Playwright tests from the Gherkin features with `bddgen test`, then runs them with the Playwright runner.
+
+To generate the Playwright-BDD test files without running the browser tests:
+
+```sh
+npm run test:dry-run
+```
+
 By default the tests target `http://127.0.0.1:5173`. Override it with:
 
 ```sh
@@ -37,11 +45,11 @@ Run with a visible browser:
 PW_HEADLESS=false npm test
 ```
 
-Generated Cucumber HTML reports are written to `acceptance-tests/reports/`.
+Generated Cucumber-style HTML reports are written to `acceptance-tests/reports/`.
 
 ## Maintenance app tests
 
-The maintenance app is protected by authentication. Acceptance tests use a local-host-only bypass that must be enabled when the client is built or started, and when Cucumber runs:
+The maintenance app is protected by authentication. Acceptance tests use a local-host-only bypass that must be enabled when the client is built or started, and when Playwright-BDD runs:
 
 ```sh
 VITE_MAINTAIN_AUTH_BYPASS=true npm run dev -w client

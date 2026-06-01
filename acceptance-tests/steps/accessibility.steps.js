@@ -1,6 +1,8 @@
 const assert = require('node:assert/strict')
-const { Then } = require('@cucumber/cucumber')
 const axe = require('axe-core')
+const { createBdd } = require('playwright-bdd')
+
+const { Then } = createBdd()
 
 const axeOptions = {
   iframes: false,
@@ -21,13 +23,13 @@ const violationSummary = (violations) =>
     failureSummaries: nodes.map((node) => node.failureSummary),
   }))
 
-Then('the page should have no detectable accessibility violations', async function () {
-  await this.page.waitForLoadState('domcontentloaded')
-  await this.page.addScriptTag({ content: axe.source })
+Then('the page should have no detectable accessibility violations', async ({ page }) => {
+  await page.waitForLoadState('domcontentloaded')
+  await page.addScriptTag({ content: axe.source })
 
-  const siteContent = this.page.locator('.main-view-container').first()
+  const siteContent = page.locator('.main-view-container').first()
   const mainContent =
-    (await siteContent.count()) > 0 ? siteContent : this.page.locator('main, [role="main"]').first()
+    (await siteContent.count()) > 0 ? siteContent : page.locator('main, [role="main"]').first()
   await mainContent.waitFor({ state: 'visible' })
 
   const results = await mainContent.evaluate(
