@@ -27,9 +27,19 @@ export const loginRedirectUrl = (forwardPath = currentMaintenancePath()) => {
   return `/login?${search.toString()}`
 }
 
+export const isMaintenanceAuthBypassEnabled = (
+  hostname = typeof window === 'undefined' ? '' : window.location.hostname,
+) => {
+  return (
+    import.meta.env.VITE_MAINTAIN_AUTH_BYPASS === 'true' && isLocalMaintenanceHost(hostname, false)
+  )
+}
+
 export const requireAuthenticatedUser = async (
   redirect: (url: string) => void = (url) => window.location.assign(url),
 ) => {
+  if (isMaintenanceAuthBypassEnabled()) return true
+
   const user = await getCurrentUser()
   if (user) return true
 
@@ -43,104 +53,104 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('../views/HomeView.vue')
+      component: () => import('../views/HomeView.vue'),
     },
     {
       path: '/season',
       name: 'season',
-      component: () => import('../views/season/SeasonList.vue')
+      component: () => import('../views/season/SeasonList.vue'),
     },
     {
-        path: '/season/:id',
-        name: 'season-edit',
-        component: () => import('../views/season/SeasonEdit.vue')
+      path: '/season/:id',
+      name: 'season-edit',
+      component: () => import('../views/season/SeasonEdit.vue'),
     },
     {
-        path: '/season/:seasonId/competition/:id',
-        name: 'competition-edit',
-        component: () => import('../views/season/CompetitionEdit.vue')
+      path: '/season/:seasonId/competition/:id',
+      name: 'competition-edit',
+      component: () => import('../views/season/CompetitionEdit.vue'),
     },
     {
-        path: '/season/:seasonId/competition/:competitionId/fixtures/:id',
-        name: 'fixtures-edit',
-        component: () => import('../views/season/FixturesEdit.vue')
+      path: '/season/:seasonId/competition/:competitionId/fixtures/:id',
+      name: 'fixtures-edit',
+      component: () => import('../views/season/FixturesEdit.vue'),
     },
     {
-        path: '/season/:seasonId/competition/:competitionId/leaguetable/:id',
-        name: 'leaguetable-edit',
-        component: () => import('../views/season/LeagueTableEdit.vue')
+      path: '/season/:seasonId/competition/:competitionId/leaguetable/:id',
+      name: 'leaguetable-edit',
+      component: () => import('../views/season/LeagueTableEdit.vue'),
     },
     {
       path: '/team',
       name: 'team',
-      component: () => import('../views/team/TeamList.vue')
+      component: () => import('../views/team/TeamList.vue'),
     },
     {
-        path: '/team/:id',
-        name: 'team-edit',
-        component: () => import('../views/team/TeamEdit.vue')
+      path: '/team/:id',
+      name: 'team-edit',
+      component: () => import('../views/team/TeamEdit.vue'),
     },
     {
       path: '/venue',
       name: 'venue',
-      component: () => import('../views/venue/VenueList.vue')
+      component: () => import('../views/venue/VenueList.vue'),
     },
     {
-        path: '/venue/:id',
-        name: 'venue-edit',
-        component: () => import('../views/venue/VenueEdit.vue')
+      path: '/venue/:id',
+      name: 'venue-edit',
+      component: () => import('../views/venue/VenueEdit.vue'),
     },
     {
       path: '/user',
       name: 'user',
-      component: () => import('../views/user/UserList.vue')
+      component: () => import('../views/user/UserList.vue'),
     },
     {
-        path: '/user/:id',
-        name: 'user-edit',
-        component: () => import('../views/user/UserEdit.vue')
+      path: '/user/:id',
+      name: 'user-edit',
+      component: () => import('../views/user/UserEdit.vue'),
     },
     {
       path: '/siteuser',
       name: 'siteuser',
-      component: () => import('../views/siteuser/SiteUserList.vue')
+      component: () => import('../views/siteuser/SiteUserList.vue'),
     },
     {
-        path: '/siteuser/:id',
-        name: 'siteuser-edit',
-        component: () => import('../views/siteuser/SiteUserEdit.vue')
+      path: '/siteuser/:id',
+      name: 'siteuser-edit',
+      component: () => import('../views/siteuser/SiteUserEdit.vue'),
     },
     {
       path: '/globaltext',
       name: 'globaltext',
-      component: () => import('../views/globaltext/GlobalTextList.vue')
+      component: () => import('../views/globaltext/GlobalTextList.vue'),
     },
     {
       path: '/globaltext/:id',
       name: 'globaltext-edit',
-      component: () => import('../views/globaltext/GlobalTextEdit.vue')
+      component: () => import('../views/globaltext/GlobalTextEdit.vue'),
     },
     {
       path: '/competitionstatistics',
       name: 'competitionstatistics',
-      component: () => import('../views/competitionstatistics/CompetitionStatisticsList.vue')
+      component: () => import('../views/competitionstatistics/CompetitionStatisticsList.vue'),
     },
     {
       path: '/competitionstatistics/:id',
       name: 'competitionstatistics-edit',
-      component: () => import('../views/competitionstatistics/CompetitionStatisticsEdit.vue')
+      component: () => import('../views/competitionstatistics/CompetitionStatisticsEdit.vue'),
     },
     {
       path: '/statistics',
       name: 'statistics',
-      component: () => import('../views/statistics/StatisticsRecalculate.vue')
+      component: () => import('../views/statistics/StatisticsRecalculate.vue'),
     },
     {
       path: '/applicationcontext',
       name: 'applicationcontext',
-      component: () => import('../views/applicationcontext/ApplicationContextEdit.vue')
-    }
-  ]
+      component: () => import('../views/applicationcontext/ApplicationContextEdit.vue'),
+    },
+  ],
 })
 
 router.beforeEach(() => requireAuthenticatedUser())

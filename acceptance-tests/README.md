@@ -38,3 +38,12 @@ PW_HEADLESS=false npm test
 ```
 
 Generated Cucumber HTML reports are written to `acceptance-tests/reports/`.
+
+## Maintenance app tests
+
+The maintenance app is protected by authentication. Acceptance tests use a local-host-only bypass that must be enabled when the client is built or started, and when Cucumber runs:
+
+```sh
+VITE_MAINTAIN_AUTH_BYPASS=true npm run dev -w client
+ACCEPTANCE_MAINTAIN_AUTH_BYPASS=true npm test
+```

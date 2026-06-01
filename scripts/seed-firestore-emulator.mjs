@@ -75,6 +75,20 @@ function user(id, name, email) {
   }
 }
 
+function siteUser(id, handle, email, userId, uid = '') {
+  return {
+    path: `siteuser/${id}`,
+    data: {
+      id,
+      handle,
+      email,
+      uid,
+      avatar: '',
+      user: userRef(userId),
+    },
+  }
+}
+
 function team(id, name, shortName, venueId, textId, handle, userIds = []) {
   return {
     path: `team/${id}`,
@@ -92,15 +106,7 @@ function team(id, name, shortName, venueId, textId, handle, userIds = []) {
   }
 }
 
-function competition(
-  id,
-  type,
-  name,
-  textId,
-  textName,
-  extra = {},
-  targetSeasonId = seasonId,
-) {
+function competition(id, type, name, textId, textName, extra = {}, targetSeasonId = seasonId) {
   return {
     path: `season/${targetSeasonId}/competition/${id}`,
     data: {
@@ -116,6 +122,33 @@ function competition(
       icon: extra.icon ?? 'mdi-trophy',
       ...extra,
     },
+  }
+}
+
+function competitionStatistics(id, competitionName, results = []) {
+  return {
+    path: `competitionstatistics/${id}`,
+    data: {
+      id,
+      competitionName,
+      results,
+    },
+  }
+}
+
+function competitionStatisticsResult(
+  seasonText,
+  teamText,
+  teamId,
+  competitionId = leagueCompetitionId,
+  targetSeasonId = seasonId,
+) {
+  return {
+    competition: competitionRef(competitionId, targetSeasonId),
+    season: ref('season', targetSeasonId),
+    seasonText,
+    team: teamRef(teamId),
+    teamText,
   }
 }
 
@@ -590,11 +623,8 @@ function addWeekStats(statistics, date, pointsFor, pointsAgainst, position) {
 function updateCurrentPositions(statsByTeam, leagueConfig, tableRows) {
   for (const row of tableRows) {
     const teamId = referenceId(row.team)
-    ensureTeamStatistics(
-      statsByTeam,
-      leagueConfig,
-      teamId,
-    ).seasonStats.currentLeaguePosition = leaguePosition(tableRows, teamId)
+    ensureTeamStatistics(statsByTeam, leagueConfig, teamId).seasonStats.currentLeaguePosition =
+      leaguePosition(tableRows, teamId)
   }
 }
 
@@ -800,7 +830,10 @@ const documents = [
   text('text-venues-front-page', 'Venues used by active teams and fixtures.'),
   text('text-links-content', 'Useful league links and resources for local quiz teams.'),
   text('text-help-main', 'Use this help page to find guidance for using the QuizLeague website.'),
-  text('text-help-login', 'Registered users can sign in to manage team details and submit results.'),
+  text(
+    'text-help-login',
+    'Registered users can sign in to manage team details and submit results.',
+  ),
   text('text-help-submit', 'Team members can submit results once they are signed in.'),
   text('text-team-ashridge', 'Ashridge Arms team profile.'),
   text('text-team-beaconsfield', 'Beaconsfield Bees team profile.'),
@@ -811,6 +844,20 @@ const documents = [
   user('user-chloe-chesham', 'Chloe Chesham', 'chloe.chesham@example.test'),
   user('user-dan-drayton', 'Dan Drayton', 'dan.drayton@example.test'),
   user('user-ella-secretary', 'Ella Secretary', 'ella.secretary@example.test'),
+  siteUser(
+    'siteuser-alice-ashridge',
+    'alice-ashridge',
+    'alice.ashridge@example.test',
+    'user-alice-ashridge',
+    'firebase-alice-ashridge',
+  ),
+  siteUser(
+    'siteuser-ella-secretary',
+    'ella-secretary',
+    'ella.secretary@example.test',
+    'user-ella-secretary',
+    'firebase-ella-secretary',
+  ),
   venue('venue-ashridge-arms', 'Ashridge Arms', '1 High Street, Ashridge HP1 1AA', {
     phone: '01494 010101',
     phoneNumber: '01494 010101',
@@ -868,6 +915,9 @@ const documents = [
     'drayton',
     ['user-dan-drayton'],
   ),
+  competitionStatistics('competition-statistics-league', 'League Roll Of Honour', [
+    competitionStatisticsResult('2025/2026', 'Ashridge Arms', 'team-ashridge-arms'),
+  ]),
   {
     path: 'globaltext/site',
     data: {
