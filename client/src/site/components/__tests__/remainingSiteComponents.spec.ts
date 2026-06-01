@@ -809,7 +809,7 @@ beforeEach(() => {
   mocks.multipleTeamsAllSeasonsPositionData.mockResolvedValue({ labels: [], datasets: [] })
   mocks.nextFixtures.mockResolvedValue([fixtureSetDoc])
   mocks.positionData.mockReturnValue({ labels: [], datasets: [] })
-  mocks.questionPapers.mockResolvedValue([questionFixtureSet])
+  mocks.questionPapers.mockResolvedValue([{ fixtures: questionFixtureSet, competition: leagueCompetition }])
   mocks.saveSiteUser.mockResolvedValue(undefined)
   mocks.singleSeasonResultTypes.mockReturnValue({ labels: ['Won'], datasets: [{ data: [1] }] })
   mocks.spentFixtures.mockResolvedValue([fixtureSetDoc])
@@ -1466,7 +1466,7 @@ describe('remaining fixture, home, and result components', () => {
     await flushPromises()
     expect(mocks.questionPapers).toHaveBeenCalledWith(mocks.seasonId)
     expect(questionsPage.get('a').attributes('href')).toBe(questionFixtureSet.questionsUrl)
-    expect(questionsPage.text()).toContain('2026/06/07 : Week 2')
+    expect(questionsPage.text()).toContain('2026/06/07 : League : Week 2')
 
     const submitResults = mountSite(SubmitResults, {
       global: { stubs: { ...siteComponentStubs, SubmitResult: simpleStub('submit-result') } },

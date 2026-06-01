@@ -84,7 +84,8 @@ describe('FixturesService', () => {
   })
 
   it('returns question paper fixture groups sorted descending', async () => {
-    mocks.firstClassCompetitions.mockResolvedValue([{ id: 'league', path: 'competition/league' }])
+    const competition = { id: 'league', path: 'competition/league', name: 'League' }
+    mocks.firstClassCompetitions.mockResolvedValue([competition])
     mocks.fixtures.mockResolvedValue([
       fixturesSet('without-paper', '2000-01-02'),
       fixturesSet('old-paper', '2000-01-01', 'https://example.com/old.pdf'),
@@ -93,8 +94,8 @@ describe('FixturesService', () => {
     ])
 
     await expect(useFixtures().questionPapers('season-1')).resolves.toEqual([
-      expect.objectContaining({ id: 'new-paper' }),
-      expect.objectContaining({ id: 'old-paper' }),
+      { fixtures: expect.objectContaining({ id: 'new-paper' }), competition },
+      { fixtures: expect.objectContaining({ id: 'old-paper' }), competition },
     ])
   })
 })

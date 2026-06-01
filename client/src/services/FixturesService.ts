@@ -5,6 +5,11 @@ import { LocalDate } from '@js-joda/core'
 import { useCompetitions } from './CompetitionService'
 const { fixtures, firstClassCompetitions } = useCompetitions()
 
+export type QuestionPaper = {
+  fixtures: Fixtures
+  competition: Competition
+}
+
 export const useFixtures = () => {
   const activeFixtures = async (seasonId: string, take?: number) => {
     const today = LocalDate.now().toString()
@@ -25,9 +30,14 @@ export const useFixtures = () => {
   }
 
   const questionPapers = async (seasonId: string) => {
-    return (await seasonFixtures(seasonId))
-      .filter((fixtures) => fixtures.questionsUrl?.trim())
-      .sort((a, b) => b.date.localeCompare(a.date))
+    const competitions = await firstClassCompetitions(seasonId)
+    const questions: QuestionPaper[] = []
+    for (const competition of competitions) {
+      ;(await fixtures(`${competition.path}`))
+        .filter((fixtures) => fixtures.questionsUrl?.trim())
+        .forEach((fixtureSet) => questions.push({ fixtures: fixtureSet, competition }))
+    }
+    return questions.sort((a, b) => b.fixtures.date.localeCompare(a.fixtures.date))
   }
 
   const seasonFixtures = async (seasonId: string) => {
