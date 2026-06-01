@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { getCurrentUser } from 'vuefire'
 import router, {
   currentMaintenancePath,
+  isMaintenanceAuthBypassEnabled,
   isLocalMaintenanceHost,
   loginRedirectUrl,
   requireAuthenticatedUser,
@@ -14,6 +15,10 @@ vi.mock('vuefire', () => ({
 describe('Maintenance Router', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
   })
 
   it('has correct base path', () => {
@@ -39,9 +44,7 @@ describe('Maintenance Router', () => {
     })
 
     expect(path).toBe('/maintain/?mode=edit#/season')
-    expect(loginRedirectUrl(path)).toBe(
-      '/login?forward=%2Fmaintain%2F%3Fmode%3Dedit%23%2Fseason',
-    )
+    expect(loginRedirectUrl(path)).toBe('/login?forward=%2Fmaintain%2F%3Fmode%3Dedit%23%2Fseason')
   })
 
   it('allows maintain navigation for authenticated users', async () => {
@@ -49,6 +52,19 @@ describe('Maintenance Router', () => {
     const redirect = vi.fn()
 
     await expect(requireAuthenticatedUser(redirect)).resolves.toBe(true)
+    expect(redirect).not.toHaveBeenCalled()
+  })
+
+  it('allows local acceptance-test auth bypass only when explicitly enabled', async () => {
+    vi.stubEnv('VITE_MAINTAIN_AUTH_BYPASS', 'true')
+    const redirect = vi.fn()
+
+    expect(isMaintenanceAuthBypassEnabled('127.0.0.1')).toBe(true)
+    expect(isMaintenanceAuthBypassEnabled('localhost')).toBe(true)
+    expect(isMaintenanceAuthBypassEnabled('www.chilternquizleague.example')).toBe(false)
+
+    await expect(requireAuthenticatedUser(redirect)).resolves.toBe(true)
+    expect(getCurrentUser).not.toHaveBeenCalled()
     expect(redirect).not.toHaveBeenCalled()
   })
 
