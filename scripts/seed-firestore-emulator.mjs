@@ -2,6 +2,8 @@ const projectId = process.env.FIREBASE_PROJECT_ID ?? 'chiltern-ql-firestore'
 const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST ?? '127.0.0.1:18080'
 const baseUrl = `http://${emulatorHost}/v1/projects/${projectId}/databases/(default)/documents`
 const clearUrl = `http://${emulatorHost}/emulator/v1/projects/${projectId}/databases/(default)/documents`
+const cupFinalQuestionsUrl =
+  'https://storage.googleapis.com/public.chilternquizleague.uk/questions/2025-26/cup%20final.pdf'
 
 const appContextId = '5659313586569216'
 const currentSeasonId = 'season-2025-2026'
@@ -124,6 +126,7 @@ function fixtureSet(
   date,
   start = '20:00:00',
   targetSeasonId = seasonId,
+  extra = {},
 ) {
   return {
     path: `season/${targetSeasonId}/competition/${competitionId}/fixtures/${id}`,
@@ -132,6 +135,7 @@ function fixtureSet(
       description,
       date,
       start,
+      ...extra,
     },
   }
 }
@@ -794,6 +798,10 @@ const documents = [
   text('text-singleton-note', 'The individual quiz is represented as a single scheduled event.'),
   text('text-teams-header', 'Active public teams in the league.'),
   text('text-venues-front-page', 'Venues used by active teams and fixtures.'),
+  text('text-links-content', 'Useful league links and resources for local quiz teams.'),
+  text('text-help-main', 'Use this help page to find guidance for using the QuizLeague website.'),
+  text('text-help-login', 'Registered users can sign in to manage team details and submit results.'),
+  text('text-help-submit', 'Team members can submit results once they are signed in.'),
   text('text-team-ashridge', 'Ashridge Arms team profile.'),
   text('text-team-beaconsfield', 'Beaconsfield Bees team profile.'),
   text('text-team-chesham', 'Chesham Comets team profile.'),
@@ -878,6 +886,10 @@ const documents = [
         'teams-header': textRef('text-teams-header'),
         'teams-front-page': textRef('text-teams-header'),
         'venues-front-page': textRef('text-venues-front-page'),
+        'links-content': textRef('text-links-content'),
+        'help-content-main': textRef('text-help-main'),
+        'help-content-login': textRef('text-help-login'),
+        'help-content-submit': textRef('text-help-submit'),
       },
     },
   },
@@ -1066,7 +1078,9 @@ const documents = [
     path,
     data,
   })),
-  fixtureSet('cup-main', 'cup-quarter-final', 'Quarter-final', '2026-06-11'),
+  fixtureSet('cup-main', 'cup-quarter-final', 'Quarter-final', '2026-06-11', '20:00:00', seasonId, {
+    questionsUrl: cupFinalQuestionsUrl,
+  }),
   fixture(
     'cup-main',
     'cup-quarter-final',
