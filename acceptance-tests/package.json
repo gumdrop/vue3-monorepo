@@ -2,15 +2,15 @@
   "name": "@quizleague/acceptance-tests",
   "version": "1.0.0",
   "private": true,
-  "description": "Playwright and Cucumber acceptance tests for the QuizLeague browser app",
+  "description": "Playwright-BDD acceptance tests for the QuizLeague browser app",
   "scripts": {
-    "test": "cucumber-js",
-    "test:dry-run": "cucumber-js --dry-run",
-    "test:headed": "PW_HEADLESS=false cucumber-js"
+    "test": "bddgen test && playwright test",
+    "test:dry-run": "bddgen test",
+    "test:headed": "PW_HEADLESS=false npm test"
   },
   "devDependencies": {
-    "@cucumber/cucumber": "^12.9.0",
+    "@playwright/test": "^1.60.0",
     "axe-core": "^4.11.4",
-    "playwright": "^1.60.0"
+    "playwright-bdd": "^8.5.1"
   }
 }
