@@ -21,10 +21,11 @@ vi.mock('@/dao/FixturesDAO', () => ({
   default: mocks.fixturesDAO,
 }))
 
-const fixturesSet = (id: string, date: string) => ({
+const fixturesSet = (id: string, date: string, questionsUrl?: string) => ({
   id,
   date,
   path: `season/season-1/competition/league/fixtures/${id}`,
+  questionsUrl,
 })
 
 describe('FixturesService', () => {
@@ -79,6 +80,22 @@ describe('FixturesService', () => {
         id: 'season/season-1/competition/league/fixtures/latest',
         path: 'season/season-1/competition/league/fixtures/latest',
       },
+    ])
+  })
+
+  it('returns question paper fixture groups sorted descending', async () => {
+    const competition = { id: 'league', path: 'competition/league', name: 'League' }
+    mocks.firstClassCompetitions.mockResolvedValue([competition])
+    mocks.fixtures.mockResolvedValue([
+      fixturesSet('without-paper', '2000-01-02'),
+      fixturesSet('old-paper', '2000-01-01', 'https://example.com/old.pdf'),
+      fixturesSet('blank-paper', '2000-01-03', ' '),
+      fixturesSet('new-paper', '2000-01-04', 'https://example.com/new.pdf'),
+    ])
+
+    await expect(useFixtures().questionPapers('season-1')).resolves.toEqual([
+      { fixtures: expect.objectContaining({ id: 'new-paper' }), competition },
+      { fixtures: expect.objectContaining({ id: 'old-paper' }), competition },
     ])
   })
 })

@@ -4,6 +4,8 @@
 
     <SideMenuItem to="/fixtures/all" title="All Fixtures" />
 
+    <SideMenuItem to="/results/questions" title="Questions" />
+
     <SideMenuItem to="/results/submit" v-if="user" title="Submit Results" />
 
     <SideMenuItem to="/results/submit/instructions" v-if="!user" title="Submit Results" />

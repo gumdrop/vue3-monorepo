@@ -1,5 +1,5 @@
 <template>
-  <SubTitle v-if="season" title="Competitions" icon="mdi-trophy" colour="purple-lighten-3">
+  <SubTitle v-if="season" title="Questions" icon="mdi-file-question" colour="purple-lighten-3">
     <template v-slot:subtitle>
       <div class="text-subtitle-1 opacity-80">{{ formatSeason(season) }}</div>
     </template>
@@ -11,18 +11,17 @@
   </SubTitle>
 </template>
 <script setup lang="ts">
-import SeasonDao from '@/dao/SeasonDAO';
-import { useSeason } from '@/services/SeasonService';
-import { useCompetition } from '@/stores/competiton';
-import { useDocument } from 'vuefire';
-import SubTitle from '../common/SubTitle.vue';
-import SeasonSelect from '../season/SeasonSelect.vue';
+import SeasonDao from '@/dao/SeasonDAO'
+import { useSeason } from '@/services/SeasonService'
+import { useResultsStore } from '@/stores/results'
+import { useDocument } from 'vuefire'
+import SubTitle from '../common/SubTitle.vue'
+import SeasonSelect from '../season/SeasonSelect.vue'
 
-const { seasonId, setSeason } = useCompetition()
+const { seasonId, setSeason } = useResultsStore()
 
 const season = useDocument(() => SeasonDao.getById(seasonId.value))
 const { formatSeason } = useSeason()
-
 </script>
 <style scoped>
 .opacity-80 {
