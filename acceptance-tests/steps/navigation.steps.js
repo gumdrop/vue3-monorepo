@@ -119,11 +119,19 @@ Then('I should see the {string} title', async function (title) {
 })
 
 Then('I should see text matching {string}', async function (pattern) {
-  await this.page.getByText(new RegExp(pattern)).first().waitFor({ state: 'visible' })
+  await this.page
+    .getByText(new RegExp(pattern))
+    .filter({ visible: true })
+    .first()
+    .waitFor({ state: 'visible' })
 })
 
 Then('I should not see text matching {string}', async function (pattern) {
-  await this.page.getByText(new RegExp(pattern)).first().waitFor({ state: 'hidden' })
+  await this.page
+    .getByText(new RegExp(pattern))
+    .filter({ visible: true })
+    .first()
+    .waitFor({ state: 'hidden' })
 })
 
 Then('the {string} field should be visible', async function (label) {
