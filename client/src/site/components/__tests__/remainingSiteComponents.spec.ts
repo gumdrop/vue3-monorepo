@@ -1521,15 +1521,19 @@ describe('remaining site content and competition components', () => {
       props: { path: leagueCompetition.path },
       global: { stubs: { ...siteComponentStubs, LeagueTable: simpleStub('league-table') } },
     })
+    mountSite(HomeLeagueTables, {
+      props: { seasonId: mocks.seasonId },
+      global: { stubs: { ...siteComponentStubs, LeagueTable: simpleStub('league-table') } },
+    })
 
     const table = mountSite(LeagueTable, {
       props: { path: `${leagueCompetition.path}/leaguetable/table-1` },
     })
 
     expect(table.text()).toContain('Alpha Quiz Team')
-    expect(mocks.vuefireCollectionCalls).toContainEqual(
-      expect.objectContaining({ options: { maxRefDepth: 0 } }),
-    )
+    expect(
+      mocks.vuefireCollectionCalls.filter((call) => call.options?.maxRefDepth === 0),
+    ).toHaveLength(2)
     expect(
       mocks.vuefireDocumentCalls.filter((call) => call.options?.maxRefDepth === 0),
     ).toHaveLength(2)

@@ -21,6 +21,8 @@ const { seasonId } = defineProps<{ seasonId: string }>()
 const { competitionOfType, leagueTables } = useCompetitions()
 
 const competition = usePromise(() => competitionOfType(seasonId, "league"))
-const tables = useCollection(() => competition.value ? leagueTables(competition.value.path) : undefined)
+const tables = useCollection(() => competition.value ? leagueTables(competition.value.path) : undefined, {
+  maxRefDepth: 0,
+})
 
 </script>

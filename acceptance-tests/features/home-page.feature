@@ -21,6 +21,15 @@ Feature: Home page
     And I should see text matching "League Championship Table"
     And I should see text matching "Ashridge Arms"
 
+  Scenario: Visitors can see team names in the home league table
+    When I open the QuizLeague home page
+    And I choose the "Tables" home tab
+    Then the "League Championship Table" league table includes:
+      | 1 | Ashridge Arms      | 1 | 1 | 0 | 0 | 42 | 2 |
+      | 2 | Beaconsfield Bees  | 1 | 0 | 0 | 1 | 38 | 0 |
+      | 3 | Chesham Comets     | 0 | 0 | 0 | 0 | 0  | 0 |
+      | 4 | Drayton Dynamos    | 0 | 0 | 0 | 0 | 0  | 0 |
+
   Scenario: Visitors can switch between headline results, fixtures, and events
     When I open the QuizLeague home page
     And I choose the "Results" home tab
