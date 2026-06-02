@@ -6,6 +6,8 @@ import {
   isPathAndId,
   parseParent,
   SINGLETON_ID,
+  TEAM_MEMBER_DOCUMENT_ID,
+  teamMemberPath,
   toPath,
 } from '../../index'
 
@@ -58,6 +60,13 @@ describe('utils', () => {
     expect(isPathAndId({ id: 'alpha', path: 'team/alpha' })).toBe(true)
     expect(isPathAndId(null)).toBe(false)
     expect(isPathAndId({ path: 'team/alpha' })).toBe(false)
+  })
+
+  it('builds the singleton team membership document path', () => {
+    expect(TEAM_MEMBER_DOCUMENT_ID).toBe('members')
+    expect(teamMemberPath({ id: 'alpha', path: 'team/alpha' })).toBe(
+      'team/alpha/member/members',
+    )
   })
 
   it('unwraps legacy competition entities and exposes shared singleton constants', () => {

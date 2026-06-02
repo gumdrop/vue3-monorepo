@@ -77,6 +77,10 @@ const mocks = vi.hoisted(() => ({
     list: vi.fn(),
     save: vi.fn(),
   },
+  teamMemberDAO: {
+    getDataForTeam: vi.fn(),
+    saveForTeam: vi.fn(),
+  },
   textDAO: {
     getData: vi.fn(),
     getDataByPath: vi.fn(),
@@ -115,6 +119,7 @@ vi.mock('@/dao/LeagueTableDAO', () => ({ default: mocks.leagueTableDAO }))
 vi.mock('@/dao/SeasonDAO', () => ({ default: mocks.seasonDAO }))
 vi.mock('@/dao/SiteUserDAO', () => ({ default: mocks.siteUserDAO }))
 vi.mock('@/dao/TeamDAO', () => ({ default: mocks.teamDAO }))
+vi.mock('@/dao/TeamMemberDAO', () => ({ default: mocks.teamMemberDAO }))
 vi.mock('@/dao/TextDAO', () => ({ default: mocks.textDAO }))
 vi.mock('@/dao/UserDAO', () => ({ default: mocks.userDAO }))
 vi.mock('@/dao/VenueDAO', () => ({ default: mocks.venueDAO }))
@@ -188,6 +193,8 @@ const resetDaoMocks = () => {
   mocks.teamDAO.getByPath.mockImplementation((path: string) => mocks.makeDocumentRef(path))
   mocks.teamDAO.list.mockResolvedValue([])
   mocks.teamDAO.save.mockResolvedValue(undefined)
+  mocks.teamMemberDAO.getDataForTeam.mockResolvedValue(undefined)
+  mocks.teamMemberDAO.saveForTeam.mockResolvedValue(undefined)
   mocks.textDAO.getData.mockResolvedValue(undefined)
   mocks.textDAO.getDataByPath.mockResolvedValue(undefined)
   mocks.textDAO.save.mockResolvedValue(undefined)
@@ -456,6 +463,10 @@ describe('maintenance edit views', () => {
     )
     expect(mocks.teamDAO.save.mock.calls[0]?.[0]).not.toHaveProperty('text')
     expect(mocks.teamDAO.save.mock.calls[0]?.[0]).not.toHaveProperty('venue')
+    expect(mocks.teamMemberDAO.saveForTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'uuid-1', path: 'team/uuid-1' }),
+      [],
+    )
     expect(mocks.routerPush).toHaveBeenCalledWith('/team')
   })
 
@@ -488,6 +499,11 @@ describe('maintenance edit views', () => {
       }),
     )
     expect(mocks.teamDAO.save.mock.calls[0]?.[0]).not.toHaveProperty('email')
+    expect(mocks.teamDAO.save.mock.calls[0]?.[0]).not.toHaveProperty('users')
+    expect(mocks.teamMemberDAO.saveForTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'alpha', path: 'team/alpha' }),
+      [],
+    )
     expect(mocks.routerPush).toHaveBeenCalledWith('/team')
   })
 
@@ -499,9 +515,13 @@ describe('maintenance edit views', () => {
       name: 'Alpha',
       shortName: 'ALP',
       retired: false,
-      users: [{ id: 'alice', path: 'user/alice' }],
       text: undefined,
       venue: { id: 'alpha-venue', path: 'venue/alpha-venue' },
+    })
+    mocks.teamMemberDAO.getDataForTeam.mockResolvedValue({
+      id: 'members',
+      path: 'team/alpha/member/members',
+      users: [{ id: 'alice', path: 'user/alice' }],
     })
     mocks.userDAO.list.mockResolvedValue([
       { id: 'alice', path: 'user/alice', name: 'Alice User', email: 'alice@example.com' },
@@ -517,10 +537,10 @@ describe('maintenance edit views', () => {
     await wrapper.get('[data-test="remove-user-alice-close"]').trigger('click')
     await clickButton(wrapper, 'Save')
 
-    expect(mocks.teamDAO.save).toHaveBeenCalledWith(
-      expect.objectContaining({
-        users: [{ id: 'bob', path: 'user/bob' }],
-      }),
+    expect(mocks.teamDAO.save.mock.calls[0]?.[0]).not.toHaveProperty('users')
+    expect(mocks.teamMemberDAO.saveForTeam).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'alpha', path: 'team/alpha' }),
+      [{ id: 'bob', path: 'user/bob' }],
     )
   })
 

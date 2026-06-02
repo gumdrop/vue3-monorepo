@@ -173,16 +173,24 @@ A team represents a league participant.
 The `team/{teamId}` document is safe for whole-document read-only access by public competition pages. That access does not include any user subcollections or referenced `User` documents.
 Public team browsing uses active documents from the `team` collection. The Firestore document ID is the route and view-model identifier for public team browse links; public routes treat IDs as opaque safe route IDs. If an embedded `id` field is present, it must match the document ID. The Teams browse repository list query requires `retired == false`; selected team route rendering also requires that field, enforced at the frontend validation boundary for direct document reads.
 
-| Field       | Type                     | Required | Notes                                                                                                                    |
-| ----------- | ------------------------ | -------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `id`        | `UUID`                   | Yes      | Canonical team identifier, usually the Firestore document ID. Public routes treat this value as an opaque route-safe ID. |
-| `name`      | `string`                 | Yes      | Team display name.                                                                                                       |
-| `shortName` | `string`                 | Yes      | Short name used for sorting.                                                                                             |
-| `text`      | `Reference<Text>`        | Yes      | Optional team text shown on team pages.                                                                                  |
-| `users`     | `array<Reference<User>>` | No       | Zero or more users associated with the team.                                                                             |
-| `venue`     | `Reference<Venue>`       | Yes      | Team venue.                                                                                                              |
-| `handle`    | `string`                 | No       | Optional team handle for internal identification.                                                                        |
-| `retired`   | `boolean`                | Yes      | Retired teams are excluded from active-team browsing.                                                                    |
+| Field       | Type              | Required | Notes                                                                                                                    |
+| ----------- | ----------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `id`        | `UUID`            | Yes      | Canonical team identifier, usually the Firestore document ID. Public routes treat this value as an opaque route-safe ID. |
+| `name`      | `string`          | Yes      | Team display name.                                                                                                       |
+| `shortName` | `string`          | Yes      | Short name used for sorting.                                                                                             |
+| `text`      | `Reference<Text>` | Yes      | Optional team text shown on team pages.                                                                                  |
+| `venue`     | `Reference<Venue>` | Yes      | Team venue.                                                                                                              |
+| `handle`    | `string`          | No       | Optional team handle for internal identification.                                                                        |
+| `retired`   | `boolean`         | Yes      | Retired teams are excluded from active-team browsing.                                                                    |
+
+### Team Member
+
+Team user membership is stored separately from public team profile data in a single member subcollection document at `team/{teamId}/member/members`.
+
+| Field   | Type                     | Required | Notes                                            |
+| ------- | ------------------------ | -------- | ------------------------------------------------ |
+| `id`    | `string`                 | Yes      | Singleton document ID. Current value: `members`. |
+| `users` | `array<Reference<User>>` | Yes      | Zero or more users associated with the team.     |
 
 ## Venue
 

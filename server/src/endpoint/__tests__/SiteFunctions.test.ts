@@ -22,6 +22,11 @@ const user = {
 const team = {
   id: 'team-1',
   path: 'team/team-1',
+}
+
+const teamMember = {
+  id: 'members',
+  path: 'team/team-1/member/members',
   users: [{ id: 'user-1', path: 'user/user-1' }],
 }
 
@@ -45,6 +50,7 @@ describe('SiteFunctions', () => {
     vi.mocked(list).mockImplementation(async (type) => {
       if (type === 'user') return [user] as never
       if (type === 'team') return [team] as never
+      if (type === 'member') return [teamMember] as never
       if (type === 'siteuser') return [siteUser] as never
       return [] as never
     })
@@ -63,6 +69,7 @@ describe('SiteFunctions', () => {
     vi.mocked(list).mockImplementation(async (type) => {
       if (type === 'user') return [user] as never
       if (type === 'team') return [team] as never
+      if (type === 'member') return [teamMember] as never
       if (type === 'siteuser') return [] as never
       return [] as never
     })

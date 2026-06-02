@@ -116,15 +116,17 @@
 </template>
 <script setup lang="ts">
 import TeamDAO from '@/dao/TeamDAO'
+import TeamMemberDAO from '@/dao/TeamMemberDAO'
 import TextDAO from '@/dao/TextDAO'
 import UserDAO from '@/dao/UserDAO'
 import type Team from '@/entity/Team'
+import type TeamMember from '@/entity/TeamMember'
 import type Text from '@/entity/Text'
 import User from '@/entity/User'
 import { useLayout } from '@/services/LayoutService'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
-import { DocumentReference } from 'firebase/firestore'
+import { deleteField, DocumentReference } from 'firebase/firestore'
 import { ref, shallowRef, watch } from 'vue'
 import { useDocument } from 'vuefire'
 import { useValidations } from '../Validation'
@@ -153,12 +155,15 @@ const removeUser = (id: string, userList: User[]) => {
 
 const submit = async (team: Team, text: Text | undefined, users: User[] | undefined) => {
   if (text) {
-    TextDAO.save(text)
+    await TextDAO.save(text)
   }
-  if (users) {
-    team.users = users.map((u) => ({ id: u.id, path: u.path }))
-  }
-  await TeamDAO.update(team.path, { name: team.name, shortName: team.shortName, users: team.users })
+
+  await TeamMemberDAO.saveForTeam(team, userRefs(users))
+  await TeamDAO.update(team.path, {
+    name: team.name,
+    shortName: team.shortName,
+    users: deleteField(),
+  })
 
   success.value = true
 }
@@ -184,10 +189,16 @@ watch(
   () => team.value,
   async (team) => {
     if (team) {
-      users.value = await UserDAO.entityList(team.users)
+      const teamMember = await TeamMemberDAO.getDataForTeam(team)
+      const legacyUsers = (team as Team & { users?: TeamMember['users'] }).users
+      users.value = (await UserDAO.entityList(teamMember ? teamMember.users : legacyUsers)) ?? []
       textDoc.value = TextDAO.getByPath(team.text)
     }
   },
   { immediate: true },
 )
+
+function userRefs(users: User[] | undefined) {
+  return users?.map((user) => ({ id: user.id, path: user.path })) ?? []
+}
 </script>
