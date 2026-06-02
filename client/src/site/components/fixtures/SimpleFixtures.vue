@@ -1,6 +1,6 @@
 <template>
   <div class="fixtures-list-container">
-    <v-slide-y-transition hide-on-leave>
+    <v-lazy :model-value="true" :transition="false">
       <div v-if="list" class="fixtures-table-wrapper">
         <table class="fixtures-table">
           <colgroup>
@@ -14,7 +14,7 @@
             :inlineDetails="inlineDetails" />
         </table>
       </div>
-    </v-slide-y-transition>
+    </v-lazy>
   </div>
 </template>
 <script setup lang="ts">
