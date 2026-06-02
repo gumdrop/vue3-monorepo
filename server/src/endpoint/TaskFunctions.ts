@@ -22,6 +22,7 @@ import {
   generateFixtureSetResultsSummary,
   type FixtureSetSummaryFixture,
 } from './GeminiResultsSummary'
+import { teamForUser } from './TeamMembership'
 
 export async function resultSubmission(result: ResultsSubmitCommand) {
   async function haveResults() {
@@ -83,7 +84,10 @@ export async function resultSubmission(result: ResultsSubmitCommand) {
     }
 
     async function newReport(reportText: string): Promise<Report> {
-      const team = await teamFromUser(user)
+      const team = await teamForUser(user)
+      if (!team) {
+        throw new Error(`No team found for user ${user.id}`)
+      }
       const id = uuid()
       return {
         id,
@@ -102,14 +106,6 @@ export async function resultSubmission(result: ResultsSubmitCommand) {
     }
 
     return await save(fixture)
-
-    async function teamFromUser(user: User) {
-      const teams = await list<Team>('team')
-
-      const team = teams.filter((t) => t.users.some((u) => u.id == user.id))[0]
-
-      return team
-    }
   }
 
   async function subsidiary(fixture: Fixture) {

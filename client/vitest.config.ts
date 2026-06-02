@@ -29,6 +29,7 @@ export default mergeConfig(
           'src/entity/SiteUser.ts',
           'src/entity/Statisitics.ts',
           'src/entity/Team.ts',
+          'src/entity/TeamMember.ts',
           'src/entity/Text.ts',
           'src/entity/Venue.ts',
         ],

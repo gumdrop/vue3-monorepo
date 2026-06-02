@@ -1,21 +1,19 @@
 <template>
   <div class="fixtures-list-container">
-    <v-lazy>
-      <v-slide-y-transition hide-on-leave>
-        <div v-if="list" class="fixtures-table-wrapper">
-          <table class="fixtures-table">
-            <colgroup>
-              <col v-if="inlineDetails" class="details-column" />
-              <col class="team-column" />
-              <col class="score-column" />
-              <col class="team-column" />
-              <col class="actions-column" />
-            </colgroup>
-            <FixtureLineWrapper v-for="fixture in list" :key="fixture.id" :fixtureDoc="fixture"
-              :inlineDetails="inlineDetails" />
-          </table>
-        </div>
-      </v-slide-y-transition>
+    <v-lazy :model-value="true" :transition="false">
+      <div v-if="list" class="fixtures-table-wrapper">
+        <table class="fixtures-table">
+          <colgroup>
+            <col v-if="inlineDetails" class="details-column" />
+            <col class="team-column" />
+            <col class="score-column" />
+            <col class="team-column" />
+            <col class="actions-column" />
+          </colgroup>
+          <FixtureLineWrapper v-for="fixture in list" :key="fixture.id" :fixtureDoc="fixture"
+            :inlineDetails="inlineDetails" />
+        </table>
+      </div>
     </v-lazy>
   </div>
 </template>

@@ -6,6 +6,7 @@ const cupFinalQuestionsUrl =
   'https://storage.googleapis.com/public.chilternquizleague.uk/questions/2025-26/cup%20final.pdf'
 
 const appContextId = '5659313586569216'
+const teamMemberDocumentId = 'members'
 const currentSeasonId = 'season-2025-2026'
 const previousSeasonId = 'season-2024-2025'
 const seasonId = currentSeasonId
@@ -89,7 +90,7 @@ function siteUser(id, handle, email, userId, uid = '') {
   }
 }
 
-function team(id, name, shortName, venueId, textId, handle, userIds = []) {
+function team(id, name, shortName, venueId, textId, handle) {
   return {
     path: `team/${id}`,
     data: {
@@ -98,10 +99,19 @@ function team(id, name, shortName, venueId, textId, handle, userIds = []) {
       shortName,
       venue: venueRef(venueId),
       text: textRef(textId),
-      users: userIds.map(userRef),
       handle,
       retired: false,
       publicSafe: true,
+    },
+  }
+}
+
+function teamMembers(teamId, userIds = []) {
+  return {
+    path: `team/${teamId}/member/${teamMemberDocumentId}`,
+    data: {
+      id: teamMemberDocumentId,
+      users: userIds.map(userRef),
     },
   }
 }
@@ -886,8 +896,8 @@ const documents = [
     'venue-ashridge-arms',
     'text-team-ashridge',
     'ashridge',
-    ['user-alice-ashridge', 'user-ella-secretary'],
   ),
+  teamMembers('team-ashridge-arms', ['user-alice-ashridge', 'user-ella-secretary']),
   team(
     'team-beaconsfield-bees',
     'Beaconsfield Bees',
@@ -895,8 +905,8 @@ const documents = [
     'venue-beaconsfield-hall',
     'text-team-beaconsfield',
     'beaconsfield',
-    ['user-ben-beaconsfield'],
   ),
+  teamMembers('team-beaconsfield-bees', ['user-ben-beaconsfield']),
   team(
     'team-chesham-comets',
     'Chesham Comets',
@@ -904,8 +914,8 @@ const documents = [
     'venue-chesham-club',
     'text-team-chesham',
     'chesham',
-    ['user-chloe-chesham'],
   ),
+  teamMembers('team-chesham-comets', ['user-chloe-chesham']),
   team(
     'team-drayton-dynamos',
     'Drayton Dynamos',
@@ -913,8 +923,8 @@ const documents = [
     'venue-ashridge-arms',
     'text-team-drayton',
     'drayton',
-    ['user-dan-drayton'],
   ),
+  teamMembers('team-drayton-dynamos', ['user-dan-drayton']),
   competitionStatistics('competition-statistics-league', 'League Roll Of Honour', [
     competitionStatisticsResult('2025/2026', 'Ashridge Arms', 'team-ashridge-arms'),
   ]),

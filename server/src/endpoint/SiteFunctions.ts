@@ -1,7 +1,8 @@
-import { User, SiteUser, Team } from '@quizleague/shared'
+import { User, SiteUser } from '@quizleague/shared'
 import { v4 as uuid } from 'uuid'
 import { docRefById, entityPath, list, save } from '../storage/Storage'
 import { HttpError } from './util'
+import { teamForUser } from './TeamMembership'
 
 function serializableSiteUser(siteUser: SiteUser): SiteUser {
   return {
@@ -33,14 +34,10 @@ export async function siteUserForEmail(email: string) {
   const users = await list<User>('user')
   const user = users.find((u) => u?.email?.toLowerCase() === lce)
 
-  const hasTeam = async (user: User) => {
-    return (await list<Team>('team')).find((t) => t.users.find((u) => u.id === user.id))
-  }
-
   const siteUsers = await list<SiteUser>('siteuser')
 
   if (user) {
-    const userHasTeam = await hasTeam(user)
+    const userHasTeam = await teamForUser(user)
     if (userHasTeam) {
       const siteUser = siteUsers.find((su) => su.user && su.user.id === user.id)
       if (siteUser) {

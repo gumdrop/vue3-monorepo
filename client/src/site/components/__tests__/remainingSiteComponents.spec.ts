@@ -148,6 +148,8 @@ const mocks = vi.hoisted(() => ({
   teamCountAllSeasons: vi.fn(),
   teamFixtures: vi.fn(),
   teamResults: vi.fn(),
+  teamMemberGetDataForTeam: vi.fn(),
+  teamMemberSaveForTeam: vi.fn(),
   teamStats: vi.fn(),
   teamUpdate: vi.fn(),
   textSave: vi.fn(),
@@ -285,6 +287,13 @@ vi.mock('@/dao/TeamDAO', () => ({
     getByPath: (path: string) => docRef(path, mocks.teamsByPath.get(path)),
     sortedActive: () => ({ __data: mocks.collections.get('team') ?? [] }),
     update: mocks.teamUpdate,
+  },
+}))
+
+vi.mock('@/dao/TeamMemberDAO', () => ({
+  default: {
+    getDataForTeam: mocks.teamMemberGetDataForTeam,
+    saveForTeam: mocks.teamMemberSaveForTeam,
   },
 }))
 
@@ -1084,6 +1093,8 @@ beforeEach(() => {
   mocks.teamCount.mockResolvedValue(4)
   mocks.teamCountAllSeasons.mockResolvedValue(4)
   mocks.teamFixtures.mockResolvedValue([fixtureDoc])
+  mocks.teamMemberGetDataForTeam.mockResolvedValue(undefined)
+  mocks.teamMemberSaveForTeam.mockResolvedValue(undefined)
   mocks.teamResults.mockResolvedValue([fixtureDoc])
   mocks.teamStats.mockReturnValue({ __data: [stats] })
   mocks.teamUpdate.mockResolvedValue(undefined)

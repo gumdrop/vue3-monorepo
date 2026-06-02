@@ -77,10 +77,12 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import TeamDAO from '@/dao/TeamDAO'
+import TeamMemberDAO from '@/dao/TeamMemberDAO'
 import TextDAO from '@/dao/TextDAO'
 import UserDAO from '@/dao/UserDAO'
 import VenueDAO from '@/dao/VenueDAO'
 import type Team from '@/entity/Team'
+import type TeamMember from '@/entity/TeamMember'
 import type Text from '@/entity/Text'
 import type User from '@/entity/User'
 import { newEntityIdentity } from '@/maintain/utils/entityIds'
@@ -95,7 +97,6 @@ type EditableTeam = {
   name: string
   shortName: string
   venue?: Team['venue']
-  users: Team['users']
   handle?: string
   retired: boolean
   text?: Team['text']
@@ -108,22 +109,21 @@ const rules = useValidations()
 const team = ref<EditableTeam | null>(null)
 const text = ref<Text | undefined>()
 const users = ref<User[]>([])
+const memberUsers = ref<TeamMember['users']>([])
 const selectedUserId = ref('')
 const valid = ref(false)
 
 const isNew = computed(() => route.params.id === 'new')
 const hasTextReference = computed(() => Boolean(team.value?.text?.id && team.value?.text?.path))
 const availableUsers = computed(() => {
-  const assignedIds = new Set(team.value?.users.map((user) => user.id) ?? [])
+  const assignedIds = new Set(memberUsers.value.map((user) => user.id))
   return users.value.filter((user) => !assignedIds.has(user.id))
 })
 const assignedUsers = computed(() => {
-  return (
-    team.value?.users.map((userRef) => ({
-      ...userRef,
-      name: users.value.find((user) => user.id === userRef.id)?.name ?? userRef.id,
-    })) ?? []
-  )
+  return memberUsers.value.map((userRef) => ({
+    ...userRef,
+    name: users.value.find((user) => user.id === userRef.id)?.name ?? userRef.id,
+  }))
 })
 
 onMounted(async () => {
@@ -137,14 +137,20 @@ onMounted(async () => {
       shortName: '',
       handle: '',
       retired: false,
-      users: [],
       text: undefined,
       venue: undefined,
     } as EditableTeam
+    memberUsers.value = []
   } else {
     const id = route.params.id as string
     const loadedTeam = await TeamDAO.getDataById(id)
     team.value = loadedTeam ? { ...loadedTeam } : null
+    if (team.value) {
+      const teamMember = await TeamMemberDAO.getDataForTeam(team.value)
+      const legacyUsers = (loadedTeam as (Team & { users?: TeamMember['users'] }) | undefined)
+        ?.users
+      memberUsers.value = teamMember ? teamMember.users : (legacyUsers ?? [])
+    }
     const textReference = team.value?.text
     if (textReference?.id && textReference.path) {
       text.value = await TextDAO.getData(textReference)
@@ -156,16 +162,16 @@ const addUser = () => {
   if (!team.value || !selectedUserId.value) return
 
   const user = users.value.find((user) => user.id === selectedUserId.value)
-  if (!user || team.value.users.some((assignedUser) => assignedUser.id === user.id)) return
+  if (!user || memberUsers.value.some((assignedUser) => assignedUser.id === user.id)) return
 
-  team.value.users = [...team.value.users, { id: user.id, path: user.path }]
+  memberUsers.value = [...memberUsers.value, { id: user.id, path: user.path }]
   selectedUserId.value = ''
 }
 
 const removeUser = (userId: string) => {
   if (!team.value) return
 
-  team.value.users = team.value.users.filter((user) => user.id !== userId)
+  memberUsers.value = memberUsers.value.filter((user) => user.id !== userId)
 }
 
 const save = async () => {
@@ -178,9 +184,11 @@ const save = async () => {
     }
     const teamToSave = { ...team.value }
     delete (teamToSave as { email?: string }).email
+    delete (teamToSave as { users?: TeamMember['users'] }).users
     if (!teamToSave.text) delete teamToSave.text
     if (!teamToSave.venue) delete teamToSave.venue
     await TeamDAO.save(teamToSave as Team)
+    await TeamMemberDAO.saveForTeam(teamToSave as Team, memberUsers.value)
     router.push('/team')
   }
 }

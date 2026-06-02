@@ -9,6 +9,7 @@ export type EntityType =
   | 'fixture'
   | 'fixtures'
   | 'leaguetable'
+  | 'member'
   | 'report'
   | 'season'
   | 'siteuser'

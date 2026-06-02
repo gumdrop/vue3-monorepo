@@ -11,7 +11,9 @@ import { useDateTime } from './DateService'
 import { useFixture } from './FixtureService'
 import StatisticsDAO from '@/dao/StatisticsDAO'
 import TeamDAO from '@/dao/TeamDAO'
+import TeamMemberDAO from '@/dao/TeamMemberDAO'
 import type Team from '@/entity/Team'
+import type TeamMember from '@/entity/TeamMember'
 
 const { date } = useDateTime()
 
@@ -575,7 +577,18 @@ export const useTeams = () => {
   }
 
   async function teamForUser(userId: string | undefined) {
-    return (await TeamDAO.list())?.find((t) => t.users.find((u) => u.id === userId))
+    if (!userId) return undefined
+
+    const teams = (await TeamDAO.list()) ?? []
+    for (const team of teams) {
+      const teamMember = await TeamMemberDAO.getDataForTeam(team)
+      const legacyUsers = (team as Team & { users?: TeamMember['users'] }).users
+      const users = teamMember ? teamMember.users : (legacyUsers ?? [])
+
+      if (users.some((user) => user.id === userId)) {
+        return team
+      }
+    }
   }
 
   return {

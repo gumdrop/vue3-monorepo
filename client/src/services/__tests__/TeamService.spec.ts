@@ -27,6 +27,9 @@ const mocks = vi.hoisted(() => ({
     getDataById: vi.fn(),
     list: vi.fn(),
   },
+  teamMemberDAO: {
+    getDataForTeam: vi.fn(),
+  },
   competitionsService: {
     firstClassCompetitions: vi.fn(),
     fixtures: vi.fn(),
@@ -51,6 +54,10 @@ vi.mock('@/dao/StatisticsDAO', () => ({
 
 vi.mock('@/dao/TeamDAO', () => ({
   default: mocks.teamDAO,
+}))
+
+vi.mock('@/dao/TeamMemberDAO', () => ({
+  default: mocks.teamMemberDAO,
 }))
 
 vi.mock('../CompetitionService', () => ({
@@ -139,6 +146,7 @@ describe('TeamService', () => {
       id,
       shortName: id.toUpperCase(),
     }))
+    mocks.teamMemberDAO.getDataForTeam.mockResolvedValue(undefined)
   })
 
   it('combines league and cup standings for a team', async () => {
@@ -492,13 +500,18 @@ describe('TeamService', () => {
 
   it('finds the team linked to a user', async () => {
     mocks.teamDAO.list.mockResolvedValue([
-      { id: 'alpha', users: [{ id: 'user-1', path: 'user/user-1' }] },
-      { id: 'bravo', users: [{ id: 'user-2', path: 'user/user-2' }] },
+      { id: 'alpha', path: 'team/alpha' },
+      { id: 'bravo', path: 'team/bravo' },
     ])
+    mocks.teamMemberDAO.getDataForTeam.mockImplementation(async (team: { id: string }) => {
+      if (team.id === 'alpha') return { users: [{ id: 'user-1', path: 'user/user-1' }] }
+      if (team.id === 'bravo') return { users: [{ id: 'user-2', path: 'user/user-2' }] }
+      return undefined
+    })
 
     await expect(useTeams().teamForUser('user-2')).resolves.toEqual({
       id: 'bravo',
-      users: [{ id: 'user-2', path: 'user/user-2' }],
+      path: 'team/bravo',
     })
   })
 })

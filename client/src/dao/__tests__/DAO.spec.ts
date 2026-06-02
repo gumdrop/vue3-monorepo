@@ -11,6 +11,7 @@ import { GenericConverter } from '../GenericConverter'
 import LeagueTableDAO from '../LeagueTableDAO'
 import SiteUserDAO from '../SiteUserDAO'
 import StatisticsDAO from '../StatisticsDAO'
+import TeamMemberDAO from '../TeamMemberDAO'
 import UserDAO from '../UserDAO'
 
 const mocks = vi.hoisted(() => {
@@ -442,6 +443,25 @@ describe('specific DAO helpers', () => {
     mocks.getDocs.mockResolvedValue({ docs: [] })
 
     await expect(SiteUserDAO.siteUserForUid('missing-uid')).resolves.toBeUndefined()
+  })
+
+  it('stores team membership in the singleton member subcollection document', async () => {
+    const ref = TeamMemberDAO.getByTeam({ id: 'alpha', path: 'team/alpha' } as never)
+
+    expect(ref.path).toBe('team/alpha/member/members')
+
+    await TeamMemberDAO.saveForTeam({ id: 'alpha', path: 'team/alpha' } as never, [
+      { id: 'alice', path: 'user/alice' },
+    ])
+
+    expect(mocks.setDoc).toHaveBeenCalledWith(
+      expect.objectContaining({ path: 'team/alpha/member/members' }),
+      {
+        id: 'members',
+        path: 'team/alpha/member/members',
+        users: [{ id: 'alice', path: 'user/alice' }],
+      },
+    )
   })
 
   it('creates statistics queries scoped by team and season', () => {
