@@ -15,6 +15,7 @@ import SiteUserEdit from '../views/siteuser/SiteUserEdit.vue'
 import SiteUserList from '../views/siteuser/SiteUserList.vue'
 import StatisticsRecalculate from '../views/statistics/StatisticsRecalculate.vue'
 import TeamEdit from '../views/team/TeamEdit.vue'
+import TeamMemberMigration from '../views/team/TeamMemberMigration.vue'
 import TeamList from '../views/team/TeamList.vue'
 import UserEdit from '../views/user/UserEdit.vue'
 import UserList from '../views/user/UserList.vue'
@@ -240,6 +241,7 @@ describe('maintenance shell components', () => {
         '/',
         '/season',
         '/team',
+        '/team-members/migrate',
         '/venue',
         '/user',
         '/siteuser',
@@ -438,6 +440,25 @@ describe('maintenance list views', () => {
 
     expect(button?.attributes('disabled')).toBeDefined()
     expect(mocks.axiosPost).not.toHaveBeenCalled()
+  })
+
+  it('migrates team members to the member subcollection document', async () => {
+    mocks.axiosPost.mockResolvedValue({
+      data: {
+        teamsScanned: 3,
+        teamsMigrated: 2,
+        teamsSkipped: 1,
+        usersMigrated: 4,
+        legacyUserArraysDeleted: 2,
+      },
+    })
+    const wrapper = await mountMaintenance(TeamMemberMigration)
+
+    await clickButton(wrapper, 'Migrate Team Members')
+    await flushPromises()
+
+    expect(mocks.axiosPost).toHaveBeenCalledWith('/rest/maintain/team-members/migrate')
+    expect(wrapper.text()).toContain('Migrated 2 teams and 4 users')
   })
 })
 

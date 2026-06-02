@@ -108,6 +108,7 @@ describe('Maintenance Router', () => {
       ['fixtures-edit', '/season/:seasonId/competition/:competitionId/fixtures/:id'],
       ['leaguetable-edit', '/season/:seasonId/competition/:competitionId/leaguetable/:id'],
       ['team', '/team'],
+      ['team-members-migrate', '/team-members/migrate'],
       ['team-edit', '/team/:id'],
       ['venue', '/venue'],
       ['venue-edit', '/venue/:id'],

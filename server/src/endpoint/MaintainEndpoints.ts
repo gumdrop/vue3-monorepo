@@ -2,6 +2,7 @@ import { Season, Text } from '@quizleague/shared'
 import { Application, Request, Response } from 'express'
 import { entityPath, load } from '../storage/Storage'
 import { regenerateFixtureSetResultsSummary } from './TaskFunctions'
+import { migrateTeamMemberships } from './TeamMembershipMigration'
 import { calculateStats } from './StatisticsUtils'
 import { param, send } from './util'
 
@@ -10,6 +11,7 @@ const root = '/rest/maintain'
 export default function configureMaintain(app: Application) {
   app
     .post(`${root}/season/:seasonId/statistics/recalculate`, recalculateSeasonStatistics)
+    .post(`${root}/team-members/migrate`, migrateTeamMembers)
     .post(`${root}/fixtures/results-summary/regenerate`, regenerateResultsSummary)
 }
 
@@ -23,6 +25,10 @@ async function recalculateStatistics(seasonId: string) {
   await calculateStats(season)
 
   return { seasonId }
+}
+
+function migrateTeamMembers(_req: Request, res: Response) {
+  return send(migrateTeamMemberships(), res)
 }
 
 function regenerateResultsSummary(req: Request, res: Response) {
