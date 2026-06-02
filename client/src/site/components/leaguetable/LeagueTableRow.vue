@@ -21,7 +21,7 @@ import { useDocument } from 'vuefire'
 import ResponsiveTeamName from '../common/ResponsiveTeamName.vue'
 
 const { row } = defineProps<{ row: LeagueTableRow }>()
-const team = useDocument(() => TeamDAO.getById(row.team.id))
+const team = useDocument(() => TeamDAO.getById(row.team.id), { maxRefDepth: 0 })
 </script>
 <style lang="css" scoped>
 .league-table-row {

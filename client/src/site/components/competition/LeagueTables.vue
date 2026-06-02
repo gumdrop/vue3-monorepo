@@ -13,5 +13,5 @@ import LeagueTable from '../leaguetable/LeagueTable.vue';
 const { leagueTables } = useCompetitions()
 
 const props = defineProps<{ path: string }>()
-const tables = useCollection(() => leagueTables(props.path))
+const tables = useCollection(() => leagueTables(props.path), { maxRefDepth: 0 })
 </script>

@@ -29,7 +29,7 @@ import LeagueTableRow from './LeagueTableRow.vue';
 
 const props = defineProps<{ path: string }>()
 
-const table = useDocument(() => LeagueTableDAO.getByPath(props.path))
+const table = useDocument(() => LeagueTableDAO.getByPath(props.path), { maxRefDepth: 0 })
 </script>
 <style lang="css" scoped>
 .league-table-container {

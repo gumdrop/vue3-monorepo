@@ -167,6 +167,8 @@ const mocks = vi.hoisted(() => ({
   textsByPath: new Map<string, unknown>(),
   venuesById: new Map<string, unknown>(),
   venuesByPath: new Map<string, unknown>(),
+  vuefireCollectionCalls: [] as Array<{ options?: { maxRefDepth?: number }; source: unknown }>,
+  vuefireDocumentCalls: [] as Array<{ options?: { maxRefDepth?: number }; source: unknown }>,
   seasonId: 'season-2025',
   smAndDown: false,
   user: undefined as
@@ -480,12 +482,17 @@ vi.mock('vuetify', () => ({
 }))
 
 vi.mock('vuefire', () => ({
-  useCollection: (source: unknown) => ref(dataForDocument(source) ?? []),
-  useDocument: (source: unknown) =>
-    Object.assign(ref(dataForDocument(source)), {
+  useCollection: (source: unknown, options?: { maxRefDepth?: number }) => {
+    mocks.vuefireCollectionCalls.push({ options, source })
+    return ref(dataForDocument(source) ?? [])
+  },
+  useDocument: (source: unknown, options?: { maxRefDepth?: number }) => {
+    mocks.vuefireDocumentCalls.push({ options, source })
+    return Object.assign(ref(dataForDocument(source)), {
       error: undefined,
       pending: false,
-    }),
+    })
+  },
 }))
 
 vi.mock('vue-chartjs', () => ({
@@ -1101,6 +1108,8 @@ beforeEach(() => {
   mocks.textsByPath.clear()
   mocks.venuesById.clear()
   mocks.venuesByPath.clear()
+  mocks.vuefireCollectionCalls.length = 0
+  mocks.vuefireDocumentCalls.length = 0
   mocks.user = {
     siteUser: {
       id: 'site-user-1',
@@ -1505,6 +1514,24 @@ describe('remaining site content and competition components', () => {
         global: { stubs: { ...siteComponentStubs, LeagueTable: simpleStub('league-table') } },
       }).text(),
     ).toContain('League Tables')
+  })
+
+  it('keeps public league table Firestore bindings shallow', () => {
+    mountSite(CompetitionLeagueTables, {
+      props: { path: leagueCompetition.path },
+      global: { stubs: { ...siteComponentStubs, LeagueTable: simpleStub('league-table') } },
+    })
+
+    mountSite(LeagueTable, {
+      props: { path: `${leagueCompetition.path}/leaguetable/table-1` },
+    })
+
+    expect(mocks.vuefireCollectionCalls).toContainEqual(
+      expect.objectContaining({ options: { maxRefDepth: 0 } }),
+    )
+    expect(
+      mocks.vuefireDocumentCalls.filter((call) => call.options?.maxRefDepth === 0),
+    ).toHaveLength(2)
   })
 })
 
