@@ -170,6 +170,24 @@ Then('the competitions menu includes:', async ({ page }, dataTable) => {
   }
 })
 
+Then('the {string} league table includes:', async ({ page }, tableName, dataTable) => {
+  const table = page.getByRole('table', {
+    name: new RegExp(`^\\s*${escapeRegExp(tableName)}\\s*$`, 'i'),
+  })
+  await table.waitFor({ state: 'visible' })
+
+  for (const expectedCells of dataTable.raw()) {
+    const teamName = expectedCells[1]
+    const row = table.locator('tbody tr', { hasText: teamName }).first()
+    await row.waitFor({ state: 'visible' })
+
+    const actualCells = (await row.locator('td').allInnerTexts()).map((cell) =>
+      cell.replace(/\s+/g, ' ').trim(),
+    )
+    assert.deepEqual(actualCells, expectedCells)
+  }
+})
+
 Then('the teams menu includes:', async ({ page }, dataTable) => {
   for (const [label] of dataTable.raw()) {
     await namedLink(page, label).last().waitFor({ state: 'visible' })

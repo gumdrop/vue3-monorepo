@@ -16,7 +16,11 @@
           </tr>
         </thead>
         <tbody>
-          <LeagueTableRow :row="row" v-for="row in table.rows" :key="row.team.id" />
+          <LeagueTableRow
+            :row="row"
+            v-for="(row, index) in table.rows"
+            :key="teamKey(row, index)"
+          />
         </tbody>
       </table>
     </div>
@@ -24,12 +28,18 @@
 </template>
 <script setup lang="ts">
 import LeagueTableDAO from '@/dao/LeagueTableDAO';
+import type { LeagueTableRow as LeagueTableRowData } from '@/entity/LeagueTable';
 import { useDocument } from 'vuefire';
 import LeagueTableRow from './LeagueTableRow.vue';
 
 const props = defineProps<{ path: string }>()
 
 const table = useDocument(() => LeagueTableDAO.getByPath(props.path), { maxRefDepth: 0 })
+
+const teamKey = (row: LeagueTableRowData, index: number) => {
+  const team = row.team as LeagueTableRowData['team'] | string
+  return typeof team === 'string' ? team : team.path || team.id || index
+}
 </script>
 <style lang="css" scoped>
 .league-table-container {

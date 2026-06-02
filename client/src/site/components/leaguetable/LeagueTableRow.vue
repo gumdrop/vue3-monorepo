@@ -2,7 +2,7 @@
   <tr class="league-table-row">
     <td class="text-center pos-col">{{ row.position }}</td>
     <td class="team-col">
-      <router-link :to="'/team/' + row.team.id" class="team-link">
+      <router-link :to="'/team/' + teamId" class="team-link">
         <ResponsiveTeamName v-if="team" :team="team" />
       </router-link>
     </td>
@@ -18,10 +18,20 @@
 import TeamDAO from '@/dao/TeamDAO'
 import type { LeagueTableRow } from '@/entity/LeagueTable'
 import { useDocument } from 'vuefire'
+import { computed } from 'vue'
 import ResponsiveTeamName from '../common/ResponsiveTeamName.vue'
 
 const { row } = defineProps<{ row: LeagueTableRow }>()
-const team = useDocument(() => TeamDAO.getById(row.team.id), { maxRefDepth: 0 })
+
+const teamPath = computed(() => {
+  const teamReference = row.team as LeagueTableRow['team'] | string
+  return typeof teamReference === 'string' ? teamReference : teamReference.path
+})
+
+const teamId = computed(() => teamPath.value.split('/').pop() ?? '')
+const team = useDocument(() => (teamId.value ? TeamDAO.getById(teamId.value) : undefined), {
+  maxRefDepth: 0,
+})
 </script>
 <style lang="css" scoped>
 .league-table-row {

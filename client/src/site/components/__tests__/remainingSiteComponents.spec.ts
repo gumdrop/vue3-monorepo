@@ -1129,7 +1129,7 @@ beforeEach(() => {
     {
       id: 'table-1',
       path: `${leagueCompetition.path}/leaguetable/table-1`,
-      rows: [{ team: { id: 'alpha', path: 'team/alpha' }, position: 1 }],
+      rows: [{ team: 'team/alpha', position: 1 }],
     },
   ])
   mocks.collections.set(`statistics/all/${team.id}`, [stats, { ...stats, id: 'stats-alpha-2' }])
@@ -1151,7 +1151,7 @@ beforeEach(() => {
     id: 'table-1',
     path: `${leagueCompetition.path}/leaguetable/table-1`,
     description: 'Main League',
-    rows: [{ team: { id: 'alpha', path: 'team/alpha' }, position: 1 }],
+    rows: [{ team: 'team/alpha', position: 1 }],
   })
   mocks.seasonsById.set(mocks.seasonId, season)
   mocks.seasonsByPath.set(`season/${mocks.seasonId}`, season)
@@ -1522,10 +1522,11 @@ describe('remaining site content and competition components', () => {
       global: { stubs: { ...siteComponentStubs, LeagueTable: simpleStub('league-table') } },
     })
 
-    mountSite(LeagueTable, {
+    const table = mountSite(LeagueTable, {
       props: { path: `${leagueCompetition.path}/leaguetable/table-1` },
     })
 
+    expect(table.text()).toContain('Alpha Quiz Team')
     expect(mocks.vuefireCollectionCalls).toContainEqual(
       expect.objectContaining({ options: { maxRefDepth: 0 } }),
     )
