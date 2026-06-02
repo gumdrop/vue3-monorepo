@@ -1,6 +1,6 @@
 <template>
   <div class="fixtures-list-container">
-    <v-lazy>
+    <v-lazy :model-value="true" :transition="false">
       <div v-if="list" class="fixtures-table-wrapper">
         <table class="fixtures-table">
           <colgroup>
