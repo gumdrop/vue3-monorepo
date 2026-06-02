@@ -38,6 +38,15 @@ Feature: Competition pages
     And I should see text matching "Chesham Comets"
     And I should see text matching "Drayton Dynamos"
 
+  Scenario: Visitors can see team names in the league table
+    When I open the "League Championship" competition page
+    Then I should be on the "/competition/season|season-2025-2026|competition|league-main/league" page
+    And the "League Championship Table" league table includes:
+      | 1 | Ashridge Arms      | 1 | 1 | 0 | 0 | 42 | 2 |
+      | 2 | Beaconsfield Bees  | 1 | 0 | 0 | 1 | 38 | 0 |
+      | 3 | Chesham Comets     | 0 | 0 | 0 | 0 | 0  | 0 |
+      | 4 | Drayton Dynamos    | 0 | 0 | 0 | 0 | 0  | 0 |
+
   Scenario: Visitors can inspect cup and subsidiary competition pages
     When I open the "Challenge Cup" competition page
     Then I should be on the "/competition/season|season-2025-2026|competition|cup-main/cup" page
