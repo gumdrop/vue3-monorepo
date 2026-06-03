@@ -12,6 +12,7 @@ export type EntityType =
   | 'member'
   | 'report'
   | 'season'
+  | 'seasonstatisticsaggregation'
   | 'siteuser'
   | 'statistics'
   | 'team'

@@ -4,6 +4,7 @@ import { entityPath, load } from '../storage/Storage'
 import { regenerateFixtureSetResultsSummary } from './TaskFunctions'
 import { migrateTeamMemberships } from './TeamMembershipMigration'
 import { calculateStats } from './StatisticsUtils'
+import { recalculateSeasonStatisticsAggregation } from './SeasonStatisticsAggregationUtils'
 import { param, send } from './util'
 
 const root = '/rest/maintain'
@@ -11,6 +12,10 @@ const root = '/rest/maintain'
 export default function configureMaintain(app: Application) {
   app
     .post(`${root}/season/:seasonId/statistics/recalculate`, recalculateSeasonStatistics)
+    .post(
+      `${root}/season/:seasonId/statistics/aggregation/recalculate`,
+      recalculateSeasonStatisticsAggregationEndpoint,
+    )
     .post(`${root}/team-members/migrate`, migrateTeamMembers)
     .post(`${root}/fixtures/results-summary/regenerate`, regenerateResultsSummary)
 }
@@ -25,6 +30,20 @@ async function recalculateStatistics(seasonId: string) {
   await calculateStats(season)
 
   return { seasonId }
+}
+
+function recalculateSeasonStatisticsAggregationEndpoint(req: Request, res: Response) {
+  return send(recalculateStatisticsAggregation(param('seasonId', req)), res)
+}
+
+async function recalculateStatisticsAggregation(seasonId: string) {
+  const season = await load<Season>(entityPath('season', seasonId))
+  const aggregation = await recalculateSeasonStatisticsAggregation(season)
+
+  return {
+    seasonId,
+    competitions: aggregation.competitions.length,
+  }
 }
 
 function migrateTeamMembers(_req: Request, res: Response) {

@@ -4,6 +4,7 @@ import configure from '../MaintainEndpoints'
 import { regenerateFixtureSetResultsSummary } from '../TaskFunctions'
 import { migrateTeamMemberships } from '../TeamMembershipMigration'
 import { calculateStats } from '../StatisticsUtils'
+import { recalculateSeasonStatisticsAggregation } from '../SeasonStatisticsAggregationUtils'
 import { load } from '../../storage/Storage'
 
 vi.mock('../TaskFunctions', () => ({
@@ -17,6 +18,14 @@ vi.mock('../TaskFunctions', () => ({
 
 vi.mock('../StatisticsUtils', () => ({
   calculateStats: vi.fn(),
+}))
+
+vi.mock('../SeasonStatisticsAggregationUtils', () => ({
+  recalculateSeasonStatisticsAggregation: vi.fn().mockResolvedValue({
+    id: 'season-1',
+    path: 'seasonstatisticsaggregation/season-1',
+    competitions: [{ competitionName: 'League' }, { competitionName: 'Cup' }],
+  }),
 }))
 
 vi.mock('../TeamMembershipMigration', () => ({
@@ -107,6 +116,30 @@ describe('MaintainEndpoints', () => {
       path: 'season/season-1',
     })
     expect(response.json).toHaveBeenCalledWith({ seasonId: 'season-1' })
+  })
+
+  it('routes season statistics aggregation recalculation to the aggregation helper', async () => {
+    const { app, routes } = createApp()
+    configure(app)
+
+    const response = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as unknown as Response
+
+    routes.get('POST /rest/maintain/season/:seasonId/statistics/aggregation/recalculate')?.(
+      { params: { seasonId: 'season-1' } } as unknown as Request,
+      response,
+    )
+    await flushPromises()
+
+    expect(load).toHaveBeenCalledWith('season/season-1')
+    expect(recalculateSeasonStatisticsAggregation).toHaveBeenCalledWith({
+      id: 'season-1',
+      path: 'season/season-1',
+    })
+    expect(response.json).toHaveBeenCalledWith({ seasonId: 'season-1', competitions: 2 })
   })
 
   it('routes team member migration to the migration utility', async () => {

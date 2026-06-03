@@ -13,3 +13,5 @@ Feature: Maintenance statistics page
     And the "Season" field should be visible
     And the "Recalculate Statistics" button should be visible
     And the "Recalculate Statistics" button should be disabled
+    And the "Recalculate Aggregation" button should be visible
+    And the "Recalculate Aggregation" button should be disabled

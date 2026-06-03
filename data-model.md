@@ -46,6 +46,10 @@ flowchart TD
   seasonStats["SeasonStats"]
   headToHead["HeadToHead"]
   weekStats["WeekStats"]
+  seasonStatisticsAggregationCollection["seasonstatisticsaggregation collection"]
+  seasonStatisticsAggregation["SeasonStatisticsAggregation"]
+  competitionStatisticsAggregation["CompetitionStatisticsAggregation"]
+  leagueTableSnapshot["LeagueTableSnapshot"]
   competitionStatisticsCollection["competitionstatistics collection"]
   competitionStatistics["CompetitionStatistics"]
   competitionStatisticsResult["CompetitionStatistics Result"]
@@ -87,6 +91,10 @@ flowchart TD
   statistics --> seasonStats
   seasonStats --> headToHead
   statistics --> weekStats
+  firestore --> seasonStatisticsAggregationCollection
+  seasonStatisticsAggregationCollection --> seasonStatisticsAggregation
+  seasonStatisticsAggregation --> competitionStatisticsAggregation
+  competitionStatisticsAggregation --> leagueTableSnapshot
   firestore --> competitionStatisticsCollection
   competitionStatisticsCollection --> competitionStatistics
   competitionStatistics --> competitionStatisticsResult
@@ -105,6 +113,11 @@ flowchart TD
   statistics --> team
   statistics --> season
   statistics --> leagueTable
+  seasonStatisticsAggregation --> season
+  competitionStatisticsAggregation --> competition
+  competitionStatisticsAggregation --> team
+  leagueTableSnapshot --> fixturesDoc
+  leagueTableSnapshot --> leagueTable
   headToHead --> team
   competitionStatisticsResult --> competition
   competitionStatisticsResult --> season
@@ -341,6 +354,57 @@ CompetitionStatistics result rows are embedded values inside a CompetitionStatis
 | `seasonText`  | `string`                                | Yes      | Season display text.                                         |
 | `team`        | `Reference<Team> \| LegacyRef`          | No       | Optional team reference; saved as a document reference.        |
 | `teamText`    | `string`                                | Yes      | Team display text.                                           |
+
+## SeasonStatisticsAggregation
+
+SeasonStatisticsAggregation is a top-level generated entity that stores season-scoped competition aggregates. Documents live in the `seasonstatisticsaggregation` collection, keyed by season ID. The server recalculates these documents when a completed fixture set is processed and from the maintenance Statistics page.
+
+| Field          | Type                                      | Required | Notes                                                                         |
+| -------------- | ----------------------------------------- | -------- | ----------------------------------------------------------------------------- |
+| `id`           | `UUID`                                    | Yes      | Canonical aggregation identifier. Current server writes use the season ID.    |
+| `season`       | `Reference<Season>`                       | Yes      | Season covered by this aggregation.                                           |
+| `generatedAt`  | `string`                                  | Yes      | UTC timestamp string for the recalculation time.                              |
+| `competitions` | `array<CompetitionStatisticsAggregation>` | Yes      | Per-competition generated aggregate rows for team competitions in the season. |
+
+## CompetitionStatisticsAggregation
+
+CompetitionStatisticsAggregation rows are embedded values inside a SeasonStatisticsAggregation document.
+
+| Field                      | Type                         | Required | Notes                                                                                                |
+| -------------------------- | ---------------------------- | -------- | ---------------------------------------------------------------------------------------------------- |
+| `competition`              | `Reference<Competition>`     | Yes      | Competition represented by this aggregate row.                                                       |
+| `competitionName`          | `string`                     | Yes      | Competition display name at recalculation time.                                                      |
+| `fixtureSetCount`          | `integer`                    | Yes      | Total number of fixture sets in the competition.                                                     |
+| `completedFixtureSetCount` | `integer`                    | Yes      | Number of fixture sets where every fixture has a result.                                             |
+| `fixtureCount`             | `integer`                    | Yes      | Number of completed fixtures included in score averages.                                             |
+| `complete`                 | `boolean`                    | Yes      | True when every fixture set in the competition is complete.                                          |
+| `averageScore`             | `number`                     | Yes      | Average of all individual home and away scores in completed fixtures.                                |
+| `averageWinningScore`      | `number`                     | Yes      | Average winning score in non-drawn completed fixtures.                                               |
+| `averageLosingScore`       | `number`                     | Yes      | Average losing score in non-drawn completed fixtures.                                                |
+| `tableSnapshots`           | `array<LeagueTableSnapshot>` | Yes      | League table snapshots after each completed fixture set for competitions that have league tables.    |
+| `winner`                   | `Reference<Team>`            | No       | Computed winner when every fixture set in a team competition is complete and a single winner exists. |
+| `winnerText`               | `string`                     | No       | Winner display text at recalculation time.                                                           |
+
+## LeagueTableSnapshot
+
+LeagueTableSnapshot rows are embedded values inside CompetitionStatisticsAggregation. They capture the recalculated league table state after a completed fixture set.
+
+| Field                   | Type                              | Required | Notes                                                         |
+| ----------------------- | --------------------------------- | -------- | ------------------------------------------------------------- |
+| `fixtures`              | `Reference<Fixtures>`             | Yes      | Fixture set that produced this snapshot.                      |
+| `fixtureSetDescription` | `string`                          | Yes      | Fixture set description at recalculation time.                |
+| `fixtureSetDate`        | `string`                          | Yes      | Fixture set date at recalculation time.                       |
+| `tables`                | `array<LeagueTableSnapshotTable>` | Yes      | Recalculated table documents and rows after this fixture set. |
+
+## LeagueTableSnapshotTable
+
+LeagueTableSnapshotTable rows are embedded values inside LeagueTableSnapshot.
+
+| Field         | Type                     | Required | Notes                                             |
+| ------------- | ------------------------ | -------- | ------------------------------------------------- |
+| `table`       | `Reference<LeagueTable>` | Yes      | Source league table represented by this snapshot. |
+| `description` | `string`                 | No       | Source league table description.                  |
+| `rows`        | `array<LeagueTableRow>`  | Yes      | Recalculated league table rows for the snapshot.  |
 
 ## Statistics
 
