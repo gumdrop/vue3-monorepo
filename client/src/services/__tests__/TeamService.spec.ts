@@ -248,6 +248,17 @@ describe('TeamService', () => {
     })
   })
 
+  it('builds single-season highlights from weekly positions, scores, and margins', () => {
+    expect(useTeams().singleSeasonHighlights(stat() as never)).toEqual([
+      { title: 'Highest position', value: '1st', detail: '15 Jan' },
+      { title: 'Lowest position', value: '3rd', detail: '1 Jan' },
+      { title: 'Highest score', value: '30', detail: '30-20, 8 Jan' },
+      { title: 'Lowest score', value: '0', detail: '0-20, 15 Jan' },
+      { title: 'Biggest margin of victory', value: '10', detail: '30-20, 8 Jan' },
+      { title: 'Biggest margin of defeat', value: '20', detail: '0-20, 15 Jan' },
+    ])
+  })
+
   it('builds all-season result type totals across supplied statistics', () => {
     expect(useTeams().allSeasonsResultTypes([stat('season-1'), stat('season-2')] as never)).toEqual(
       {

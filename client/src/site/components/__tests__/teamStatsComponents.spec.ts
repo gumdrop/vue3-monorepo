@@ -4,6 +4,7 @@ import { defineComponent, h } from 'vue'
 import { siteComponentStubs } from './componentStubs'
 import AllSeasonsHighlights from '../team/stats/AllSeasonsHighlights.vue'
 import HeadToHeadLeaders from '../team/stats/HeadToHeadLeaders.vue'
+import SeasonHighlights from '../team/stats/SeasonHighlights.vue'
 import SeasonLeaguePosition from '../team/stats/SeasonLeaguePosition.vue'
 import SeasonStats from '../team/stats/SeasonStats.vue'
 
@@ -14,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   stats: [] as unknown[],
   teamStats: vi.fn(),
   teamCount: vi.fn(),
+  singleSeasonHighlights: vi.fn(),
   allSeasonsHighlights: vi.fn(),
   headToHeadLeaders: vi.fn(),
 }))
@@ -31,6 +33,7 @@ vi.mock('@/services/TeamService', () => ({
     cumulativeScoresData: vi.fn(),
     cumulativePointsDifferenceData: vi.fn(),
     singleSeasonResultTypes: vi.fn(),
+    singleSeasonHighlights: mocks.singleSeasonHighlights,
     teamCount: mocks.teamCount,
     allSeasonsHighlights: mocks.allSeasonsHighlights,
     headToHeadLeaders: mocks.headToHeadLeaders,
@@ -129,6 +132,10 @@ beforeEach(() => {
   mocks.stats = [stats]
   mocks.positionData.mockReturnValue({ datasets: [], labels: [] })
   mocks.teamCount.mockResolvedValue(4)
+  mocks.singleSeasonHighlights.mockReturnValue([
+    { title: 'Highest position', value: '1st', detail: '15 Jan' },
+    { title: 'Biggest margin of defeat', value: '20', detail: '0-20, 15 Jan' },
+  ])
   mocks.allSeasonsHighlights.mockResolvedValue([])
   mocks.headToHeadLeaders.mockResolvedValue({
     mostBeaten: [],
@@ -198,6 +205,27 @@ describe('team statistics components', () => {
     expect(wrapper.get('[data-test="line-chart"]').attributes('data-y-axis-tick-count')).toBe('4')
     expect(wrapper.get('[data-test="line-chart"]').attributes('data-y-axis-integer-tick')).toBe('1')
     expect(wrapper.get('[data-test="line-chart"]').attributes('data-y-axis-decimal-tick')).toBe('')
+    expect(wrapper.text()).toContain('Season Highlights')
+    expect(wrapper.text()).toContain('Biggest margin of defeat')
+  })
+
+  it('renders single-season highlights', () => {
+    const wrapper = mount(SeasonHighlights, {
+      props: {
+        stats,
+      },
+      global: {
+        stubs: siteComponentStubs,
+      },
+    })
+
+    expect(mocks.singleSeasonHighlights).toHaveBeenCalledWith(stats)
+    expect(wrapper.text()).toContain('Season Highlights')
+    expect(wrapper.text()).toContain('Highest position')
+    expect(wrapper.text()).toContain('1st')
+    expect(wrapper.text()).toContain('15 Jan')
+    expect(wrapper.text()).toContain('Biggest margin of defeat')
+    expect(wrapper.text()).toContain('0-20, 15 Jan')
   })
 
   it('renders all-season highlights', async () => {
