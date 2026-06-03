@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   save: vi.fn(),
   saveAll: vi.fn(),
   calculateStats: vi.fn(),
+  updateAggregationForCompletedFixtureSet: vi.fn(),
   updateForFixture: vi.fn(),
 }))
 
@@ -30,6 +31,10 @@ vi.mock('../GeminiResultsSummary', () => ({
 vi.mock('../StatisticsUtils', () => ({
   calculateStats: mocks.calculateStats,
   updateForFixture: mocks.updateForFixture,
+}))
+
+vi.mock('../SeasonStatisticsAggregationUtils', () => ({
+  updateAggregationForCompletedFixtureSet: mocks.updateAggregationForCompletedFixtureSet,
 }))
 
 import {
@@ -168,6 +173,7 @@ describe('TaskFunctions', () => {
         },
       ],
     })
+    expect(mocks.updateAggregationForCompletedFixtureSet).toHaveBeenCalledWith(fixtureSetPath)
     expect(fixtureSet).toEqual(
       expect.objectContaining({
         resultsSummary: expect.objectContaining({
@@ -236,6 +242,7 @@ describe('TaskFunctions', () => {
     })
 
     expect(mocks.generateFixtureSetResultsSummary).not.toHaveBeenCalled()
+    expect(mocks.updateAggregationForCompletedFixtureSet).not.toHaveBeenCalled()
   })
 
   it('leaves completed fixture set summaries unchanged when Gemini returns empty text', async () => {
@@ -284,6 +291,7 @@ describe('TaskFunctions', () => {
     })
 
     expect(mocks.generateFixtureSetResultsSummary).toHaveBeenCalled()
+    expect(mocks.updateAggregationForCompletedFixtureSet).toHaveBeenCalledWith(fixtureSetPath)
     expect(fixtureSet).not.toHaveProperty('resultsSummary')
     expect(mocks.save).not.toHaveBeenCalledWith(
       expect.objectContaining({

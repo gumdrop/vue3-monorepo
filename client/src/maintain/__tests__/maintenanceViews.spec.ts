@@ -429,6 +429,22 @@ describe('maintenance list views', () => {
     expect(wrapper.text()).toContain('Statistics recalculated for 2025/2026')
   })
 
+  it('recalculates statistics aggregation for the selected season', async () => {
+    mocks.seasonDAO.list.mockResolvedValue([
+      { id: '2025-2026', path: 'season/2025-2026', startYear: 2025, endYear: 2026 },
+    ])
+    const wrapper = await mountMaintenance(StatisticsRecalculate)
+
+    await wrapper.get('select[data-test="statistics-season"]').setValue('2025-2026')
+    await clickButton(wrapper, 'Recalculate Aggregation')
+    await flushPromises()
+
+    expect(mocks.axiosPost).toHaveBeenCalledWith(
+      '/rest/maintain/season/2025-2026/statistics/aggregation/recalculate',
+    )
+    expect(wrapper.text()).toContain('Statistics aggregation recalculated for 2025/2026')
+  })
+
   it('requires a selected season before recalculating statistics', async () => {
     mocks.seasonDAO.list.mockResolvedValue([
       { id: '2025-2026', path: 'season/2025-2026', startYear: 2025, endYear: 2026 },
@@ -439,6 +455,10 @@ describe('maintenance list views', () => {
       .find((candidate) => candidate.text().includes('Recalculate Statistics'))
 
     expect(button?.attributes('disabled')).toBeDefined()
+    const aggregationButton = wrapper
+      .findAll('button')
+      .find((candidate) => candidate.text().includes('Recalculate Aggregation'))
+    expect(aggregationButton?.attributes('disabled')).toBeDefined()
     expect(mocks.axiosPost).not.toHaveBeenCalled()
   })
 

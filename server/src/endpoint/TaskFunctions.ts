@@ -22,6 +22,7 @@ import {
   generateFixtureSetResultsSummary,
   type FixtureSetSummaryFixture,
 } from './GeminiResultsSummary'
+import { updateAggregationForCompletedFixtureSet } from './SeasonStatisticsAggregationUtils'
 import { teamForUser } from './TeamMembership'
 
 export async function resultSubmission(result: ResultsSubmitCommand) {
@@ -153,6 +154,7 @@ async function updateCompletedFixtureSetSummary(fixtureSetPath: string) {
   const fixtures = await list<Fixture>('fixture', fixtureSet.path)
   if (fixtures.length === 0 || fixtures.some((fixture) => !fixture.result)) return
 
+  await updateAggregationForCompletedFixtureSet(fixtureSet.path)
   await generateAndSaveFixtureSetResultsSummary(fixtureSet, fixtures, false)
 }
 

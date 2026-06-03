@@ -33,6 +33,14 @@
             >
               Recalculate Statistics
             </v-btn>
+            <v-btn
+              color="primary"
+              variant="outlined"
+              :disabled="!selectedSeason || recalculating"
+              @click="recalculateAggregation"
+            >
+              Recalculate Aggregation
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -90,6 +98,27 @@ const recalculate = async () => {
     successMessage.value = `Statistics recalculated for ${selectedSeason.value.label}`
   } catch {
     errorMessage.value = 'Statistics recalculation failed'
+  } finally {
+    recalculating.value = false
+  }
+}
+
+const recalculateAggregation = async () => {
+  if (!selectedSeason.value) return
+
+  recalculating.value = true
+  successMessage.value = ''
+  errorMessage.value = ''
+
+  try {
+    await axios.post(
+      `/rest/maintain/season/${encodeURIComponent(
+        selectedSeason.value.id,
+      )}/statistics/aggregation/recalculate`,
+    )
+    successMessage.value = `Statistics aggregation recalculated for ${selectedSeason.value.label}`
+  } catch {
+    errorMessage.value = 'Statistics aggregation recalculation failed'
   } finally {
     recalculating.value = false
   }
