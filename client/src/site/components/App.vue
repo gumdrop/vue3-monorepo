@@ -129,6 +129,7 @@ const items = [
   { name: "Teams", to: "/team", icon: "mdi-account-multiple" },
   { name: "Competitions", to: "/competition", icon: "mdi-trophy" },
   { name: "Results", to: "/results", icon: "mdi-check" },
+  { name: "Analytics", to: "/analytics", icon: "mdi-chart-timeline-variant" },
   { name: "Venues", to: "/venue", icon: "mdi-map-marker" },
   { name: "Rules", to: "/rules", icon: "mdi-book-open-page-variant" },
   { name: "Links", to: "/links", icon: "mdi-link" },

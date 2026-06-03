@@ -218,6 +218,14 @@ const router = createRouter({
     },
 
     {
+      path: '/analytics',
+      name: 'analytics',
+      components: {
+        title: () => import('../components/analytics/AnalyticsTitle.vue'),
+        default: () => import('../components/analytics/AnalyticsMain.vue'),
+      },
+    },
+    {
       path: '/rules',
       name: 'rules',
       components: {

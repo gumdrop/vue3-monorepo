@@ -25,6 +25,7 @@ describe('site router', () => {
     expect(routePathsByName.get('links')).toBe('/links')
     expect(routePathsByName.get('contact')).toBe('/contact')
     expect(routePathsByName.get('help')).toBe('/help')
+    expect(routePathsByName.get('analytics')).toBe('/analytics')
     expect(routePathsByName.get('login')).toBe('/login')
     expect(routePathsByName.get('questions')).toBe('/results/questions')
     expect(router.options.scrollBehavior?.({} as never, {} as never, null)).toEqual({ top: 0 })
