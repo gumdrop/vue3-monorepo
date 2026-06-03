@@ -313,6 +313,29 @@ describe('interactive site components', () => {
     expect(wrapper.text()).not.toContain('Login')
   })
 
+  it('renders the app bar league title in the mobile-safe title wrapper', () => {
+    const wrapper = mountSite(App, {
+      global: {
+        stubs: {
+          ...siteComponentStubs,
+          Notifications: true,
+          PageTitle: true,
+          RouterView: routerViewSlotStub,
+          VBottomNavigation: true,
+          VFadeTransition: passthroughStub,
+          VToolbarItems: passthroughStub,
+          'v-fade-transition': passthroughStub,
+          FadeTransition: passthroughStub,
+        },
+      },
+    })
+
+    const appTitle = wrapper.get('.app-title')
+    const titleText = appTitle.get('.app-title-content').text().replace(/\s+/g, ' ')
+
+    expect(titleText).toContain('Quiz League')
+  })
+
   it('sorts seasons newest first and emits selected season changes', async () => {
     const wrapper = mountSite(SeasonSelect, {
       props: {
