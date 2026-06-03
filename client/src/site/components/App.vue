@@ -3,8 +3,8 @@
     <v-app-bar color="primary" dark fixed app clipped-left scroll-behavior="hide" class="app-header"
       :extended="lgAndUp">
       <v-app-bar-nav-icon @click.stop="drawer = !drawer" v-show="mdAndDown"></v-app-bar-nav-icon>
-      <v-toolbar-title>
-        <div v-if="appData" class="d-flex align-center">
+      <v-toolbar-title class="app-title">
+        <div v-if="appData" class="app-title-content d-flex align-center">
           <TopTitle :title="appData.leagueName" />
           <PageTitle :title="appData.leagueName"></PageTitle>
         </div>
@@ -143,6 +143,23 @@ const items = [
 
 .app-header {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.app-title {
+  flex: 0 1 auto !important;
+  min-width: 0;
+}
+
+.app-title-content {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.app-title :deep(.v-toolbar-title__placeholder) {
+  display: flex;
+  align-items: center;
+  overflow: visible;
+  text-overflow: clip;
 }
 
 .nav-toolbar {
