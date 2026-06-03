@@ -140,6 +140,7 @@ const mocks = vi.hoisted(() => ({
   setSidemenu: vi.fn(),
   setTeamSeason: vi.fn(),
   setTitle: vi.fn(),
+  singleSeasonHighlights: vi.fn(),
   singleSeasonResultTypes: vi.fn(),
   spentFixtures: vi.fn(),
   standings: vi.fn(),
@@ -412,6 +413,7 @@ vi.mock('@/services/TeamService', () => ({
     multipleTeamsAllSeasonsAverageData: mocks.multipleTeamsAllSeasonsAverageData,
     multipleTeamsAllSeasonsPositionData: mocks.multipleTeamsAllSeasonsPositionData,
     positionData: mocks.positionData,
+    singleSeasonHighlights: mocks.singleSeasonHighlights,
     singleSeasonResultTypes: mocks.singleSeasonResultTypes,
     standings: mocks.standings,
     teamCount: mocks.teamCount,
@@ -1086,6 +1088,9 @@ beforeEach(() => {
     { fixtures: questionFixtureSet, competition: leagueCompetition },
   ])
   mocks.saveSiteUser.mockResolvedValue(undefined)
+  mocks.singleSeasonHighlights.mockReturnValue([
+    { title: 'Highest position', value: '1st', detail: '2025/01/01' },
+  ])
   mocks.singleSeasonResultTypes.mockReturnValue({ labels: ['Won'], datasets: [{ data: [1] }] })
   mocks.spentFixtures.mockResolvedValue([fixtureSetDoc])
   mocks.standings.mockResolvedValue([{ name: 'League', standing: '1st' }])
