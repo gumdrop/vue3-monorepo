@@ -13,6 +13,10 @@ const mocks = vi.hoisted(() => ({
     getByPath: vi.fn(),
     subCollection: vi.fn(),
   },
+  fixtureDAO: {
+    entities: vi.fn(),
+    subCollection: vi.fn(),
+  },
   leagueTableDAO: {
     nestedCollection: vi.fn(),
   },
@@ -27,6 +31,7 @@ vi.mock('@/dao/CompetitionDAO', () => ({
 
 vi.mock('@/dao/FixturesDAO', () => ({
   default: mocks.fixturesDAO,
+  fixtureDAO: mocks.fixtureDAO,
 }))
 
 vi.mock('@/dao/LeagueTableDAO', () => ({
@@ -37,6 +42,15 @@ vi.mock('@/dao/SeasonDAO', () => ({
   default: mocks.seasonDAO,
 }))
 
+const completedFixture = (id: string) => ({
+  id,
+  result: { homeScore: 42, awayScore: 38 },
+})
+
+const incompleteFixture = (id: string) => ({
+  id,
+})
+
 describe('CompetitionService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -44,6 +58,8 @@ describe('CompetitionService', () => {
     mocks.competitionDAO.nestedCollection.mockReturnValue('competition-collection')
     mocks.fixturesDAO.subCollection.mockImplementation((path: string) => `${path}/fixtures`)
     mocks.fixturesDAO.getByPath.mockImplementation((path: string) => ({ id: path, path }))
+    mocks.fixtureDAO.subCollection.mockImplementation((path: string) => `${path}/fixture`)
+    mocks.fixtureDAO.entities.mockResolvedValue([completedFixture('fixture-1')])
     mocks.competitionDAO.getByPath.mockImplementation((path: string) => ({ id: path, path }))
     mocks.leagueTableDAO.nestedCollection.mockImplementation((doc) => ({
       parent: doc,
@@ -105,6 +121,22 @@ describe('CompetitionService', () => {
 
     await expect(useCompetitions().latestResults('competition/league', 1)).resolves.toEqual([
       { id: 'competition/league/fixtures/latest', path: 'competition/league/fixtures/latest' },
+    ])
+  })
+
+  it('skips incomplete fixture sets when returning latest results', async () => {
+    mocks.fixturesDAO.entities.mockResolvedValue([
+      { id: 'complete', date: '2000-01-01', path: 'competition/league/fixtures/complete' },
+      { id: 'incomplete', date: '2000-01-02', path: 'competition/league/fixtures/incomplete' },
+    ])
+    mocks.fixtureDAO.entities.mockImplementation(async (collectionPath: string) =>
+      collectionPath.includes('/incomplete/')
+        ? [incompleteFixture('fixture-2')]
+        : [completedFixture('fixture-1')],
+    )
+
+    await expect(useCompetitions().latestResults('competition/league', 1)).resolves.toEqual([
+      { id: 'competition/league/fixtures/complete', path: 'competition/league/fixtures/complete' },
     ])
   })
 

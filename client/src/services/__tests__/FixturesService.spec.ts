@@ -8,6 +8,10 @@ const mocks = vi.hoisted(() => ({
   fixturesDAO: {
     getByPath: vi.fn(),
   },
+  fixtureDAO: {
+    entities: vi.fn(),
+    subCollection: vi.fn(),
+  },
 }))
 
 vi.mock('../CompetitionService', () => ({
@@ -19,6 +23,7 @@ vi.mock('../CompetitionService', () => ({
 
 vi.mock('@/dao/FixturesDAO', () => ({
   default: mocks.fixturesDAO,
+  fixtureDAO: mocks.fixtureDAO,
 }))
 
 const fixturesSet = (id: string, date: string, questionsUrl?: string) => ({
@@ -28,10 +33,21 @@ const fixturesSet = (id: string, date: string, questionsUrl?: string) => ({
   questionsUrl,
 })
 
+const completedFixture = (id: string) => ({
+  id,
+  result: { homeScore: 42, awayScore: 38 },
+})
+
+const incompleteFixture = (id: string) => ({
+  id,
+})
+
 describe('FixturesService', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mocks.fixturesDAO.getByPath.mockImplementation((path: string) => ({ id: path, path }))
+    mocks.fixtureDAO.subCollection.mockImplementation((path: string) => `${path}/fixture`)
+    mocks.fixtureDAO.entities.mockResolvedValue([completedFixture('fixture-1')])
   })
 
   it('combines fixture groups from first-class season competitions', async () => {
@@ -79,6 +95,26 @@ describe('FixturesService', () => {
       {
         id: 'season/season-1/competition/league/fixtures/latest',
         path: 'season/season-1/competition/league/fixtures/latest',
+      },
+    ])
+  })
+
+  it('skips incomplete fixture sets when returning spent fixtures', async () => {
+    mocks.firstClassCompetitions.mockResolvedValue([{ id: 'league', path: 'competition/league' }])
+    mocks.fixtures.mockResolvedValue([
+      fixturesSet('complete', '2000-01-01'),
+      fixturesSet('incomplete', '2000-01-02'),
+    ])
+    mocks.fixtureDAO.entities.mockImplementation(async (collectionPath: string) =>
+      collectionPath.includes('/incomplete/')
+        ? [incompleteFixture('fixture-2')]
+        : [completedFixture('fixture-1')],
+    )
+
+    await expect(useFixtures().spentFixtures('season-1', 1)).resolves.toEqual([
+      {
+        id: 'season/season-1/competition/league/fixtures/complete',
+        path: 'season/season-1/competition/league/fixtures/complete',
       },
     ])
   })
