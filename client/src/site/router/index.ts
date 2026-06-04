@@ -218,6 +218,24 @@ const router = createRouter({
     },
 
     {
+      path: '/analytics',
+      name: 'analytics',
+      components: {
+        title: () => import('../components/analytics/AnalyticsTitle.vue'),
+        default: () => import('../components/analytics/AnalyticsMain.vue'),
+        sidenav: () => import('../components/analytics/AnalyticsMenu.vue'),
+      },
+    },
+    {
+      path: '/analytics/replay',
+      name: 'analytics replay',
+      components: {
+        title: () => import('../components/analytics/AnalyticsTitle.vue'),
+        default: () => import('../components/analytics/AnalyticsReplay.vue'),
+        sidenav: () => import('../components/analytics/AnalyticsMenu.vue'),
+      },
+    },
+    {
       path: '/rules',
       name: 'rules',
       components: {

@@ -638,6 +638,63 @@ function updateCurrentPositions(statsByTeam, leagueConfig, tableRows) {
   }
 }
 
+function generateSeasonStatisticsAggregation(leagueConfig) {
+  let tableRows = blankLeagueTableRows(leagueConfig.tableRows)
+  const snapshots = []
+
+  for (const fixtureSetData of [...leagueConfig.fixtureSets].sort((a, b) =>
+    a.date.localeCompare(b.date),
+  )) {
+    for (const fixtureData of fixtureSetData.fixtures) {
+      tableRows = applyFixtureToTableRows(tableRows, fixtureData)
+    }
+
+    snapshots.push({
+      fixtures: ref(
+        'fixtures',
+        fixtureSetData.id,
+        `season/${leagueConfig.seasonId}/competition/${leagueConfig.competitionId}`,
+      ),
+      fixtureSetDescription: fixtureSetData.description,
+      fixtureSetDate: fixtureSetData.date,
+      tables: [
+        {
+          table: ref(
+            'leaguetable',
+            leagueConfig.tableId,
+            `season/${leagueConfig.seasonId}/competition/${leagueConfig.competitionId}`,
+          ),
+          description: 'League Championship Table',
+          rows: JSON.parse(JSON.stringify(tableRows)), // Deep copy rows
+        },
+      ],
+    })
+  }
+
+  return {
+    path: `seasonstatisticsaggregation/${leagueConfig.seasonId}`,
+    data: {
+      id: leagueConfig.seasonId,
+      season: ref('season', leagueConfig.seasonId),
+      generatedAt: new Date().toISOString(),
+      competitions: [
+        {
+          competition: competitionRef(leagueConfig.competitionId, leagueConfig.seasonId),
+          competitionName: 'League Championship',
+          fixtureSetCount: leagueConfig.fixtureSets.length,
+          completedFixtureSetCount: leagueConfig.fixtureSets.length,
+          fixtureCount: leagueConfig.fixtureSets.reduce((acc, fs) => acc + fs.fixtures.length, 0),
+          complete: true,
+          averageScore: 40,
+          averageWinningScore: 42,
+          averageLosingScore: 38,
+          tableSnapshots: snapshots,
+        },
+      ],
+    },
+  }
+}
+
 function buildLeagueTableRows(leagueConfig) {
   let tableRows = emptyLeagueTableRows(leagueConfig.teamIds)
 
@@ -803,6 +860,10 @@ const generatedPreviousSeasonStatistics = seasonStatistics(previousLeagueConfig)
 const generatedSeasonStatistics = [
   ...generatedCurrentSeasonStatistics,
   ...generatedPreviousSeasonStatistics,
+]
+const generatedSeasonStatisticsAggregations = [
+  generateSeasonStatisticsAggregation(currentLeagueConfig),
+  generateSeasonStatisticsAggregation(previousLeagueConfig),
 ]
 const previousLeagueResultCount = previousLeagueFixtureSets.reduce(
   (total, fixtureSetData) => total + fixtureSetData.fixtures.length,
@@ -1138,6 +1199,7 @@ const documents = [
     path,
     data,
   })),
+  ...generatedSeasonStatisticsAggregations,
   fixtureSet('cup-main', 'cup-quarter-final', 'Quarter-final', '2026-06-11', '20:00:00', seasonId, {
     questionsUrl: cupFinalQuestionsUrl,
   }),
