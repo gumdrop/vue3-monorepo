@@ -42,6 +42,7 @@ vi.mock('vuefire', () => ({
 }))
 
 import { useAppContextStore, useSideMenuStore, useUserStore } from '../app'
+import { useAnalyticsStore } from '../analytics'
 import { useCompetition } from '../competiton'
 import { useResultsStore } from '../results'
 import { useTeamStore } from '../teams'
@@ -89,6 +90,7 @@ describe('stores', () => {
     const competition = useCompetition()
     const results = useResultsStore()
     const teams = useTeamStore()
+    const analytics = useAnalyticsStore()
 
     await flushPromises()
 
@@ -98,16 +100,33 @@ describe('stores', () => {
     expect(unrefMaybe(competition.seasonId)).toBe('season-2026')
     expect(unrefMaybe(results.seasonId)).toBe('season-2026')
     expect(unrefMaybe(teams.seasonId)).toBe('season-2026')
+    expect(unrefMaybe(analytics.seasonId)).toBe('season-2026')
 
     competition.setSeason('season-2027')
     results.setSeason('season-2027')
     teams.setSeason('season-2027')
+    analytics.setCompetition('league-main')
+    analytics.setSeason('season-2027')
 
     expect(unrefMaybe(competition.seasonId)).toBe('season-2027')
     expect(unrefMaybe(results.seasonId)).toBe('season-2027')
     expect(unrefMaybe(teams.seasonId)).toBe('season-2027')
-  })
+    expect(unrefMaybe(analytics.seasonId)).toBe('season-2027')
+    expect(unrefMaybe(analytics.competitionId)).toBeUndefined()
 
+    analytics.setCompetition('cup-main')
+
+    expect(unrefMaybe(analytics.competitionId)).toBe('cup-main')
+
+    analytics.setSeason('season-2027')
+
+    expect(unrefMaybe(analytics.competitionId)).toBe('cup-main')
+
+    analytics.setSeason(undefined)
+
+    expect(unrefMaybe(analytics.seasonId)).toBe('season-2027')
+    expect(unrefMaybe(analytics.competitionId)).toBe('cup-main')
+  })
   it('sets and clears the logged-in user projection', async () => {
     const siteUser = {
       id: 'site-user-1',
