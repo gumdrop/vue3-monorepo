@@ -477,6 +477,45 @@ describe('interactive site components', () => {
     expect(wrapper.get('a').attributes('href')).toBe('/team/alpha')
   })
 
+  it('renders league table rows with Firestore reference-shaped teams', () => {
+    mocks.teams.set('alpha', {
+      id: 'alpha',
+      name: 'Alpha Quiz Team',
+      shortName: 'Alpha',
+    })
+    const wrapper = mountSite(LeagueTableRow, {
+      props: {
+        row: {
+          position: 1,
+          team: {
+            _key: {
+              path: {
+                segments: [
+                  'projects',
+                  'chiltern-ql-firestore',
+                  'databases',
+                  '(default)',
+                  'documents',
+                  'team',
+                  'alpha',
+                ],
+              },
+            },
+          },
+          played: 10,
+          won: 8,
+          drawn: 1,
+          lost: 1,
+          matchPointsFor: 420,
+          leaguePoints: 17,
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain('Alpha Quiz Team')
+    expect(wrapper.get('a').attributes('href')).toBe('/team/alpha')
+  })
+
   it('renders standalone and competition events with localised dates', async () => {
     mocks.standaloneEvents.mockResolvedValue([
       {

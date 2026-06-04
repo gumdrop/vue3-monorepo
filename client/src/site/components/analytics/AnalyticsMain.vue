@@ -7,21 +7,25 @@
       </v-col>
     </v-row>
 
-    <v-row v-else>
-      <v-col cols="12" md="6">
-        <!-- We pass seasonId here, but we want it to show even if it's not yet set if we had seasons. 
-             Since seasonId is now guaranteed to be set if we reach here, SeasonSelect should show. -->
-        <SeasonSelect :season-id="seasonId" @season="setSeason" :inline="false" label="Select Season" />
+    <v-row v-else class="analytics-selector-row">
+      <v-col cols="12" md="6" class="analytics-selector-col">
+        <SeasonSelect
+          :season-id="seasonId"
+          @season="setSeason"
+          :inline="false"
+          label="Select Season"
+          class="analytics-season-select"
+        />
       </v-col>
-      <v-col cols="12" md="6" v-if="aggregation">
+      <v-col cols="12" md="6" v-if="aggregation" class="analytics-selector-col">
         <v-select
           v-model="selectedCompetitionId"
           :items="competitions"
           item-title="competitionName"
           item-value="competitionId"
           label="Select Competition"
-          prepend-inner-icon="mdi-trophy"
-          variant="outlined"
+          bg-color="transparent"
+          class="analytics-competition-select"
         ></v-select>
       </v-col>
     </v-row>
@@ -84,33 +88,31 @@
             </v-card-text>
           </v-card>
 
-          <div v-for="table in currentSnapshot?.tables" :key="table.table.id">
-            <v-slide-y-transition mode="out-in">
-              <div class="league-table-container mb-6 elevation-2" :key="snapshotIndex">
-                <table class="ql-league-table">
-                  <caption v-if="table.description" class="pa-4 font-weight-bold">{{ table.description }}</caption>
-                  <thead>
-                    <tr>
-                      <th class="text-center">Pos</th>
-                      <th class="text-left">Team</th>
-                      <th class="text-center">Pl</th>
-                      <th class="text-center">W</th>
-                      <th class="text-center">D</th>
-                      <th class="text-center">L</th>
-                      <th class="text-center">S</th>
-                      <th class="text-center">Pts</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <LeagueTableRow
-                      :row="row"
-                      v-for="(row, index) in table.rows"
-                      :key="row.team.id || index"
-                    />
-                  </tbody>
-                </table>
-              </div>
-            </v-slide-y-transition>
+          <div v-for="(table, tableIndex) in currentSnapshot?.tables" :key="tableKey(table, tableIndex)">
+            <div class="league-table-container mb-6 elevation-2">
+              <table class="ql-league-table">
+                <caption v-if="table.description" class="pa-4 font-weight-bold">{{ table.description }}</caption>
+                <thead>
+                  <tr>
+                    <th class="text-center">Pos</th>
+                    <th class="text-left">Team</th>
+                    <th class="text-center">Pl</th>
+                    <th class="text-center">W</th>
+                    <th class="text-center">D</th>
+                    <th class="text-center">L</th>
+                    <th class="text-center">S</th>
+                    <th class="text-center">Pts</th>
+                  </tr>
+                </thead>
+                <TransitionGroup tag="tbody" name="analytics-table-row">
+                  <LeagueTableRow
+                    :row="row"
+                    v-for="(row, index) in table.rows"
+                    :key="rowKey(row, index)"
+                  />
+                </TransitionGroup>
+              </table>
+            </div>
           </div>
         </v-col>
       </v-row>
@@ -135,25 +137,74 @@
 <script setup lang="ts">
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useDocument } from 'vuefire'
+import type {
+  LeagueTableRow as LeagueTableRowData,
+  LeagueTableSnapshotTable,
+} from '@quizleague/shared'
 import ApplicationContextDAO from '@/dao/ApplicationContextDAO'
 import SeasonStatisticsAggregationDAO from '@/dao/SeasonStatisticsAggregationDAO'
 import SeasonSelect from '../season/SeasonSelect.vue'
 import LeagueTableRow from '../leaguetable/LeagueTableRow.vue'
 
-const appContext = useDocument(ApplicationContextDAO.get())
-const seasonId = ref<string>()
-
-watch(appContext, (ctx) => {
-  if (ctx && !seasonId.value) {
-    seasonId.value = ctx.currentSeason.id
-  }
-})
-
-const setSeason = (id: string) => {
-  seasonId.value = id
+type InternalFirestorePath = {
+  canonicalString?: () => string
+  segments?: string[]
 }
 
-const aggregation = useDocument(() => seasonId.value ? SeasonStatisticsAggregationDAO.getById(seasonId.value) : undefined)
+type ReferenceLike = {
+  id?: unknown
+  path?: unknown
+  _path?: InternalFirestorePath
+  _key?: {
+    path?: InternalFirestorePath
+  }
+}
+
+const appContext = useDocument(ApplicationContextDAO.get())
+const selectedSeasonId = ref<string>()
+
+const pathFromSegments = (segments: string[]) => {
+  const documentsIndex = segments.indexOf('documents')
+  const documentPathSegments = documentsIndex >= 0 ? segments.slice(documentsIndex + 1) : segments
+
+  return documentPathSegments.join('/')
+}
+
+const internalPath = (path?: InternalFirestorePath) => {
+  if (!path) return ''
+
+  if (typeof path.canonicalString === 'function') {
+    return path.canonicalString()
+  }
+
+  return Array.isArray(path.segments) ? pathFromSegments(path.segments) : ''
+}
+
+const referenceId = (reference: unknown) => {
+  if (!reference || typeof reference !== 'object') return ''
+
+  const referenceLike = reference as ReferenceLike
+  if (typeof referenceLike.id === 'string') return referenceLike.id
+
+  const path =
+    (typeof referenceLike.path === 'string' ? referenceLike.path : '') ||
+    internalPath(referenceLike._path) ||
+    internalPath(referenceLike._key?.path)
+  const pathParts = path.split('/').filter(Boolean)
+  return pathParts[pathParts.length - 1] ?? ''
+}
+
+const setSeason = (id: string) => {
+  selectedSeasonId.value = id
+}
+
+const seasonId = computed(
+  () => selectedSeasonId.value || referenceId(appContext.value?.currentSeason),
+)
+
+const aggregation = useDocument(() =>
+  seasonId.value ? SeasonStatisticsAggregationDAO.getById(seasonId.value) : undefined,
+)
 
 const competitions = computed(() => {
   if (!aggregation.value) return []
@@ -189,6 +240,12 @@ const currentSnapshot = computed(() => {
   if (!selectedCompetition.value) return undefined
   return selectedCompetition.value.tableSnapshots[snapshotIndex.value]
 })
+
+const tableKey = (table: LeagueTableSnapshotTable, index: number) =>
+  referenceId(table.table) || `${index}`
+
+const rowKey = (row: LeagueTableRowData, index: number) =>
+  referenceId(row.team) || `${index}`
 
 const togglePlay = () => {
   if (isPlaying.value) {
@@ -268,6 +325,73 @@ th {
 
 .text-left {
   text-align: left;
+}
+
+.analytics-selector-row {
+  align-items: flex-start;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.analytics-selector-col {
+  display: flex;
+  align-items: flex-start;
+}
+
+.analytics-selector-col :deep(.season-select) {
+  display: block;
+  width: 100%;
+  margin: 0;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  font-weight: 400 !important;
+  line-height: inherit !important;
+  letter-spacing: 0 !important;
+}
+
+.analytics-selector-row :deep(.v-input),
+.analytics-selector-row :deep(.v-field),
+.analytics-selector-row :deep(.v-field__input),
+.analytics-selector-row :deep(.v-select__selection),
+.analytics-selector-row :deep(.v-select__selection-text) {
+  font-family: inherit !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  line-height: 24px !important;
+  letter-spacing: 0 !important;
+}
+
+.analytics-selector-row :deep(.v-field-label) {
+  font-family: inherit !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+}
+
+.analytics-selector-row :deep(.v-field-label--floating) {
+  font-size: 12px !important;
+  line-height: 18px !important;
+}
+
+.analytics-selector-row :deep(.v-field__overlay) {
+  background-color: transparent !important;
+}
+
+.analytics-season-select,
+.analytics-competition-select {
+  width: 100%;
+}
+
+.analytics-table-row-move,
+.analytics-table-row-enter-active,
+.analytics-table-row-leave-active {
+  transition:
+    opacity 0.54s ease,
+    transform 0.72s ease;
+}
+
+.analytics-table-row-enter-from,
+.analytics-table-row-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
 }
 
 @media (max-width: 600px) {

@@ -23,12 +23,51 @@ import ResponsiveTeamName from '../common/ResponsiveTeamName.vue'
 
 const { row } = defineProps<{ row: LeagueTableRow }>()
 
+type InternalFirestorePath = {
+  canonicalString?: () => string
+  segments?: string[]
+}
+
+type TeamReferenceLike = {
+  id?: unknown
+  path?: unknown
+  _path?: InternalFirestorePath
+  _key?: {
+    path?: InternalFirestorePath
+  }
+}
+
+const pathFromSegments = (segments: string[]) => {
+  const documentsIndex = segments.indexOf('documents')
+  const documentPathSegments = documentsIndex >= 0 ? segments.slice(documentsIndex + 1) : segments
+
+  return documentPathSegments.join('/')
+}
+
+const internalPath = (path?: InternalFirestorePath) => {
+  if (!path) return ''
+
+  if (typeof path.canonicalString === 'function') {
+    return path.canonicalString()
+  }
+
+  return Array.isArray(path.segments) ? pathFromSegments(path.segments) : ''
+}
+
 const teamPath = computed(() => {
   const teamReference = row.team as LeagueTableRow['team'] | string
-  return typeof teamReference === 'string' ? teamReference : teamReference.path
+  if (typeof teamReference === 'string') return teamReference
+
+  const referenceLike = teamReference as TeamReferenceLike
+  if (typeof referenceLike.path === 'string') return referenceLike.path
+
+  const path = internalPath(referenceLike._path) || internalPath(referenceLike._key?.path)
+  if (path) return path
+
+  return typeof referenceLike.id === 'string' ? `team/${referenceLike.id}` : ''
 })
 
-const teamId = computed(() => teamPath.value.split('/').pop() ?? '')
+const teamId = computed(() => teamPath.value.split('/').filter(Boolean).pop() ?? '')
 const team = useDocument(() => (teamId.value ? TeamDAO.getById(teamId.value) : undefined), {
   maxRefDepth: 0,
 })
