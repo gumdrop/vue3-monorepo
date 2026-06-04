@@ -34,7 +34,7 @@ Feature: Team pages
     And I should see text matching "42\s*-\s*38"
     And I should see text matching "Team Fixtures"
     And I should see text matching "Chesham Comets"
-    And I should see text matching "Analytics"
+    And I should see text matching "Seasons"
     And I should see text matching "Calendar"
 
   Scenario: Visitors can open a team's statistics page

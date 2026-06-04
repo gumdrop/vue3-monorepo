@@ -1,4 +1,4 @@
-Feature: Analytics pages
+Feature: Seasons analytics pages
   Visitors need to review competition analytics and move between analytics panes.
 
   Background:
@@ -7,7 +7,7 @@ Feature: Analytics pages
   Scenario: Visitors keep the selected competition when moving between analytics panes
     When I open the analytics page
     Then I should be on the "/analytics" page
-    And I should see text matching "Analytics"
+    And I should see text matching "Seasons"
     When I select "League Championship" from the analytics competition selector
     Then the analytics competition selector should show "League Championship"
     And I should see text matching "Fixture sets complete"
