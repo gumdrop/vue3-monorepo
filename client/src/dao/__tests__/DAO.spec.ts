@@ -9,6 +9,7 @@ import CompetitionStatisticsDAO from '../CompetitionStatisticsDAO'
 import FixturesDAO, { fixtureDAO, reportDAO } from '../FixturesDAO'
 import { GenericConverter } from '../GenericConverter'
 import LeagueTableDAO from '../LeagueTableDAO'
+import SeasonStatisticsAggregationDAO from '../SeasonStatisticsAggregationDAO'
 import SiteUserDAO from '../SiteUserDAO'
 import StatisticsDAO from '../StatisticsDAO'
 import TeamMemberDAO from '../TeamMemberDAO'
@@ -496,6 +497,17 @@ describe('specific DAO helpers', () => {
     expect(CompetitionStatisticsDAO.collection()).toMatchObject({
       path: 'competitionstatistics',
     })
+  })
+
+  it('creates season statistics aggregation document and collection references', () => {
+    expect(SeasonStatisticsAggregationDAO.collection()).toMatchObject({
+      path: 'seasonstatisticsaggregation',
+    })
+    expect(SeasonStatisticsAggregationDAO.getById('season-2025-2026')).toMatchObject({
+      path: 'seasonstatisticsaggregation/season-2025-2026',
+      converter: SeasonStatisticsAggregationDAO.converter,
+    })
+    expect(SeasonStatisticsAggregationDAO.converter).toBeInstanceOf(GenericConverter)
   })
 
   it('creates chat and league table DAO collection references', () => {

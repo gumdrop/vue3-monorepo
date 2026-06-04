@@ -2,6 +2,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
 import AnalyticsMain from '../analytics/AnalyticsMain.vue'
+import AnalyticsTitle from '../analytics/AnalyticsTitle.vue'
 import { siteComponentStubs } from './componentStubs'
 
 const mocks = vi.hoisted(() => ({
@@ -91,6 +92,17 @@ beforeEach(() => {
 })
 
 describe('AnalyticsMain', () => {
+  it('renders the analytics route title', () => {
+    const wrapper = mount(AnalyticsTitle, {
+      global: {
+        stubs: siteComponentStubs,
+      },
+    })
+
+    expect(wrapper.text()).toContain('mdi-chart-timeline-variant')
+    expect(wrapper.text()).toContain('Analytics')
+  })
+
   it('uses an already-loaded application context to select the initial season', async () => {
     const wrapper = await mountAnalytics()
 
