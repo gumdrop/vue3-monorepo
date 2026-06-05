@@ -336,7 +336,7 @@ const averageScoresOptions: ChartOptions<'line'> = {
   },
   scales: {
     y: {
-      beginAtZero: true,
+      beginAtZero: false,
       ticks: {
         precision: 0,
       },

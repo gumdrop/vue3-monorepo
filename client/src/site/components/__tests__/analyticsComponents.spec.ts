@@ -96,8 +96,9 @@ vi.mock('vuefire', () => ({
 
 vi.mock('vue-chartjs', () => ({
   Line: {
-    props: ['data'],
-    template: '<div data-test="line-chart">{{ JSON.stringify(data) }}</div>',
+    props: ['data', 'options'],
+    template:
+      '<div><div data-test="line-chart">{{ JSON.stringify(data) }}</div><div data-test="line-chart-options">{{ JSON.stringify(options) }}</div></div>',
   },
 }))
 
@@ -150,8 +151,9 @@ const mountAnalyticsAllSeasons = async () => {
       stubs: {
         ...siteComponentStubs,
         Line: {
-          props: ['data'],
-          template: '<div data-test="line-chart">{{ JSON.stringify(data) }}</div>',
+          props: ['data', 'options'],
+          template:
+            '<div><div data-test="line-chart">{{ JSON.stringify(data) }}</div><div data-test="line-chart-options">{{ JSON.stringify(options) }}</div></div>',
         },
       },
     },
@@ -500,6 +502,11 @@ describe('AnalyticsAllSeasons', () => {
       [38, 42, 42],
       [26, 28, 32],
     ])
+    expect(JSON.parse(wrapper.get('[data-test="line-chart-options"]').text()).scales.y).toEqual(
+      expect.objectContaining({
+        beginAtZero: false,
+      }),
+    )
   })
 })
 
