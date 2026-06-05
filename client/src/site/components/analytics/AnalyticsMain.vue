@@ -94,10 +94,7 @@ const {
 
 const numberValue = (value: number | undefined) => (Number.isFinite(value) ? Number(value) : 0)
 
-const formatNumber = (value: number | undefined) => {
-  const rounded = Math.round(numberValue(value) * 10) / 10
-  return Number.isInteger(rounded) ? `${rounded}` : rounded.toFixed(1)
-}
+const formatNumber = (value: number | undefined) => `${Math.round(numberValue(value))}`
 
 const formattedGeneratedAt = computed(() => {
   if (!aggregation.value?.generatedAt) return ''

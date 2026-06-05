@@ -314,6 +314,9 @@ describe('AnalyticsMain', () => {
     expect(wrapper.text()).toContain('Fixtures counted')
     expect(wrapper.text()).toContain('Average winning score')
     expect(wrapper.text()).toContain('Pending')
+    expect(wrapper.get('[data-test="analytics-overview"]').text()).not.toContain('36.2')
+    expect(wrapper.get('[data-test="analytics-overview"]').text()).not.toContain('42.4')
+    expect(wrapper.get('[data-test="analytics-overview"]').text()).not.toContain('31.1')
     expect(wrapper.find('[data-test="analytics-replay"]').exists()).toBe(false)
     expect(useAnalyticsStore().competitionId).toBe('cup-main')
   })
@@ -475,8 +478,15 @@ describe('AnalyticsAllSeasons', () => {
     expect(chartText).toContain('Average winning score')
     expect(chartText).toContain('Average losing score')
     expect(chartText).toContain('2023/2024')
-    expect(chartText).toContain('31.8')
-    expect(chartText).toContain('37.9')
+    expect(chartText).not.toContain('31.8')
+    expect(chartText).not.toContain('37.9')
+    expect(
+      JSON.parse(chartText).datasets.map((dataset: { data: number[] }) => dataset.data),
+    ).toEqual([
+      [32, 34, 38],
+      [38, 42, 42],
+      [26, 28, 32],
+    ])
   })
 })
 

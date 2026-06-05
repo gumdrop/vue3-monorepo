@@ -136,6 +136,8 @@ const allAggregations = useCollection<SeasonStatisticsAggregation>(
 
 const numberValue = (value: number | undefined) => (Number.isFinite(value) ? Number(value) : 0)
 
+const averageValue = (value: number | undefined) => Math.round(numberValue(value))
+
 const seasonIdentity = (seasonAggregation: SeasonStatisticsAggregation) =>
   referenceId(seasonAggregation.season) || seasonAggregation.id || seasonAggregation.path || ''
 
@@ -219,21 +221,21 @@ const averageScoresData = computed<ChartData<'line', number[], string>>(() => ({
   datasets: [
     {
       label: 'Average score',
-      data: allSeasonRows.value.map((row) => numberValue(row.competition.averageScore)),
+      data: allSeasonRows.value.map((row) => averageValue(row.competition.averageScore)),
       borderColor: '#1565c0',
       backgroundColor: 'rgba(21, 101, 192, 0.12)',
       tension: 0.25,
     },
     {
       label: 'Average winning score',
-      data: allSeasonRows.value.map((row) => numberValue(row.competition.averageWinningScore)),
+      data: allSeasonRows.value.map((row) => averageValue(row.competition.averageWinningScore)),
       borderColor: '#2e7d32',
       backgroundColor: 'rgba(46, 125, 50, 0.12)',
       tension: 0.25,
     },
     {
       label: 'Average losing score',
-      data: allSeasonRows.value.map((row) => numberValue(row.competition.averageLosingScore)),
+      data: allSeasonRows.value.map((row) => averageValue(row.competition.averageLosingScore)),
       borderColor: '#c62828',
       backgroundColor: 'rgba(198, 40, 40, 0.12)',
       tension: 0.25,
