@@ -4,7 +4,7 @@ import LeagueTableDAO from '@/dao/LeagueTableDAO'
 import SeasonDao from '@/dao/SeasonDAO'
 import type Competition from '@/entity/Competition'
 import type { name } from '@/entity/Competition'
-import { LocalDate } from '@js-joda/core'
+import { currentLocalDate } from './DateService'
 import { completedFixtureSets } from './FixtureSetCompletion'
 
 export const useCompetitions = () => {
@@ -24,7 +24,7 @@ export const useCompetitions = () => {
   }
 
   async function nextFixtures(competitionPath: string, take: number | undefined = undefined) {
-    const today = LocalDate.now().toString()
+    const today = currentLocalDate().toString()
     return (await fixtures(competitionPath))
       .filter((f) => f.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date))
@@ -33,7 +33,7 @@ export const useCompetitions = () => {
   }
 
   async function latestResults(competitionPath: string, take: number | undefined = undefined) {
-    const today = LocalDate.now().toString()
+    const today = currentLocalDate().toString()
     return (
       await completedFixtureSets((await fixtures(competitionPath)).filter((f) => f.date <= today))
     )

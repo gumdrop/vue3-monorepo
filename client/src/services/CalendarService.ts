@@ -1,15 +1,15 @@
-import { LocalDate } from '@js-joda/core'
 import { useCompetitions } from './CompetitionService'
 import SeasonDAO from '@/dao/SeasonDAO'
 import type { SingletonCompetition } from '@/entity/Competition'
 import type { EventWrapper } from '@/entity/Event'
 import VenueDAO from '@/dao/VenueDAO'
+import { currentLocalDate } from './DateService'
 
 export const useCalendar = () => {
   const { competitionsOfType } = useCompetitions()
 
   const standaloneEvents = async (seasonId: string) => {
-    const now = LocalDate.now().toString()
+    const now = currentLocalDate().toString()
     const comps: SingletonCompetition[] = await competitionsOfType(seasonId, 'singleton')
     const season = await SeasonDAO.getDataById(seasonId)
 
