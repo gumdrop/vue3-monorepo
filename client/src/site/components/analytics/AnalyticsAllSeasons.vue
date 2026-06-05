@@ -110,12 +110,14 @@
 import type {
   CompetitionStatisticsAggregation,
   SeasonStatisticsAggregation,
+  Team,
 } from '@quizleague/shared'
 import type { ChartData, ChartOptions } from 'chart.js'
 import 'chart.js/auto'
 import { computed } from 'vue'
 import { Line } from 'vue-chartjs'
 import SeasonStatisticsAggregationDAO from '@/dao/SeasonStatisticsAggregationDAO'
+import TeamDAO from '@/dao/TeamDAO'
 import { useCollection } from 'vuefire'
 import AnalyticsSelector from './AnalyticsSelector.vue'
 import { referenceId, useAnalyticsSelection } from './analyticsState'
@@ -150,6 +152,20 @@ const allAggregations = useCollection<SeasonStatisticsAggregation>(
   { maxRefDepth: 1 },
 )
 
+const allTeams = useCollection<Team>(() => TeamDAO.collection())
+
+const teamNameMap = computed(() => {
+  const map = new Map<string, string>()
+  if (Array.isArray(allTeams.value)) {
+    for (const team of allTeams.value) {
+      if (team.id) {
+        map.set(team.id, team.name)
+      }
+    }
+  }
+  return map
+})
+
 const numberValue = (value: number | undefined) => (Number.isFinite(value) ? Number(value) : 0)
 
 const averageValue = (value: number | undefined) => Math.round(numberValue(value))
@@ -171,12 +187,19 @@ const seasonLabel = (seasonIdValue: string) => {
   return `${yearMatch[1]}/${yearMatch[2]}`
 }
 
-const winnerLabel = (competition: CompetitionStatisticsAggregation) =>
-  competition.winnerText || referenceId(competition.winner)
+const winnerLabel = (competition: CompetitionStatisticsAggregation) => {
+  const winnerId = referenceId(competition.winner)
+  return competition.winnerText || teamNameMap.value.get(winnerId) || winnerId
+}
 
 const teamLabel = (team: unknown) => {
   const teamId =
     typeof team === 'string' ? (team.split('/').filter(Boolean).pop() ?? '') : referenceId(team)
+
+  if (teamNameMap.value.has(teamId)) {
+    return teamNameMap.value.get(teamId) ?? ''
+  }
+
   if (!teamId) return ''
 
   return teamId
@@ -198,17 +221,26 @@ const allSeasonRows = computed<AllSeasonRow[]>(() => {
   return allAggregations.value
     .map((seasonAggregation) => {
       const competition = seasonAggregation.competitions.find(
-        (candidate) => referenceId(candidate.competition) === competitionId.value,
+        (candidate) => candidate.competitionName === competitionId.value,
       )
 
       if (!competition) return undefined
 
+      const season = seasonAggregation.season as unknown as Season
       const resolvedSeasonId = seasonIdentity(seasonAggregation)
+
+      let label = seasonLabel(resolvedSeasonId)
+      let sortValue = seasonSortValue(resolvedSeasonId)
+
+      if (season && typeof season.startYear === 'number' && typeof season.endYear === 'number') {
+        label = `${season.startYear}/${season.endYear}`
+        sortValue = season.startYear
+      }
 
       return {
         seasonId: resolvedSeasonId,
-        seasonLabel: seasonLabel(resolvedSeasonId),
-        sortValue: seasonSortValue(resolvedSeasonId),
+        seasonLabel: label,
+        sortValue: sortValue,
         competition,
         winnerLabel: winnerLabel(competition),
       }
