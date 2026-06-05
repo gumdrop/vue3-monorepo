@@ -122,9 +122,9 @@ const winnerValue = computed(() => {
 const completionLabel = computed(() => {
   if (!selectedCompetition.value) return ''
   if (selectedCompetition.value.complete) return 'Complete'
-  if (selectedCompetition.value.fixtureSetCount === 0) return 'No fixture sets'
+  if (selectedCompetition.value.fixtureSetCount === 0) return 'No match days'
 
-  return `${selectedCompetition.value.completedFixtureSetCount}/${selectedCompetition.value.fixtureSetCount} sets complete`
+  return `${selectedCompetition.value.completedFixtureSetCount}/${selectedCompetition.value.fixtureSetCount} match days complete`
 })
 
 const overviewMetrics = computed(() => {
@@ -132,7 +132,7 @@ const overviewMetrics = computed(() => {
 
   return [
     {
-      label: 'Fixture sets complete',
+      label: 'Match days complete',
       value: `${selectedCompetition.value.completedFixtureSetCount}/${selectedCompetition.value.fixtureSetCount}`,
       icon: 'mdi-calendar-check',
     },
@@ -163,7 +163,7 @@ const overviewRows = computed(() => {
       value: selectedCompetition.value.complete ? 'Complete' : 'In progress',
     },
     {
-      label: 'Fixture sets',
+      label: 'Match days',
       value: `${selectedCompetition.value.completedFixtureSetCount} completed of ${selectedCompetition.value.fixtureSetCount}`,
     },
     {
