@@ -21,6 +21,7 @@ Feature: Seasons analytics pages
     And I should see text matching "Average Scores"
     And I should see text matching "Different winners"
     And I should see text matching "Most successful team"
+    And I should see text matching "Highest average score"
     When I choose "Replay" from the analytics menu
     Then I should be on the "/analytics/replay" page
     And the analytics competition selector should show "League Championship"

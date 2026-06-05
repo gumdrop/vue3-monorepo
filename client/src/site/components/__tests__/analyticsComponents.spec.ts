@@ -41,6 +41,23 @@ const dataForDocument = (source: unknown) => {
   return (resolved as { __data?: unknown } | undefined)?.__data
 }
 
+const leagueTableRow = (
+  position: string,
+  teamId: string,
+  played: number,
+  matchPointsFor: number,
+) => ({
+  position,
+  team: { id: teamId, path: `team/${teamId}` },
+  played,
+  won: 0,
+  drawn: 0,
+  lost: 0,
+  leaguePoints: 0,
+  matchPointsFor,
+  matchPointsAgainst: 0,
+})
+
 vi.mock('@/dao/ApplicationContextDAO', () => ({
   default: {
     get: () => docRef('applicationcontext/site', mocks.appContext),
@@ -183,10 +200,7 @@ const analyticsAggregation = (seasonId = 'season-2025-2026') => ({
                 path: `season/${seasonId}/competition/league-main/leaguetable/league-table`,
               },
               description: 'League Championship Table',
-              rows: [
-                { position: '1', team: { id: 'alpha', path: 'team/alpha' } },
-                { position: '2', team: { id: 'bravo', path: 'team/bravo' } },
-              ],
+              rows: [leagueTableRow('1', 'alpha', 1, 42), leagueTableRow('2', 'bravo', 1, 38)],
             },
           ],
         },
@@ -200,10 +214,7 @@ const analyticsAggregation = (seasonId = 'season-2025-2026') => ({
                 path: `season/${seasonId}/competition/league-main/leaguetable/league-table`,
               },
               description: 'League Championship Table',
-              rows: [
-                { position: '1', team: { id: 'bravo', path: 'team/bravo' } },
-                { position: '2', team: { id: 'alpha', path: 'team/alpha' } },
-              ],
+              rows: [leagueTableRow('1', 'bravo', 2, 82), leagueTableRow('2', 'alpha', 2, 80)],
             },
           ],
         },
@@ -464,6 +475,8 @@ describe('AnalyticsAllSeasons', () => {
     expect(page.text()).toMatch(/Different winners\s*2/)
     expect(page.text()).toContain('Most successful team(s)')
     expect(page.text()).toMatch(/Most successful team\(s\)\s*Alpha/)
+    expect(page.text()).toContain('Highest average score')
+    expect(page.text()).toMatch(/Highest average score\s*Bravo \(41\)/)
     expect(page.text()).toContain('Alpha')
     expect(page.text()).toContain('Average Scores')
     expect(page.text()).toContain('2023/2024')

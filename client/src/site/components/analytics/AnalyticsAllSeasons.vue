@@ -53,6 +53,15 @@
                   </div>
                 </div>
               </div>
+              <div class="analytics-metric">
+                <v-icon color="primary" size="28">mdi-chart-bell-curve</v-icon>
+                <div>
+                  <div class="analytics-metric-label">Highest average score</div>
+                  <div class="analytics-metric-value analytics-metric-value-wrap">
+                    {{ highestAverageScoreLabel }}
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div
@@ -119,6 +128,13 @@ type AllSeasonRow = {
   winnerLabel: string
 }
 
+type TeamScoreTotal = {
+  team: string
+  points: number
+  played: number
+  average: number
+}
+
 const {
   seasonId,
   competitionId,
@@ -157,6 +173,24 @@ const seasonLabel = (seasonIdValue: string) => {
 
 const winnerLabel = (competition: CompetitionStatisticsAggregation) =>
   competition.winnerText || referenceId(competition.winner)
+
+const teamLabel = (team: unknown) => {
+  const teamId =
+    typeof team === 'string' ? (team.split('/').filter(Boolean).pop() ?? '') : referenceId(team)
+  if (!teamId) return ''
+
+  return teamId
+    .replace(/^team-/, '')
+    .split('-')
+    .filter(Boolean)
+    .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
+    .join(' ')
+}
+
+const latestSnapshot = (competition: CompetitionStatisticsAggregation) =>
+  [...competition.tableSnapshots].sort((left, right) =>
+    left.fixtureSetDate.localeCompare(right.fixtureSetDate),
+  )[competition.tableSnapshots.length - 1]
 
 const allSeasonRows = computed<AllSeasonRow[]>(() => {
   if (!competitionId.value || !Array.isArray(allAggregations.value)) return []
@@ -215,6 +249,51 @@ const mostSuccessfulTeams = computed(() => {
 const mostSuccessfulTeamsLabel = computed(() =>
   mostSuccessfulTeams.value.length ? mostSuccessfulTeams.value.join(', ') : 'No winners recorded',
 )
+
+const teamScoreTotals = computed<TeamScoreTotal[]>(() => {
+  const totals = new Map<string, { points: number; played: number }>()
+
+  for (const row of allSeasonRows.value) {
+    const snapshot = latestSnapshot(row.competition)
+    if (!snapshot) continue
+
+    for (const table of snapshot.tables) {
+      for (const tableRow of table.rows) {
+        const team = teamLabel(tableRow.team)
+        const played = numberValue(tableRow.played)
+        if (!team || played <= 0) continue
+
+        const current = totals.get(team) ?? { points: 0, played: 0 }
+        current.points += numberValue(tableRow.matchPointsFor)
+        current.played += played
+        totals.set(team, current)
+      }
+    }
+  }
+
+  return [...totals.entries()]
+    .map(([team, total]) => ({
+      team,
+      points: total.points,
+      played: total.played,
+      average: total.points / total.played,
+    }))
+    .sort((left, right) => left.team.localeCompare(right.team))
+})
+
+const highestAverageScoreTeams = computed(() => {
+  const highestAverage = Math.max(0, ...teamScoreTotals.value.map((team) => team.average))
+  if (!highestAverage) return []
+
+  return teamScoreTotals.value.filter((team) => team.average === highestAverage)
+})
+
+const highestAverageScoreLabel = computed(() => {
+  if (!highestAverageScoreTeams.value.length) return 'No team scores recorded'
+
+  const teamNames = highestAverageScoreTeams.value.map((team) => team.team).join(', ')
+  return `${teamNames} (${averageValue(highestAverageScoreTeams.value[0].average)})`
+})
 
 const averageScoresData = computed<ChartData<'line', number[], string>>(() => ({
   labels: allSeasonRows.value.map((row) => row.seasonLabel),
