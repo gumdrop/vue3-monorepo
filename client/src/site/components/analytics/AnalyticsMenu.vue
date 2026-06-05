@@ -7,6 +7,7 @@
       icon="mdi-play-box-multiple-outline"
       title="Replay"
     />
+    <SideMenuItem to="/analytics/all-seasons" icon="mdi-chart-line" title="All Seasons" />
   </QlSideMenu>
 </template>
 

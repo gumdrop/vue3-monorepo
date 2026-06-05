@@ -3,6 +3,7 @@ import { createPinia, setActivePinia, type Pinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { computed } from 'vue'
 import { useAnalyticsStore } from '@/stores/analytics'
+import AnalyticsAllSeasons from '../analytics/AnalyticsAllSeasons.vue'
 import AnalyticsMenu from '../analytics/AnalyticsMenu.vue'
 import AnalyticsMain from '../analytics/AnalyticsMain.vue'
 import AnalyticsReplay from '../analytics/AnalyticsReplay.vue'
@@ -11,6 +12,7 @@ import { siteComponentStubs } from './componentStubs'
 
 const mocks = vi.hoisted(() => ({
   aggregation: null as unknown,
+  aggregations: [] as unknown[],
   getDoc: vi.fn(),
   setSidemenu: vi.fn(),
   appContext: {
@@ -48,6 +50,7 @@ vi.mock('@/dao/ApplicationContextDAO', () => ({
 vi.mock('@/dao/SeasonStatisticsAggregationDAO', () => ({
   default: {
     getById: (id: string) => docRef(`seasonstatisticsaggregation/${id}`, mocks.aggregation),
+    collection: () => docRef('seasonstatisticsaggregation', mocks.aggregations),
   },
 }))
 
@@ -71,6 +74,14 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('vuefire', () => ({
   useDocument: (source: unknown) => computed(() => dataForDocument(source)),
+  useCollection: (source: unknown) => computed(() => dataForDocument(source) ?? []),
+}))
+
+vi.mock('vue-chartjs', () => ({
+  Line: {
+    props: ['data'],
+    template: '<div data-test="line-chart">{{ JSON.stringify(data) }}</div>',
+  },
 }))
 
 vi.mock('@/stores/app', () => ({
@@ -107,6 +118,23 @@ const mountAnalyticsReplay = async () => {
         VSlider: {
           props: ['modelValue'],
           template: '<input data-test="snapshot-slider" :value="modelValue" />',
+        },
+      },
+    },
+  })
+  await flushPromises()
+  return wrapper
+}
+
+const mountAnalyticsAllSeasons = async () => {
+  const wrapper = mount(AnalyticsAllSeasons, {
+    global: {
+      plugins: [pinia],
+      stubs: {
+        ...siteComponentStubs,
+        Line: {
+          props: ['data'],
+          template: '<div data-test="line-chart">{{ JSON.stringify(data) }}</div>',
         },
       },
     },
@@ -196,6 +224,30 @@ const analyticsAggregation = (seasonId = 'season-2025-2026') => ({
   ],
 })
 
+const analyticsAllSeasonAggregation = (
+  seasonId: string,
+  averages: {
+    averageScore: number
+    averageWinningScore: number
+    averageLosingScore: number
+  },
+  winnerText: string,
+) => {
+  const aggregation = analyticsAggregation(seasonId)
+  const leagueCompetition = aggregation.competitions[0] as Record<string, unknown>
+
+  leagueCompetition.averageScore = averages.averageScore
+  leagueCompetition.averageWinningScore = averages.averageWinningScore
+  leagueCompetition.averageLosingScore = averages.averageLosingScore
+  leagueCompetition.winnerText = winnerText
+  leagueCompetition.winner = {
+    id: winnerText.toLowerCase(),
+    path: `team/${winnerText.toLowerCase()}`,
+  }
+
+  return aggregation
+}
+
 const internalReference = (path: string) => ({
   _key: {
     path: {
@@ -225,6 +277,7 @@ beforeEach(() => {
   pinia = createPinia()
   setActivePinia(pinia)
   mocks.aggregation = null
+  mocks.aggregations = []
   mocks.getDoc.mockResolvedValue(snapshot(mocks.appContext))
 })
 
@@ -237,7 +290,7 @@ describe('AnalyticsMain', () => {
     })
 
     expect(wrapper.text()).toContain('mdi-chart-timeline-variant')
-    expect(wrapper.text()).toContain('Analytics')
+    expect(wrapper.text()).toContain('Seasons')
   })
 
   it('uses an already-loaded application context to select the initial season', async () => {
@@ -362,6 +415,71 @@ describe('AnalyticsReplay', () => {
   })
 })
 
+describe('AnalyticsAllSeasons', () => {
+  it('shows all-season average scores and winner summary for the selected competition', async () => {
+    mocks.aggregation = analyticsAggregation()
+    mocks.aggregations = [
+      analyticsAllSeasonAggregation(
+        'season-2024-2025',
+        {
+          averageScore: 34.2,
+          averageWinningScore: 41.5,
+          averageLosingScore: 28.4,
+        },
+        'Bravo',
+      ),
+      analyticsAllSeasonAggregation(
+        'season-2023-2024',
+        {
+          averageScore: 31.8,
+          averageWinningScore: 38.1,
+          averageLosingScore: 25.6,
+        },
+        'Alpha',
+      ),
+      analyticsAllSeasonAggregation(
+        'season-2025-2026',
+        {
+          averageScore: 37.9,
+          averageWinningScore: 42,
+          averageLosingScore: 32.3,
+        },
+        'Alpha',
+      ),
+    ]
+    const analyticsStore = useAnalyticsStore()
+    analyticsStore.setSeason('season-2025-2026')
+    analyticsStore.setCompetition('league-main')
+
+    const wrapper = await mountAnalyticsAllSeasons()
+
+    const page = wrapper.get('[data-test="analytics-all-seasons"]')
+    expect(page.text()).toContain('League Championship')
+    expect(page.text()).toContain('Seasons counted')
+    expect(page.text()).toMatch(/Seasons counted\s*3/)
+    expect(page.text()).toContain('Different winners')
+    expect(page.text()).toMatch(/Different winners\s*2/)
+    expect(page.text()).toContain('Most successful team(s)')
+    expect(page.text()).toMatch(/Most successful team\(s\)\s*Alpha/)
+    expect(page.text()).toContain('Alpha')
+    expect(page.text()).toContain('Average Scores')
+    expect(page.text()).toContain('2023/2024')
+    expect(page.text()).toContain('2024/2025')
+    expect(page.text()).toContain('2025/2026')
+    expect(
+      wrapper.get<HTMLSelectElement>('select[aria-label="Select Competition"]').element.value,
+    ).toBe('league-main')
+
+    const chartText = wrapper.get('[data-test="line-chart"]').text()
+    expect(chartText).toContain('Average score')
+    expect(chartText).toContain('Average winning score')
+    expect(chartText).toContain('Average losing score')
+    expect(chartText).toContain('2023/2024')
+    expect(chartText).toContain('31.8')
+    expect(chartText).toContain('37.9')
+  })
+})
+
 describe('AnalyticsMenu', () => {
   it('shows overview and replay entries for a league competition with snapshots', async () => {
     mocks.aggregation = analyticsAggregation()
@@ -374,13 +492,14 @@ describe('AnalyticsMenu', () => {
     expect(wrapper.text()).toContain('League Championship')
     expect(wrapper.text()).toContain('Overview')
     expect(wrapper.text()).toContain('Replay')
+    expect(wrapper.text()).toContain('All Seasons')
     expect(
       wrapper.findAll('button[data-to]').map((button) => button.attributes('data-to')),
-    ).toEqual(['/analytics', '/analytics/replay'])
+    ).toEqual(['/analytics', '/analytics/replay', '/analytics/all-seasons'])
     expect(mocks.setSidemenu).toHaveBeenCalledWith(true)
   })
 
-  it('shows only the overview entry for a competition without replay snapshots', async () => {
+  it('shows overview and all-seasons entries for a competition without replay snapshots', async () => {
     mocks.aggregation = analyticsAggregation()
     const analyticsStore = useAnalyticsStore()
     analyticsStore.setSeason('season-2025-2026')
@@ -391,8 +510,9 @@ describe('AnalyticsMenu', () => {
     expect(wrapper.text()).toContain('Cup Championship')
     expect(wrapper.text()).toContain('Overview')
     expect(wrapper.text()).not.toContain('Replay')
+    expect(wrapper.text()).toContain('All Seasons')
     expect(
       wrapper.findAll('button[data-to]').map((button) => button.attributes('data-to')),
-    ).toEqual(['/analytics'])
+    ).toEqual(['/analytics', '/analytics/all-seasons'])
   })
 })

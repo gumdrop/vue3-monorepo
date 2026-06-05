@@ -12,8 +12,15 @@ Feature: Seasons analytics pages
     Then the analytics competition selector should show "League Championship"
     And I should see text matching "Fixture sets complete"
     And the analytics menu includes:
-      | Overview |
-      | Replay   |
+      | Overview     |
+      | Replay       |
+      | All Seasons  |
+    When I choose "All Seasons" from the analytics menu
+    Then I should be on the "/analytics/all-seasons" page
+    And the analytics competition selector should show "League Championship"
+    And I should see text matching "Average Scores"
+    And I should see text matching "Different winners"
+    And I should see text matching "Most successful team"
     When I choose "Replay" from the analytics menu
     Then I should be on the "/analytics/replay" page
     And the analytics competition selector should show "League Championship"

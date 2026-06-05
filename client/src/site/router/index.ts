@@ -236,6 +236,15 @@ const router = createRouter({
       },
     },
     {
+      path: '/analytics/all-seasons',
+      name: 'analytics all seasons',
+      components: {
+        title: () => import('../components/analytics/AnalyticsTitle.vue'),
+        default: () => import('../components/analytics/AnalyticsAllSeasons.vue'),
+        sidenav: () => import('../components/analytics/AnalyticsMenu.vue'),
+      },
+    },
+    {
       path: '/rules',
       name: 'rules',
       components: {
