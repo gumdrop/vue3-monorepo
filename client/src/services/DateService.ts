@@ -13,6 +13,12 @@ const TIME_FORMAT = DateTimeFormatter.ISO_LOCAL_TIME
 const DATE_TIME_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 const ZONED_DATE_TIME_FORMAT = DateTimeFormatter.ISO_ZONED_DATE_TIME
 
+export const currentLocalDate = () => {
+  const configuredDate = import.meta.env.VITE_CURRENT_DATE
+
+  return configuredDate ? LocalDate.parse(configuredDate, DATE_FORMAT) : LocalDate.now()
+}
+
 export const useDateTime = () => {
   function date(value: string | undefined, format: string) {
     return value

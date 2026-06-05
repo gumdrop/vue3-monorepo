@@ -45,7 +45,7 @@ export const useAnalyticsSelection = () => {
 
     return aggregation.value.competitions.map((competition) => ({
       competitionName: competition.competitionName,
-      competitionId: referenceId(competition.competition),
+      competitionId: competition.competitionName,
     }))
   })
 
@@ -53,7 +53,7 @@ export const useAnalyticsSelection = () => {
     if (!aggregation.value || !competitionId.value) return undefined
 
     return aggregation.value.competitions.find(
-      (competition) => referenceId(competition.competition) === competitionId.value,
+      (competition) => competition.competitionName === competitionId.value,
     )
   })
 

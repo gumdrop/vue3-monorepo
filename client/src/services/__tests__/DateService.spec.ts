@@ -1,6 +1,6 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 
-import { useDateTime } from '../DateService'
+import { currentLocalDate, useDateTime } from '../DateService'
 
 describe('DateService', () => {
   const { date, time, datetime, zoneddatetime } = useDateTime()
@@ -22,5 +22,13 @@ describe('DateService', () => {
     expect(time(undefined, 'HH:mm')).toBeUndefined()
     expect(datetime(undefined, 'd MMM yyyy HH:mm')).toBeUndefined()
     expect(zoneddatetime(undefined, 'd MMM yyyy HH:mm')).toBeUndefined()
+  })
+
+  it('uses a configured current date when one is provided', () => {
+    vi.stubEnv('VITE_CURRENT_DATE', '2026-06-04')
+
+    expect(currentLocalDate().toString()).toBe('2026-06-04')
+
+    vi.unstubAllEnvs()
   })
 })

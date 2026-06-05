@@ -1,8 +1,8 @@
 import FixturesDAO from '@/dao/FixturesDAO'
 import type Competition from '@/entity/Competition'
 import Fixtures from '@/entity/Fixtures'
-import { LocalDate } from '@js-joda/core'
 import { useCompetitions } from './CompetitionService'
+import { currentLocalDate } from './DateService'
 import { completedFixtureSets } from './FixtureSetCompletion'
 const { fixtures, firstClassCompetitions } = useCompetitions()
 
@@ -13,7 +13,7 @@ export type QuestionPaper = {
 
 export const useFixtures = () => {
   const activeFixtures = async (seasonId: string, take?: number) => {
-    const today = LocalDate.now().toString()
+    const today = currentLocalDate().toString()
     return (await seasonFixtures(seasonId))
       .filter((f) => f.date >= today)
       .sort((a, b) => a.date.localeCompare(b.date))
@@ -22,7 +22,7 @@ export const useFixtures = () => {
   }
 
   const spentFixtures = async (seasonId: string, take?: number) => {
-    const today = LocalDate.now().toString()
+    const today = currentLocalDate().toString()
     return (
       await completedFixtureSets((await seasonFixtures(seasonId)).filter((f) => f.date <= today))
     )
