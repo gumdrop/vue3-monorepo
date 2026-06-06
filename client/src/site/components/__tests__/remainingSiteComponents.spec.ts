@@ -60,6 +60,7 @@ import QuestionsTitle from '../results/QuestionsTitle.vue'
 import ResultsMenu from '../results/ResultsMenu.vue'
 import ResultsTitle from '../results/ResultsTitle.vue'
 import RoundupsPage from '../results/RoundupsPage.vue'
+import RoundupsTitle from '../results/RoundupsTitle.vue'
 import SubmitResult from '../results/SubmitResult.vue'
 import SubmitResults from '../results/SubmitResults.vue'
 import SubmitResultsInstructions from '../results/SubmitResultsInstructions.vue'
@@ -961,7 +962,7 @@ const sitePageCases: SitePageCase[] = [
   },
   {
     name: 'roundups page',
-    title: { component: ResultsTitle },
+    title: { component: RoundupsTitle },
     sidenav: { component: ResultsMenu },
     main: { component: RoundupsPage },
   },
@@ -1311,6 +1312,10 @@ describe('remaining site title and navigation components', () => {
     const questions = mountSite(QuestionsTitle)
     expect(questions.text()).toContain('Questions')
     expect(questions.text()).toContain('2025/2026')
+
+    const roundups = mountSite(RoundupsTitle)
+    expect(roundups.text()).toContain('Roundups')
+    expect(roundups.text()).toContain('2025/2026')
   })
 
   it('renders menus from loaded collections and user state', async () => {
