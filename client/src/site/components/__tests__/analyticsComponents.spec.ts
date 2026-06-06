@@ -299,7 +299,7 @@ const analyticsAllSeasonAggregation = (
   sameNameCupCompetition.averageWinningScore = 99
   sameNameCupCompetition.averageLosingScore = 99
   sameNameCupCompetition.winnerText = 'Delta'
-  aggregation.competitions = [aggregation.competitions[1], aggregation.competitions[0]]
+  // aggregation.competitions = [aggregation.competitions[1], aggregation.competitions[0]]
 
   return aggregation
 }
