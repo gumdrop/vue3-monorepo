@@ -140,7 +140,7 @@ const router = createRouter({
           name: 'roundups',
           components: {
             default: () => import('../components/results/RoundupsPage.vue'),
-            title: () => import('../components/results/ResultsTitle.vue'),
+            title: () => import('../components/results/RoundupsTitle.vue'),
             sidenav: () => import('../components/results/ResultsMenu.vue'),
           },
         },

@@ -92,7 +92,8 @@ Feature: Maintenance season pages
     And the "Start Time" field should contain "20:00:00"
     And the "Questions URL" field should be visible
     And I should see text matching "AI Results Summary"
-    And I should see text matching "No AI summary has been generated for this fixture group yet."
+    And the "Markdown" field should contain "Summary for the match: Ashridge Arms edged Beaconsfield Bees 42-38 in a close league opener."
+    And the "Save Text" button should be visible
     And the "Regenerate AI Summary" button should be visible
     And I should see text matching "Fixtures"
     And the maintain fixture list includes:

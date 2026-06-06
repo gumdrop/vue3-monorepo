@@ -59,6 +59,8 @@ import QuestionsPage from '../results/QuestionsPage.vue'
 import QuestionsTitle from '../results/QuestionsTitle.vue'
 import ResultsMenu from '../results/ResultsMenu.vue'
 import ResultsTitle from '../results/ResultsTitle.vue'
+import RoundupsPage from '../results/RoundupsPage.vue'
+import RoundupsTitle from '../results/RoundupsTitle.vue'
 import SubmitResult from '../results/SubmitResult.vue'
 import SubmitResults from '../results/SubmitResults.vue'
 import SubmitResultsInstructions from '../results/SubmitResultsInstructions.vue'
@@ -959,6 +961,12 @@ const sitePageCases: SitePageCase[] = [
     main: { component: QuestionsPage },
   },
   {
+    name: 'roundups page',
+    title: { component: RoundupsTitle },
+    sidenav: { component: ResultsMenu },
+    main: { component: RoundupsPage },
+  },
+  {
     name: 'submit result instructions page',
     title: { component: SubmitResultsTitle },
     sidenav: { component: ResultsMenu },
@@ -1304,6 +1312,10 @@ describe('remaining site title and navigation components', () => {
     const questions = mountSite(QuestionsTitle)
     expect(questions.text()).toContain('Questions')
     expect(questions.text()).toContain('2025/2026')
+
+    const roundups = mountSite(RoundupsTitle)
+    expect(roundups.text()).toContain('Roundups')
+    expect(roundups.text()).toContain('2025/2026')
   })
 
   it('renders menus from loaded collections and user state', async () => {
@@ -1799,6 +1811,56 @@ describe('remaining fixture, home, and result components', () => {
     expect(mocks.questionPapers).toHaveBeenCalledWith(mocks.seasonId)
     expect(questionsPage.get('a').attributes('href')).toBe(questionFixtureSet.questionsUrl)
     expect(questionsPage.text()).toContain('2026/06/07 : League : Week 2')
+
+    // Test RoundupsPage
+    const roundupFixtureSet = {
+      ...fixtureSet,
+      id: 'week-2',
+      date: '2026-06-07',
+      description: 'Week 2',
+      resultsSummary: { id: 'summary-1', path: 'text/summary-1' },
+    }
+    mocks.spentFixtures.mockResolvedValue([docRef(roundupFixtureSet.path, roundupFixtureSet)])
+    mocks.fixtureSets = [roundupFixtureSet]
+    mocks.textsByPath.set('text/summary-1', { text: 'This is an awesome roundup summary!' })
+
+    let roundupsPage = mountSite(RoundupsPage, {
+      global: {
+        stubs: {
+          ...siteComponentStubs,
+          QlMarkdown: {
+            template: '<div>{{ text }}</div>',
+            props: ['text'],
+          },
+        },
+      },
+    })
+    await flushPromises()
+    expect(mocks.spentFixtures).toHaveBeenCalledWith(mocks.seasonId)
+    expect(roundupsPage.text()).toContain('2026/06/07: Week 2')
+    expect(roundupsPage.text()).toContain('This is an awesome roundup summary!')
+
+    // Test RoundupsPage with no roundups
+    mocks.spentFixtures.mockResolvedValue([])
+    mocks.fixtureSets = []
+    roundupsPage = mountSite(RoundupsPage)
+    await flushPromises()
+    expect(roundupsPage.text()).toContain('No roundups are available for this season.')
+
+    // Test RoundupsPage with fixture set but no summary
+    const noSummaryFixtureSet = { ...fixtureSet, resultsSummary: undefined }
+    mocks.spentFixtures.mockResolvedValue([docRef(noSummaryFixtureSet.path, noSummaryFixtureSet)])
+    mocks.fixtureSets = [noSummaryFixtureSet]
+    roundupsPage = mountSite(RoundupsPage)
+    await flushPromises()
+    expect(roundupsPage.text()).toContain('No roundups are available for this season.')
+
+    // Test RoundupsPage with null fixtureSets
+    mocks.spentFixtures.mockResolvedValue([])
+    mocks.fixtureSets = null as any
+    roundupsPage = mountSite(RoundupsPage)
+    await flushPromises()
+    expect(roundupsPage.text()).toContain('No roundups are available for this season.')
 
     const submitResults = mountSite(SubmitResults, {
       global: { stubs: { ...siteComponentStubs, SubmitResult: simpleStub('submit-result') } },
