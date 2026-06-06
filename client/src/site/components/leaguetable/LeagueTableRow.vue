@@ -1,5 +1,5 @@
 <template>
-  <tr class="league-table-row">
+  <tr class="league-table-row" :class="{ 'highlight-team': isUserTeam }">
     <td class="text-center pos-col">{{ row.position }}</td>
     <td class="team-col">
       <router-link :to="'/team/' + teamId" class="team-link">
@@ -20,8 +20,10 @@ import type { LeagueTableRow } from '@/entity/LeagueTable'
 import { useDocument } from 'vuefire'
 import { computed } from 'vue'
 import ResponsiveTeamName from '../common/ResponsiveTeamName.vue'
+import { useUserStore } from '@/stores/app'
 
 const { row } = defineProps<{ row: LeagueTableRow }>()
+const userStore = useUserStore()
 
 type InternalFirestorePath = {
   canonicalString?: () => string
@@ -68,6 +70,8 @@ const teamPath = computed(() => {
 })
 
 const teamId = computed(() => teamPath.value.split('/').filter(Boolean).pop() ?? '')
+const isUserTeam = computed(() => userStore.user?.team.id === teamId.value)
+
 const team = useDocument(() => (teamId.value ? TeamDAO.getById(teamId.value) : undefined), {
   maxRefDepth: 0,
 })
@@ -75,6 +79,10 @@ const team = useDocument(() => (teamId.value ? TeamDAO.getById(teamId.value) : u
 <style lang="css" scoped>
 .league-table-row {
   transition: background-color 0.2s ease;
+}
+
+.highlight-team {
+  background-color: rgba(37, 99, 235, 0.1);
 }
 
 .league-table-row:hover {
