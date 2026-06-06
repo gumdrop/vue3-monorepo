@@ -20,8 +20,6 @@ Feature: Competition pages
     Then I should be on the "/competition/season|season-2025-2026|competition|league-main/league" page
     And I should see the "League Championship" title
 
-  @skip
-  # Ignored: the competition page currently renders the latest result round heading without the fixture score row.
   Scenario: Visitors can inspect the league competition page
     When I open the "League Championship" competition page
     Then I should be on the "/competition/season|season-2025-2026|competition|league-main/league" page
@@ -34,7 +32,8 @@ Feature: Competition pages
     And I should see text matching "Ashridge Arms"
     And I should see text matching "Latest Results"
     And I should see text matching "Round 1"
-    And I should see text matching "42\s*-\s*38"
+    And the fixture results include:
+      | Ashridge Arms | 42 - 38 | Beaconsfield Bees |
     And I should see text matching "Next Fixtures"
     And I should see text matching "Round 2"
     And I should see text matching "Chesham Comets"
