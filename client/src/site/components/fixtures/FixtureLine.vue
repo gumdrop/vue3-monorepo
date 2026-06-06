@@ -17,7 +17,7 @@
   </tr>
 
   <!-- Main Fixture/Result Row -->
-  <tr v-if="fixture && home && away" class="match-row" :class="{ 'has-result': fixtureResult }">
+  <tr v-if="fixture && home && away" class="match-row" :class="{ 'has-result': fixtureResult, 'user-team-row': isUserTeam }">
     <!-- Desktop Inline Details Column -->
     <td v-if="inlineDetails && !$vuetify.display.smAndDown" class="inline-details-col">
       <v-skeleton-loader
@@ -173,6 +173,8 @@
   </tr>
 </template>
 <script setup lang="ts">
+import { useRoute } from 'vue-router'
+import { useUserStore } from '@/stores/app'
 import CompetitionDAO from '@/dao/CompetitionDAO'
 import FixturesDAO, { reportDAO } from '@/dao/FixturesDAO'
 import TeamDAO from '@/dao/TeamDAO'
@@ -190,6 +192,22 @@ const props = defineProps<{
   fixture: Fixture
   inlineDetails?: boolean
 }>()
+
+const route = useRoute()
+const userStore = useUserStore()
+
+const isTeamPage = computed(() => route.path.startsWith('/team'))
+
+const isUserTeam = computed(() => {
+  if (isTeamPage.value) return false
+  const userTeam = userStore.user?.team
+  if (!userTeam) return false
+
+  return (
+    props.fixture.home.id === userTeam.id ||
+    props.fixture.away.id === userTeam.id
+  )
+})
 
 const { date } = useDateTime()
 
@@ -252,6 +270,10 @@ const fixtureVenueName = computed(
 .match-row {
   transition: background-color 0.2s ease;
   border-bottom: 1px solid #f1f5f9;
+}
+
+.user-team-row {
+  background-color: #f0f9ff;
 }
 
 .match-row:hover {
