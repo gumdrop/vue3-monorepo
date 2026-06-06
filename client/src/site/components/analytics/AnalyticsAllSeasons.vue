@@ -179,26 +179,13 @@ const averageValue = (value: number | undefined) => Math.round(numberValue(value
 const normalizedCompetitionName = (competitionName: string | undefined) =>
   competitionName?.trim().toLowerCase() ?? ''
 
-const competitionType = (competition: CompetitionStatisticsAggregation | undefined) => {
-  const competitionReference = competition?.competition as HydratedCompetitionReference | undefined
-  const type =
-    typeof competitionReference?._name === 'string'
-      ? competitionReference._name
-      : typeof competitionReference?._type === 'string'
-        ? competitionReference._type
-        : ''
-
-  return type.trim().toLowerCase()
-}
-
 const selectedCompetitionIdentity = computed(() => {
   const competition = selectedCompetition.value
   if (!competition) return undefined
 
   const name = normalizedCompetitionName(competition.competitionName)
-  const type = competitionType(competition)
 
-  return name && type ? { name, type } : undefined
+  return name ? { name } : undefined
 })
 
 const matchesSelectedCompetition = (candidate: CompetitionStatisticsAggregation) => {
@@ -206,8 +193,7 @@ const matchesSelectedCompetition = (candidate: CompetitionStatisticsAggregation)
 
   return (
     normalizedCompetitionName(candidate.competitionName) ===
-      selectedCompetitionIdentity.value.name &&
-    competitionType(candidate) === selectedCompetitionIdentity.value.type
+      selectedCompetitionIdentity.value.name
   )
 }
 
