@@ -4,8 +4,8 @@
     <v-card class="rounded-xl overflow-hidden">
       <v-toolbar color="primary" density="compact" flat>
         <v-toolbar-title class="text-subtitle-1 font-weight-bold d-flex align-center">
-          <v-icon start class="mr-2">mdi-robot-outline</v-icon>
-          <span>Roundup: {{ date(fixtures.date, 'd MMM yyyy') }}{{ parentName ? ` - ${parentName}` : '' }}{{ fixtures.description ? ` (${fixtures.description})` : '' }}</span>
+          <v-icon start class="mr-2">mdi-clipboard-text-outline</v-icon>
+          <span>Roundup</span>
         </v-toolbar-title>
         <v-spacer></v-spacer>
         <v-btn icon @click="showSummary = false">
@@ -13,16 +13,11 @@
         </v-btn>
       </v-toolbar>
       <v-card-text class="pa-6">
+        <div class="text-subtitle-1 font-weight-bold mb-4 text-grey-darken-2">
+          {{ date(fixtures.date, 'd MMM yyyy') }}{{ parentName ? ` - ${parentName}` : '' }}{{ fixtures.description ? ` (${fixtures.description})` : '' }}
+        </div>
         <QlText v-if="resultsSummaryDoc" :id="resultsSummaryDoc.id" />
       </v-card-text>
-      <v-divider></v-divider>
-      <v-card-actions class="pa-4">
-        <v-spacer></v-spacer>
-        <v-btn variant="text" color="grey-darken-1" @click="showSummary = false" class="px-4">
-          <v-icon start>mdi-close</v-icon>
-          Close
-        </v-btn>
-      </v-card-actions>
     </v-card>
   </v-dialog>
 </template>
