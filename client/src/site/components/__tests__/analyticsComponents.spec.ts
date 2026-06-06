@@ -86,10 +86,20 @@ vi.mock('../leaguetable/LeagueTableRow.vue', () => ({
 }))
 
 vi.mock('firebase/firestore', () => ({
+  collection: vi.fn((_db: unknown, path = '') => docRef(path, [])),
+  deleteDoc: vi.fn(),
+  doc: vi.fn((_db: unknown, path = '') => docRef(path, undefined)),
   getDoc: mocks.getDoc,
+  getDocs: vi.fn(async () => ({ docs: [] })),
+  orderBy: vi.fn(),
+  query: vi.fn((collectionReference: unknown) => collectionReference),
+  setDoc: vi.fn(),
+  updateDoc: vi.fn(),
+  where: vi.fn(),
 }))
 
 vi.mock('vuefire', () => ({
+  useFirestore: () => ({}),
   useDocument: (source: unknown) => computed(() => dataForDocument(source)),
   useCollection: (source: unknown) => computed(() => dataForDocument(source) ?? []),
 }))
@@ -180,7 +190,12 @@ const analyticsAggregation = (seasonId = 'season-2025-2026') => ({
   generatedAt: '2026-06-01T09:30:00.000Z',
   competitions: [
     {
-      competition: { id: 'league-main', path: `season/${seasonId}/competition/league-main` },
+      competition: {
+        id: 'league-main',
+        path: `season/${seasonId}/competition/league-main`,
+        name: 'League Championship',
+        _name: 'league',
+      },
       competitionName: 'League Championship',
       fixtureSetCount: 2,
       completedFixtureSetCount: 2,
@@ -223,7 +238,12 @@ const analyticsAggregation = (seasonId = 'season-2025-2026') => ({
       ],
     },
     {
-      competition: { id: 'cup-main', path: `season/${seasonId}/competition/cup-main` },
+      competition: {
+        id: 'cup-main',
+        path: `season/${seasonId}/competition/cup-main`,
+        name: 'Cup Championship',
+        _name: 'cup',
+      },
       competitionName: 'Cup Championship',
       fixtureSetCount: 3,
       completedFixtureSetCount: 2,
@@ -248,6 +268,14 @@ const analyticsAllSeasonAggregation = (
 ) => {
   const aggregation = analyticsAggregation(seasonId)
   const leagueCompetition = aggregation.competitions[0] as Record<string, unknown>
+  const leagueCompetitionId = `league-${seasonId}`
+
+  leagueCompetition.competition = {
+    id: leagueCompetitionId,
+    path: `season/${seasonId}/competition/${leagueCompetitionId}`,
+    name: 'League Championship',
+    _name: 'league',
+  }
 
   leagueCompetition.averageScore = averages.averageScore
   leagueCompetition.averageWinningScore = averages.averageWinningScore
@@ -257,6 +285,21 @@ const analyticsAllSeasonAggregation = (
     id: winnerText.toLowerCase(),
     path: `team/${winnerText.toLowerCase()}`,
   }
+
+  const sameNameCupCompetition = aggregation.competitions[1] as Record<string, unknown>
+  const cupCompetitionId = `cup-${seasonId}`
+  sameNameCupCompetition.competition = {
+    id: cupCompetitionId,
+    path: `season/${seasonId}/competition/${cupCompetitionId}`,
+    name: 'League Championship',
+    _name: 'cup',
+  }
+  sameNameCupCompetition.competitionName = 'League Championship'
+  sameNameCupCompetition.averageScore = 99
+  sameNameCupCompetition.averageWinningScore = 99
+  sameNameCupCompetition.averageLosingScore = 99
+  sameNameCupCompetition.winnerText = 'Delta'
+  aggregation.competitions = [aggregation.competitions[1], aggregation.competitions[0]]
 
   return aggregation
 }

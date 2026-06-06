@@ -8,6 +8,29 @@ const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const namedLink = (page, label) =>
   page.getByRole('link', { name: new RegExp(`^\\s*${escapeRegExp(label)}\\s*$`, 'i') })
 
+const normalizeText = (value) => value.replace(/\s+/g, ' ').trim()
+
+const waitForVisibleRowWithScroll = async (page, row) => {
+  const timeoutAt = Date.now() + 15000
+
+  while (Date.now() < timeoutAt) {
+    if (await row.count()) {
+      try {
+        await row.first().waitFor({ state: 'visible', timeout: 500 })
+        return row.first()
+      } catch {
+        // Continue scrolling; the row may exist while a lazy parent is still settling.
+      }
+    }
+
+    await page.evaluate(() => window.scrollBy(0, Math.floor(window.innerHeight / 2)))
+    await page.waitForTimeout(150)
+  }
+
+  await row.first().waitFor({ state: 'visible', timeout: 1000 })
+  return row.first()
+}
+
 const competitionRoutes = {
   'Challenge Cup': '/competition/season|season-2025-2026|competition|cup-main/cup',
   'Individual Quiz Night':
@@ -185,6 +208,27 @@ Then('the {string} league table includes:', async ({ page }, tableName, dataTabl
       cell.replace(/\s+/g, ' ').trim(),
     )
     assert.deepEqual(actualCells, expectedCells)
+  }
+})
+
+Then('the fixture results include:', async ({ page }, dataTable) => {
+  for (const [homeTeam, score, awayTeam] of dataTable.raw()) {
+    const row = page.getByRole('row').filter({ hasText: homeTeam }).filter({ hasText: awayTeam })
+    const visibleRow = await waitForVisibleRowWithScroll(page, row)
+    const cells = (await visibleRow.locator('td').allInnerTexts()).map(normalizeText)
+
+    assert.ok(
+      cells.includes(homeTeam),
+      `Expected fixture row to include home team "${homeTeam}". Actual cells: ${JSON.stringify(cells)}`,
+    )
+    assert.ok(
+      cells.includes(score),
+      `Expected fixture row to include score "${score}". Actual cells: ${JSON.stringify(cells)}`,
+    )
+    assert.ok(
+      cells.includes(awayTeam),
+      `Expected fixture row to include away team "${awayTeam}". Actual cells: ${JSON.stringify(cells)}`,
+    )
   }
 })
 

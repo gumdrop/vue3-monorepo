@@ -32,7 +32,8 @@ Feature: Competition pages
     And I should see text matching "Ashridge Arms"
     And I should see text matching "Latest Results"
     And I should see text matching "Round 1"
-    And I should see text matching "42\s*-\s*38"
+    And the fixture results include:
+      | Ashridge Arms | 42 - 38 | Beaconsfield Bees |
     And I should see text matching "Next Fixtures"
     And I should see text matching "Round 2"
     And I should see text matching "Chesham Comets"

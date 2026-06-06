@@ -36,8 +36,9 @@ export const useAnalyticsSelection = () => {
   const analyticsStore = useAnalyticsStore()
   const { seasonId, competitionId } = storeToRefs(analyticsStore)
 
-  const aggregation = useDocument(() =>
-    seasonId.value ? SeasonStatisticsAggregationDAO.getById(seasonId.value) : undefined,
+  const aggregation = useDocument(
+    () => (seasonId.value ? SeasonStatisticsAggregationDAO.getById(seasonId.value) : undefined),
+    { maxRefDepth: 1 },
   )
 
   const competitions = computed<AnalyticsCompetitionOption[]>(() => {
@@ -45,7 +46,7 @@ export const useAnalyticsSelection = () => {
 
     return aggregation.value.competitions.map((competition) => ({
       competitionName: competition.competitionName,
-      competitionId: competition.competitionName,
+      competitionId: referenceId(competition.competition),
     }))
   })
 
@@ -53,7 +54,7 @@ export const useAnalyticsSelection = () => {
     if (!aggregation.value || !competitionId.value) return undefined
 
     return aggregation.value.competitions.find(
-      (competition) => competition.competitionName === competitionId.value,
+      (competition) => referenceId(competition.competition) === competitionId.value,
     )
   })
 
