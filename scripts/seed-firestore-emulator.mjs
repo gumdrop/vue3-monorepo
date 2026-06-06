@@ -256,6 +256,7 @@ const leagueFixtureSets = [
     id: 'league-round-1',
     description: 'Round 1',
     date: '2026-05-07',
+    resultsSummary: 'text-league-round-1-summary',
     fixtures: [
       {
         id: 'fixture-league-1',
@@ -894,6 +895,11 @@ const documents = [
   text('text-competitions-header', 'Current season competitions.'),
   text('text-league-description', 'League fixtures and current standings.'),
   text('text-league-note', 'The main league competition is played home and away.'),
+  text(
+    'text-league-round-1-summary',
+    'Summary for the match: Ashridge Arms edged Beaconsfield Bees 42-38 in a close league opener.',
+    'text/markdown',
+  ),
   text('text-cup-note', 'The cup competition is a knockout team competition.'),
   text('text-subsidiary-note', 'The subsidiary league tracks additional standings.'),
   text('text-singleton-note', 'The individual quiz is represented as a single scheduled event.'),
@@ -1148,6 +1154,14 @@ const documents = [
       fixtureSetData.description,
       fixtureSetData.date,
       fixtureSetData.start,
+      seasonId,
+      fixtureSetData.resultsSummary
+        ? {
+            resultsSummary: textRef(fixtureSetData.resultsSummary),
+            resultsSummaryGeneratedAt: '2026-05-07T22:00:00.000Z',
+            resultsSummaryModel: 'seed-data',
+          }
+        : {},
     ),
   ),
   ...leagueFixtureSets.flatMap((fixtureSetData) =>
