@@ -132,7 +132,7 @@ const mocks = vi.hoisted(() => ({
   nextFixtures: vi.fn(),
   positionData: vi.fn(),
   questionPapers: vi.fn(),
-  route: { query: {} as Record<string, unknown> },
+  route: { query: {} as Record<string, unknown>, path: '/' },
   routerPush: vi.fn(),
   saveSiteUser: vi.fn(),
   setCompetitionSeason: vi.fn(),
