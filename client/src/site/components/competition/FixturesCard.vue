@@ -6,6 +6,7 @@
           <span class="header-date">{{ date(fixtures.date, 'd MMMM yyyy') }}</span>
           <span v-if="fixtures.description" class="header-sep">|</span>
           <span v-if="fixtures.description" class="header-desc">{{ fixtures.description }}</span>
+          <AISummaryButton :fixtures="fixtures" />
         </div>
       </div>
       <v-card-text class="pa-0">
@@ -26,6 +27,7 @@ import { usePromise } from '@/utils/PromiseRef';
 import { DocumentReference } from 'firebase/firestore';
 import { useDocument } from 'vuefire';
 import SimpleFixtures from '../fixtures/SimpleFixtures.vue';
+import AISummaryButton from '@/site/components/common/AISummaryButton.vue';
 
 
 const { date } = useDateTime()

@@ -6,6 +6,7 @@
         <v-row>
           <h3 class="headline mb-0">
             {{ date(fixtures.date, 'd MMMM yyyy') }} : {{ fixtures.description }}
+            <AISummaryButton :fixtures="fixtures" />
           </h3>
         </v-row>
         <v-row v-if="fixtureList">
@@ -21,10 +22,12 @@ import type Fixtures from '@/entity/Fixtures'
 import { useDateTime } from '@/services/DateService'
 import { usePromise } from '@/utils/PromiseRef'
 import type { DocumentReference } from 'firebase/firestore'
-import { useDocument } from 'vuefire'
-import SimpleFixtures from '../fixtures/SimpleFixtures.vue'
+import { useDocument } from 'vuefire';
+import SimpleFixtures from '../fixtures/SimpleFixtures.vue';
+import AISummaryButton from '@/site/components/common/AISummaryButton.vue';
 
 const { date } = useDateTime()
+
 
 const props = defineProps<{ fixtures: DocumentReference<Fixtures>; title: string }>()
 

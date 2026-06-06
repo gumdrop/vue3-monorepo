@@ -135,6 +135,15 @@ const router = createRouter({
           },
           beforeEnter: authGuard,
         },
+        {
+          path: 'roundups',
+          name: 'roundups',
+          components: {
+            default: () => import('../components/results/RoundupsPage.vue'),
+            title: () => import('../components/results/ResultsTitle.vue'),
+            sidenav: () => import('../components/results/ResultsMenu.vue'),
+          },
+        },
       ],
       redirect: '/results/all',
     },

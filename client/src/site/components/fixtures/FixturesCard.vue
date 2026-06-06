@@ -6,6 +6,7 @@
           <span class="header-date">{{ date(fixtures.date, 'd MMM yyyy') }}</span>
           <span class="header-sep">|</span>
           <span class="header-comp">{{ parent.name }}</span>
+          <AISummaryButton :fixtures="fixtures" :parent-name="parent.name" />
         </div>
         <div v-if="fixtures.description" class="header-sub">
           {{ fixtures.description }}
@@ -31,6 +32,7 @@ import { usePromise } from '@/utils/PromiseRef';
 import { DocumentReference } from 'firebase/firestore';
 import { useDocument } from 'vuefire';
 import SimpleFixtures from '../fixtures/SimpleFixtures.vue';
+import AISummaryButton from '@/site/components/common/AISummaryButton.vue';
 const { parseParent } = useKey()
 
 
