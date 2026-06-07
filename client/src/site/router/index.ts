@@ -3,11 +3,15 @@ import HelpMenu from '../components/other/HelpMenu.vue'
 import HelpTitle from '../components/other/HelpTitle.vue'
 import LinksTitle from '../components/other/LinksTitle.vue'
 import useAuth from '@/services/AuthService'
-import { createRouter, createWebHistory } from 'vue-router'
-
-// const { user } = useUserStore()
+import { useUserStore } from '@/stores/app'
+import { createRouter, createWebHistory, type RouteLocationRaw } from 'vue-router'
 
 const { authGuard } = useAuth()
+
+export function redirectLoggedInUserToTeam(): true | RouteLocationRaw {
+  const teamId = useUserStore().user?.team?.id
+  return teamId ? { name: 'team', params: { id: teamId } } : true
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -159,6 +163,7 @@ const router = createRouter({
             title: () => import('../components/team/TeamsTitle.vue'),
             sidenav: () => import('../components/team/TeamsMenu.vue'),
           },
+          beforeEnter: redirectLoggedInUserToTeam,
         },
         {
           path: ':id',

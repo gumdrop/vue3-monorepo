@@ -1,7 +1,10 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   authGuard: vi.fn(),
+  userStore: {
+    user: undefined as undefined | { team?: { id?: string } },
+  },
 }))
 
 vi.mock('@/services/AuthService', () => ({
@@ -10,9 +13,18 @@ vi.mock('@/services/AuthService', () => ({
   }),
 }))
 
-import router from '../index'
+vi.mock('@/stores/app', () => ({
+  useUserStore: () => mocks.userStore,
+}))
+
+import router, { redirectLoggedInUserToTeam } from '../index'
 
 describe('site router', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.userStore.user = undefined
+  })
+
   it('registers public top-level routes and scrolls to the top', () => {
     const routes = router.getRoutes()
     const routePathsByName = new Map(routes.map((route) => [route.name, route.path]))
@@ -39,6 +51,22 @@ describe('site router', () => {
 
     expect(routeGuardsByName.get('submit results')).toBe(mocks.authGuard)
     expect(routeGuardsByName.get('team edit')).toBe(mocks.authGuard)
+  })
+
+  it('redirects logged-in users from the team index to their team page', () => {
+    const routeGuardsByName = new Map(
+      router.getRoutes().map((route) => [route.name, route.beforeEnter]),
+    )
+
+    expect(routeGuardsByName.get('teams')).toBe(redirectLoggedInUserToTeam)
+    expect(redirectLoggedInUserToTeam()).toBe(true)
+
+    mocks.userStore.user = { team: { id: 'alpha' } }
+
+    expect(redirectLoggedInUserToTeam()).toEqual({
+      name: 'team',
+      params: { id: 'alpha' },
+    })
   })
 
   it('registers competition, team, and venue detail routes with props', () => {
