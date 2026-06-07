@@ -39,9 +39,7 @@ function teamPath(teamId: string) {
 function uniqueEmails(users: User[]) {
   return [
     ...new Set(
-      users
-        .map((user) => user.email?.trim())
-        .filter((email): email is string => Boolean(email)),
+      users.map((user) => user.email?.trim()).filter((email): email is string => Boolean(email)),
     ),
   ]
 }
@@ -69,7 +67,7 @@ async function sendMail(
   if (addresses.length === 0) return
 
   sendGridMail.setApiKey(sendGridApiKey())
-  await sendGridMail.send({
+  const response = await sendGridMail.send({
     to: addresses,
     from: context.senderEmail,
     replyTo: sender,
@@ -77,6 +75,7 @@ async function sendMail(
     text,
     html: htmlBody(text),
   })
+  console.log(`Sent email to ${addresses.join(', ')} with status ${JSON.stringify(response[0])}`)
 }
 
 async function usersForRefs(refs: Pathish<User>[]) {

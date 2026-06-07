@@ -1805,7 +1805,7 @@ describe('remaining fixture, home, and result components', () => {
     expect(reportItem.text()).toContain('report-text')
   })
 
-  it('renders home tabs, fixture wrappers, and the latest results summary', async () => {
+  it('renders home tabs, fixture wrappers, and the latest results roundup', async () => {
     expect(
       mountSite(HomeMain, {
         global: {
@@ -1852,7 +1852,7 @@ describe('remaining fixture, home, and result components', () => {
       },
     })
     await flushPromises()
-    expect(summary.text()).toContain('Latest Results Summary')
+    expect(summary.text()).toContain('Latest Results Roundup')
     expect(summary.text()).toContain('Alpha opened the season with a win.')
   })
 

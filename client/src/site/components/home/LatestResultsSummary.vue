@@ -3,7 +3,7 @@
     <div class="summary-header mb-2">
       <v-icon color="primary" size="20" class="mr-2">mdi-auto-awesome</v-icon>
       <div>
-        <div class="text-subtitle-1 font-weight-bold">Latest Results Summary</div>
+        <div class="text-subtitle-1 font-weight-bold">Latest Results Roundup</div>
         <div class="text-caption text-medium-emphasis">
           {{ date(latestSummary.fixtureSet.date, 'd MMMM yyyy') }}:
           {{ latestSummary.fixtureSet.description }}
