@@ -121,6 +121,8 @@ const mocks = vi.hoisted(() => ({
   fixtureRefs: [] as unknown[],
   fixtureSets: [] as unknown[],
   fixturesForResultSubmission: vi.fn(),
+  sendEmailToAlias: vi.fn(),
+  sendEmailToTeam: vi.fn(),
   getNamedTextId: vi.fn(),
   goTo: vi.fn(),
   headToHeadLeaders: vi.fn(),
@@ -344,6 +346,13 @@ vi.mock('@/services/CompetitionService', () => ({
       __data: mocks.collections.get(`${path}/leaguetable`) ?? [],
     }),
     nextFixtures: mocks.nextFixtures,
+  }),
+}))
+
+vi.mock('@/services/ContactService', () => ({
+  useContact: () => ({
+    sendEmailToAlias: mocks.sendEmailToAlias,
+    sendEmailToTeam: mocks.sendEmailToTeam,
   }),
 }))
 
@@ -1096,6 +1105,8 @@ beforeEach(() => {
     { fixtures: questionFixtureSet, competition: leagueCompetition },
   ])
   mocks.saveSiteUser.mockResolvedValue(undefined)
+  mocks.sendEmailToAlias.mockResolvedValue(undefined)
+  mocks.sendEmailToTeam.mockResolvedValue(undefined)
   mocks.singleSeasonHighlights.mockReturnValue([
     { title: 'Highest position', value: '1st', detail: '2025/01/01' },
   ])
@@ -1419,6 +1430,75 @@ describe('remaining site content and competition components', () => {
     expect(wrapper.get('input[aria-label="Your email address"]').exists()).toBe(true)
     expect(wrapper.get('textarea[aria-label="Message"]').exists()).toBe(true)
     expect(wrapper.emitted('close')).toEqual([[]])
+  })
+
+  it('sends alias contact dialog messages and closes on success', async () => {
+    const wrapper = mountSite(AliasContactDialog, {
+      props: {
+        alias: 'secretary',
+        aliasText: 'League Secretary',
+        open: true,
+      },
+    })
+
+    await wrapper.get('input[aria-label="Your email address"]').setValue('sender@example.com')
+    await wrapper.get('textarea[aria-label="Message"]').setValue('Can someone contact me?')
+    await wrapper.get('[data-test="send-contact-email"]').trigger('click')
+    await flushPromises()
+
+    expect(mocks.sendEmailToAlias).toHaveBeenCalledWith(
+      'sender@example.com',
+      'Can someone contact me?',
+      'secretary',
+    )
+    expect(wrapper.emitted('close')).toEqual([[]])
+  })
+
+  it('keeps alias contact dialog open and shows an error when sending fails', async () => {
+    mocks.sendEmailToAlias.mockRejectedValueOnce(new Error('send failed'))
+    const wrapper = mountSite(AliasContactDialog, {
+      props: {
+        alias: 'secretary',
+        aliasText: 'League Secretary',
+        open: true,
+      },
+    })
+
+    await wrapper.get('input[aria-label="Your email address"]').setValue('sender@example.com')
+    await wrapper.get('textarea[aria-label="Message"]').setValue('Can someone contact me?')
+    await wrapper.get('[data-test="send-contact-email"]').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Could not send your message. Please try again.')
+    expect(wrapper.emitted('close')).toBeUndefined()
+  })
+
+  it('opens the team contact dialog and sends messages to the team endpoint', async () => {
+    const info = mountSite(TeamInfo, {
+      props: { teamId: team.id },
+      global: {
+        stubs: {
+          ...siteComponentStubs,
+          TeamStandings: simpleStub('team-standings'),
+          VenueLink: simpleStub('venue-link'),
+        },
+      },
+    })
+
+    await info
+      .findAll('button')
+      .find((button) => button.text().includes('Contact Us'))
+      ?.trigger('click')
+    await info.get('input[aria-label="Your email address"]').setValue('sender@example.com')
+    await info.get('textarea[aria-label="Message"]').setValue('Can someone contact us?')
+    await info.get('[data-test="send-contact-email"]').trigger('click')
+    await flushPromises()
+
+    expect(mocks.sendEmailToTeam).toHaveBeenCalledWith(
+      'sender@example.com',
+      'Can someone contact us?',
+      team.id,
+    )
   })
 
   it('renders competition type pages with text, tables, fixtures, and event details', () => {

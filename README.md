@@ -54,7 +54,7 @@ npm run emulators:export
 
 ### Gemini result summaries
 
-The server generates a public fixture-set results summary after every fixture in the set has a submitted result. Put the Gemini API key in `gemini-api-key.txt` at the project root before deploying. The local server also uses that file when `GEMINI_API_KEY` is not set. `npm run deployToProd` writes a gitignored `server/deploy/app.yaml` with `GEMINI_API_KEY` for GCP deployment. `npm run deployToGcp` then deploys the generated artifact with `gcloud app deploy server/deploy`. `GEMINI_MODEL` is optional and defaults to `gemini-3.5-flash`.
+The server generates a public fixture-set results summary after every fixture in the set has a submitted result. Put the Gemini API key in `gemini-api-key.txt` at the project root before deploying. The local server also uses that file when `GEMINI_API_KEY` is not set. `npm run deployToProd` writes a gitignored `server/deploy/app.yaml` with `GEMINI_API_KEY`, `GEMINI_MODEL`, and `SENDGRID_API_KEY` for GCP deployment. `SENDGRID_API_KEY` must be set in the build environment. `npm run deployToGcp` then deploys the generated artifact with `gcloud app deploy server/deploy`. `GEMINI_MODEL` is optional and defaults to `gemini-3.5-flash`.
 
 ### Lint with [ESLint](https://eslint.org/)
 
