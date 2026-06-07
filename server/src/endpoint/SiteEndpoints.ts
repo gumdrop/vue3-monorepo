@@ -1,6 +1,12 @@
 import { Application, Request, Response } from 'express'
 import type { ResultsSubmitCommand } from '@quizleague/shared'
-import { siteUserForEmail } from './SiteFunctions'
+import {
+  contactPerson,
+  contactTeam,
+  siteUserForEmail,
+  type AliasEmailCommand,
+  type TeamEmailCommand,
+} from './SiteFunctions'
 import { resultSubmission } from './TaskFunctions'
 import { param, send } from './util'
 
@@ -10,9 +16,9 @@ export default function configure(app: Application) {
   app
     .post(`${root}/result/submit`, postResultSubmit)
     .get(`${root}/site-user-for-email/:email`, getSiteUserForEmail)
+    .post(`${root}/email/team`, postEmailTeam)
+    .post(`${root}/email/alias`, postEmailAlias)
   //.post(`$root/save-site-user`, postSaveSiteUser _)
-  // .post(`$root/email/team`, postEmailTeam)
-  // .post(`$root/email/alias`, postEmailAlias)
 }
 
 function postResultSubmit(req: Request, res: Response) {
@@ -34,5 +40,10 @@ function getSiteUserForEmail(req: Request, res: Response) {
   send(siteUserForEmail(param('email', req)), res)
 }
 // function postSaveSiteUser(req: Request, res: Response){ send(saveSiteUser(parse[SiteUser](req)), res)}
-// function postEmailTeam(req: Request, res: Response){ send(contactTeam(parse[TeamEmailCommand](req)), res)}
-// function postEmailAlias(req: Request, res: Response){ send(contactPerson(parse[AliasEmailCommand](req)), res)}
+function postEmailTeam(req: Request, res: Response) {
+  send(contactTeam(parseBody<TeamEmailCommand>(req)), res)
+}
+
+function postEmailAlias(req: Request, res: Response) {
+  send(contactPerson(parseBody<AliasEmailCommand>(req)), res)
+}

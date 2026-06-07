@@ -17,13 +17,27 @@ if (!apiKey) {
 
 const yamlString = (value) => JSON.stringify(value)
 const geminiModel = process.env.GEMINI_MODEL ?? 'gemini-3.5-flash'
+const sendgridApiKey = process.env.SENDGRID_API_KEY?.trim()
+
+if (!sendgridApiKey) {
+  throw new Error('Missing SENDGRID_API_KEY in the build environment')
+}
 
 const appYaml = `runtime: nodejs22
+instance_class: F1
 
 env_variables:
+  SENDGRID_API_KEY: ${yamlString(sendgridApiKey)}
   GEMINI_API_KEY: ${yamlString(apiKey)}
   GEMINI_MODEL: ${yamlString(geminiModel)}
+automatic_scaling:
+  max_instances: 1
+handlers:
+  - url: /.*
+    secure: always
+    redirect_http_response_code: 301
+    script: auto
 `
 
 writeFileSync(appYamlPath, appYaml, { mode: 0o600 })
-console.log('Wrote server/deploy/app.yaml using gemini-api-key.txt')
+console.log('Wrote server/deploy/app.yaml using legacy app.yaml settings and build secrets')

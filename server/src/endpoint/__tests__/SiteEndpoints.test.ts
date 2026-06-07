@@ -2,13 +2,15 @@ import type { Application, Request, Response } from 'express'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import configure from '../SiteEndpoints'
 import { resultSubmission } from '../TaskFunctions'
-import { siteUserForEmail } from '../SiteFunctions'
+import { contactPerson, contactTeam, siteUserForEmail } from '../SiteFunctions'
 
 vi.mock('../TaskFunctions', () => ({
   resultSubmission: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('../SiteFunctions', () => ({
+  contactPerson: vi.fn().mockResolvedValue([]),
+  contactTeam: vi.fn().mockResolvedValue([]),
   siteUserForEmail: vi.fn().mockResolvedValue({
     id: 'site-user-1',
     path: 'siteuser/site-user-1',
@@ -104,5 +106,52 @@ describe('SiteEndpoints', () => {
       path: 'siteuser/site-user-1',
       user: { id: 'user-1', path: 'user/user-1' },
     })
+  })
+
+  it('routes team email requests to the site function', async () => {
+    const { app, routes } = createApp()
+    configure(app)
+
+    const command = {
+      sender: 'sender@example.com',
+      text: 'Can someone contact me?',
+      teamId: 'team-1',
+    }
+    const response = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as unknown as Response
+
+    routes.get('POST /rest/site/email/team')?.(
+      { body: JSON.stringify(command) } as Request,
+      response,
+    )
+    await flushPromises()
+
+    expect(contactTeam).toHaveBeenCalledWith(command)
+    expect(response.json).toHaveBeenCalledWith([])
+  })
+
+  it('routes alias email requests to the site function', async () => {
+    const { app, routes } = createApp()
+    configure(app)
+
+    const command = {
+      sender: 'sender@example.com',
+      text: 'Can someone contact me?',
+      alias: 'secretary',
+    }
+    const response = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as unknown as Response
+
+    routes.get('POST /rest/site/email/alias')?.({ body: command } as Request, response)
+    await flushPromises()
+
+    expect(contactPerson).toHaveBeenCalledWith(command)
+    expect(response.json).toHaveBeenCalledWith([])
   })
 })
