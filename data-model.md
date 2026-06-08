@@ -46,6 +46,10 @@ flowchart TD
   seasonStats["SeasonStats"]
   headToHead["HeadToHead"]
   weekStats["WeekStats"]
+  resultIndexCollection["resultindex collection"]
+  resultIndex["Result Index"]
+  resultIndexStatusCollection["resultindexstatus collection"]
+  resultIndexStatus["Result Index Status"]
   seasonStatisticsAggregationCollection["seasonstatisticsaggregation collection"]
   seasonStatisticsAggregation["SeasonStatisticsAggregation"]
   competitionStatisticsAggregation["CompetitionStatisticsAggregation"]
@@ -91,6 +95,10 @@ flowchart TD
   statistics --> seasonStats
   seasonStats --> headToHead
   statistics --> weekStats
+  firestore --> resultIndexCollection
+  resultIndexCollection --> resultIndex
+  firestore --> resultIndexStatusCollection
+  resultIndexStatusCollection --> resultIndexStatus
   firestore --> seasonStatisticsAggregationCollection
   seasonStatisticsAggregationCollection --> seasonStatisticsAggregation
   seasonStatisticsAggregation --> competitionStatisticsAggregation
@@ -113,6 +121,10 @@ flowchart TD
   statistics --> team
   statistics --> season
   statistics --> leagueTable
+  resultIndex --> season
+  resultIndex --> competition
+  resultIndex --> fixturesDoc
+  resultIndexStatus --> season
   seasonStatisticsAggregation --> season
   competitionStatisticsAggregation --> competition
   competitionStatisticsAggregation --> team
@@ -167,6 +179,27 @@ This public read contract is read-only and does not make `users`, team user subc
 The Teams public visitor browse feature reads active public team documents directly from `team/{teamId}`. The Teams browse repository must query with `retired == false` and `limit(500)`; documents must also be audited for unauthenticated Teams rendering before they are published. Public team browse reads do not include team user subcollections, referenced `User` documents, standings, fixture/result aggregation, or team-detail data owned by later Team detail features.
 
 Public competition pages have an existing bounded team-name resolution read contract on the same `team` collection. They may continue to read bounded public team-name data needed for historical competitions and do not use the Teams browse requirement to exclude retired teams from competition results, fixtures, or tables. Firestore rules preserve both bounded query shapes and deny unbounded or over-limit `team` list queries. Because Firestore rules cannot distinguish reads by app route, selected Teams route rendering must validate `retired == false` in the frontend before showing a team name.
+
+## Result Index
+
+`resultindex/{resultIndexId}` is a top-level denormalized read model for public results pages. Each document represents one completed fixture set and stores the season, competition, fixture-set path/date, participating team IDs, and the completed child fixture paths/scores. The document ID is `encodeURIComponent(fixtureSet.path)` so rebuilding is idempotent.
+
+`resultindexstatus/{seasonId}` records that the result index has been rebuilt for a season. Public result services only use the fast result-index queries after this status exists; otherwise they fall back to the canonical nested `season -> competition -> fixtures -> fixture` data to avoid hiding historical results during rollout.
+
+| Field                   | Type            | Required | Notes                                                               |
+| ----------------------- | --------------- | -------- | ------------------------------------------------------------------- |
+| `seasonId`              | `UUID`          | Yes      | Season identifier for indexed queries.                              |
+| `seasonPath`            | `string`        | Yes      | Canonical `season/{seasonId}` path.                                 |
+| `competitionId`         | `UUID`          | Yes      | Competition identifier.                                             |
+| `competitionPath`       | `string`        | Yes      | Canonical nested competition path.                                  |
+| `competitionName`       | `string`        | Yes      | Display name captured for lightweight clients and diagnostics.      |
+| `firstClass`            | `boolean`       | Yes      | `false` for subsidiary competitions excluded from all-team results. |
+| `fixtureSetPath`        | `string`        | Yes      | Canonical nested fixture-set path.                                  |
+| `fixtureSetDate`        | `LocalDate`     | Yes      | Date used for latest/all/team result ordering.                      |
+| `fixtureSetStart`       | `LocalTime`     | Yes      | Start time copied from the fixture set.                             |
+| `fixtureSetDescription` | `string`        | Yes      | Fixture-set description copied from the canonical document.         |
+| `teamIds`               | `array<UUID>`   | Yes      | Unique participating team IDs, used with `array-contains`.          |
+| `fixtures`              | `array<object>` | Yes      | Completed fixture paths, team IDs/paths, and home/away scores.      |
 
 ## Season
 

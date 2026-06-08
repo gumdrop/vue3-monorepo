@@ -21,6 +21,9 @@ const mocks = vi.hoisted(() => ({
     seasonFixtures: vi.fn(),
     spentFixtures: vi.fn(),
   },
+  resultIndexDAO: {
+    teamFixtureDocuments: vi.fn(),
+  },
 }))
 
 vi.mock('@/dao/ApplicationContextDAO', () => ({
@@ -30,6 +33,10 @@ vi.mock('@/dao/ApplicationContextDAO', () => ({
 vi.mock('@/dao/FixturesDAO', () => ({
   default: mocks.fixturesDAO,
   fixtureDAO: mocks.fixtureDAO,
+}))
+
+vi.mock('@/dao/ResultIndexDAO', () => ({
+  default: mocks.resultIndexDAO,
 }))
 
 vi.mock('../FixturesService', () => ({
@@ -63,6 +70,7 @@ describe('FixtureService', () => {
     mocks.applicationContextDAO.getData.mockResolvedValue({ currentSeason: { id: 'season-1' } })
     mocks.fixtureDAO.subCollection.mockImplementation((path: string) => `${path}/fixture`)
     mocks.fixtureDAO.getByPath.mockImplementation((path: string) => ({ id: path, path }))
+    mocks.resultIndexDAO.teamFixtureDocuments.mockResolvedValue(undefined)
   })
 
   it('flattens fixture groups into their child fixtures', async () => {
@@ -108,6 +116,24 @@ describe('FixtureService', () => {
     await useFixture().teamResults('bravo', 'season-2', 1)
 
     expect(mocks.fixturesService.spentFixtures).toHaveBeenCalledWith('season-2')
+  })
+
+  it('returns team results from the result index when the season has been rebuilt', async () => {
+    mocks.resultIndexDAO.teamFixtureDocuments.mockResolvedValue([
+      {
+        id: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+        path: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+      },
+    ])
+
+    await expect(useFixture().teamResults('bravo', 'season-2', 1)).resolves.toEqual([
+      {
+        id: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+        path: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+      },
+    ])
+    expect(mocks.resultIndexDAO.teamFixtureDocuments).toHaveBeenCalledWith('bravo', 'season-2', 1)
+    expect(mocks.fixturesService.spentFixtures).not.toHaveBeenCalled()
   })
 
   it('returns the latest due fixture for result submission by team', async () => {

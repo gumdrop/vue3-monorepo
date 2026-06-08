@@ -5,6 +5,7 @@ import { regenerateFixtureSetResultsSummary } from './TaskFunctions'
 import { migrateTeamMemberships } from './TeamMembershipMigration'
 import { calculateStats } from './StatisticsUtils'
 import { recalculateSeasonStatisticsAggregation } from './SeasonStatisticsAggregationUtils'
+import { rebuildSeasonResultIndex } from './ResultIndexUtils'
 import { param, send } from './util'
 
 const root = '/rest/maintain'
@@ -16,6 +17,7 @@ export default function configureMaintain(app: Application) {
       `${root}/season/:seasonId/statistics/aggregation/recalculate`,
       recalculateSeasonStatisticsAggregationEndpoint,
     )
+    .post(`${root}/season/:seasonId/result-index/rebuild`, rebuildResultIndex)
     .post(`${root}/team-members/migrate`, migrateTeamMembers)
     .post(`${root}/fixtures/results-summary/regenerate`, regenerateResultsSummary)
 }
@@ -43,6 +45,20 @@ async function recalculateStatisticsAggregation(seasonId: string) {
   return {
     seasonId,
     competitions: aggregation.competitions.length,
+  }
+}
+
+function rebuildResultIndex(req: Request, res: Response) {
+  return send(rebuildSeasonResultIndexEndpoint(param('seasonId', req)), res)
+}
+
+async function rebuildSeasonResultIndexEndpoint(seasonId: string) {
+  const season = await load<Season>(entityPath('season', seasonId))
+  const status = await rebuildSeasonResultIndex(season)
+
+  return {
+    seasonId,
+    fixtureSetCount: status.fixtureSetCount,
   }
 }
 

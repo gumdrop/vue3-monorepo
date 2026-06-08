@@ -1,0 +1,32 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "resultindex",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "seasonId", "order": "ASCENDING" },
+        { "fieldPath": "firstClass", "order": "ASCENDING" },
+        { "fieldPath": "fixtureSetDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "resultindex",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "seasonId", "order": "ASCENDING" },
+        { "fieldPath": "firstClass", "order": "ASCENDING" },
+        { "fieldPath": "teamIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "fixtureSetDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "resultindex",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "competitionPath", "order": "ASCENDING" },
+        { "fieldPath": "fixtureSetDate", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

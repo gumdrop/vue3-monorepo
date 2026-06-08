@@ -41,6 +41,14 @@
             >
               Recalculate Aggregation
             </v-btn>
+            <v-btn
+              color="primary"
+              variant="outlined"
+              :disabled="!selectedSeason || recalculating"
+              @click="rebuildResultIndex"
+            >
+              Rebuild Result Index
+            </v-btn>
           </v-card-actions>
         </v-card>
       </v-col>
@@ -119,6 +127,25 @@ const recalculateAggregation = async () => {
     successMessage.value = `Statistics aggregation recalculated for ${selectedSeason.value.label}`
   } catch {
     errorMessage.value = 'Statistics aggregation recalculation failed'
+  } finally {
+    recalculating.value = false
+  }
+}
+
+const rebuildResultIndex = async () => {
+  if (!selectedSeason.value) return
+
+  recalculating.value = true
+  successMessage.value = ''
+  errorMessage.value = ''
+
+  try {
+    const response = await axios.post(
+      `/rest/maintain/season/${encodeURIComponent(selectedSeason.value.id)}/result-index/rebuild`,
+    )
+    successMessage.value = `Result index rebuilt for ${selectedSeason.value.label} (${response.data.fixtureSetCount} fixture sets)`
+  } catch {
+    errorMessage.value = 'Result index rebuild failed'
   } finally {
     recalculating.value = false
   }
