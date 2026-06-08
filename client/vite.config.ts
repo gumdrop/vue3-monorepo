@@ -9,16 +9,25 @@ import { resolve } from 'path'
 const maintainHistoryFallback = (): Plugin => ({
   name: 'maintain-history-fallback',
   configureServer(server) {
-    server.middlewares.use((req, _res, next) => {
-      const url = req.url ?? ''
-      if (isMaintainHistoryRequest(url)) {
-        const query = url.includes('?') ? `?${url.split('?').slice(1).join('?')}` : ''
-        req.url = `/maintain/${query}`
-      }
-      next()
-    })
+    server.middlewares.use(rewriteMaintainHistoryRequest)
+  },
+  configurePreviewServer(server) {
+    server.middlewares.use(rewriteMaintainHistoryRequest)
   },
 })
+
+const rewriteMaintainHistoryRequest = (
+  req: { url?: string },
+  _res: unknown,
+  next: () => void,
+) => {
+  const url = req.url ?? ''
+  if (isMaintainHistoryRequest(url)) {
+    const query = url.includes('?') ? `?${url.split('?').slice(1).join('?')}` : ''
+    req.url = `/maintain/${query}`
+  }
+  next()
+}
 
 const isMaintainHistoryRequest = (url: string) => {
   const path = url.split('?')[0]
