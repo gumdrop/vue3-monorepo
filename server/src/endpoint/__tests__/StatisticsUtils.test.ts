@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { calculateStats, updateForFixture } from '../StatisticsUtils'
-import { LocalDate } from '@js-joda/core'
 
 // Mock Storage
 vi.mock('../../storage/Storage', () => ({
@@ -15,25 +14,27 @@ vi.mock('../../storage/Storage', () => ({
   saveAll: vi.fn(),
 }))
 
-// Mock @quizleague/shared
 vi.mock('@quizleague/shared', async () => {
-  const actual = await vi.importActual('@quizleague/shared') as any
+  const actual = (await vi.importActual('@quizleague/shared')) as typeof import('@quizleague/shared')
   return {
     ...actual,
-    recalculateTables: vi.fn((tables, fixtures) => {
-        // Simple mock implementation that sets position to "1" for the first team it finds
-        return tables.map(t => ({
-            ...t,
-            rows: t.rows.map((r, index) => ({
-                ...r,
-                position: (index + 1).toString()
-            }))
-        }))
-    }),
+    recalculateTables: vi.fn(actual.recalculateTables),
   }
 })
 
 import { list, load, saveAll } from '../../storage/Storage'
+
+const tableRow = (teamId: string, position = '') => ({
+  team: { id: teamId, path: `team/${teamId}` },
+  position,
+  played: 0,
+  won: 0,
+  drawn: 0,
+  lost: 0,
+  leaguePoints: 0,
+  matchPointsAgainst: 0,
+  matchPointsFor: 0,
+})
 
 describe('StatisticsUtils', () => {
   beforeEach(() => {
@@ -46,22 +47,19 @@ describe('StatisticsUtils', () => {
     const table = {
       id: 't1',
       path: 'leaguetable/t1',
-      rows: [
-        { team: { id: 'team1', path: 'team/team1' } },
-        { team: { id: 'team2', path: 'team/team2' } }
-      ]
+      rows: [tableRow('team1'), tableRow('team2')],
     }
     const fixtures = {
-        id: 'fs1',
-        path: 'fixtures/fs1',
-        date: '2023-01-01'
+      id: 'fs1',
+      path: 'fixtures/fs1',
+      date: '2023-01-01',
     }
     const fixture = {
-        id: 'f1',
-        path: 'fixture/f1',
-        home: { id: 'team1', path: 'team/team1' },
-        away: { id: 'team2', path: 'team/team2' },
-        result: { homeScore: 10, awayScore: 5 }
+      id: 'f1',
+      path: 'fixture/f1',
+      home: { id: 'team1', path: 'team/team1' },
+      away: { id: 'team2', path: 'team/team2' },
+      result: { homeScore: 10, awayScore: 5 },
     }
 
     vi.mocked(list).mockImplementation((type, path) => {
@@ -77,20 +75,20 @@ describe('StatisticsUtils', () => {
 
     expect(saveAll).toHaveBeenCalled()
     const savedStats = vi.mocked(saveAll).mock.calls[0][0] as any[]
-    
+
     expect(savedStats.length).toBeGreaterThan(0)
-    
-    const team1Stats = savedStats.find(s => s.team.id === 'team1')
+
+    const team1Stats = savedStats.find((s) => s.team.id === 'team1')
     expect(team1Stats).toBeDefined()
     expect(team1Stats.seasonStats.currentLeaguePosition).toBe(1)
-    
+
     const weekStats1 = Object.values(team1Stats.weekStats)[0] as any
     expect(weekStats1.leaguePosition).toBe(1)
 
-    const team2Stats = savedStats.find(s => s.team.id === 'team2')
+    const team2Stats = savedStats.find((s) => s.team.id === 'team2')
     expect(team2Stats).toBeDefined()
     expect(team2Stats.seasonStats.currentLeaguePosition).toBe(2)
-    
+
     const weekStats2 = Object.values(team2Stats.weekStats)[0] as any
     expect(weekStats2.leaguePosition).toBe(2)
   })
@@ -107,9 +105,9 @@ describe('StatisticsUtils', () => {
       id: 't1',
       path: 'season/s1/competition/league/leaguetable/t1',
       rows: [
-        { team: { id: 'team1', path: 'team/team1' }, position: '2' },
-        { team: { id: 'team2', path: 'team/team2' }, position: '1' },
-        { team: { id: 'team3', path: 'team/team3' }, position: '3' },
+        tableRow('team1', '2'),
+        tableRow('team2', '1'),
+        tableRow('team3', '3'),
       ],
     }
     const fixture = {
@@ -160,5 +158,56 @@ describe('StatisticsUtils', () => {
     const team3Stats = savedStats.find((stats) => stats.team.id === 'team3')
     expect(team3Stats.weekStats).toEqual({})
     expect(team3Stats.seasonStats.currentLeaguePosition).toBe(3)
+  })
+
+  it('records weekly league positions after all fixtures in the same fixture set are applied', async () => {
+    const season = { id: 's1', path: 'season/s1' }
+    const competition = { id: 'c1', path: 'season/s1/competition/league', _name: 'league' }
+    const table = {
+      id: 't1',
+      path: 'season/s1/competition/league/leaguetable/t1',
+      rows: [tableRow('alpha'), tableRow('bravo'), tableRow('charlie'), tableRow('delta')],
+    }
+    const fixtures = {
+      id: 'fs1',
+      path: 'season/s1/competition/league/fixtures/fs1',
+      date: '2025-03-18',
+    }
+    const alphaFixture = {
+      id: 'fixture-alpha',
+      path: `${fixtures.path}/fixture/fixture-alpha`,
+      home: { id: 'alpha', path: 'team/alpha' },
+      away: { id: 'bravo', path: 'team/bravo' },
+      result: { homeScore: 10, awayScore: 0 },
+    }
+    const charlieFixture = {
+      id: 'fixture-charlie',
+      path: `${fixtures.path}/fixture/fixture-charlie`,
+      home: { id: 'charlie', path: 'team/charlie' },
+      away: { id: 'delta', path: 'team/delta' },
+      result: { homeScore: 30, awayScore: 0 },
+    }
+
+    vi.mocked(list).mockImplementation((type, path) => {
+      if (type === 'statistics') return Promise.resolve([])
+      if (type === 'competition') return Promise.resolve([competition] as any)
+      if (type === 'leaguetable' && path === competition.path) return Promise.resolve([table] as any)
+      if (type === 'fixtures' && path === competition.path) return Promise.resolve([fixtures] as any)
+      if (type === 'fixture' && path === fixtures.path) {
+        return Promise.resolve([alphaFixture, charlieFixture] as any)
+      }
+      return Promise.resolve([])
+    })
+
+    await calculateStats(season as any)
+
+    const savedStats = vi.mocked(saveAll).mock.calls[0][0] as any[]
+    const alphaStats = savedStats.find((stats) => stats.team.id === 'alpha')
+    const charlieStats = savedStats.find((stats) => stats.team.id === 'charlie')
+
+    expect(alphaStats.weekStats['2025-03-18'].leaguePosition).toBe(2)
+    expect(alphaStats.seasonStats.currentLeaguePosition).toBe(2)
+    expect(charlieStats.weekStats['2025-03-18'].leaguePosition).toBe(1)
+    expect(charlieStats.seasonStats.currentLeaguePosition).toBe(1)
   })
 })

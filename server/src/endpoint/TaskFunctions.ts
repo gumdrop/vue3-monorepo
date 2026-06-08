@@ -39,6 +39,7 @@ export async function resultSubmission(result: ResultsSubmitCommand) {
 
   const user = await load<User>(entityPath('user', result.userID))
   const fixtureSetPaths = new Set<string>()
+  const statsUpdateFixtures: Fixture[] = []
   for (const fixture of result.fixtures) {
     await saveFixture(user, result.reportText, fixture)
     fixtureSetPaths.add(parseParent(fixture.fixturePath))
@@ -53,7 +54,7 @@ export async function resultSubmission(result: ResultsSubmitCommand) {
         await updateTables(leagueTables, fixture)
 
         if (!isSubsidiary) {
-          await fireStatsUpdate(fixture)
+          statsUpdateFixtures.push(fixture)
         }
       }
       if (!isSubsidiary) {
@@ -62,7 +63,13 @@ export async function resultSubmission(result: ResultsSubmitCommand) {
     }
   }
 
-  await updateCompletedFixtureSetSummaries([...fixtureSetPaths])
+  const completedFixtureSetPaths = await updateCompletedFixtureSetSummaries([...fixtureSetPaths])
+
+  for (const fixture of statsUpdateFixtures) {
+    if (!completedFixtureSetPaths.has(parseParent(fixture.path))) {
+      await fireStatsUpdate(fixture)
+    }
+  }
 
   async function saveFixture(user: User, reportText: string | undefined, result: ResultValues) {
     const fixture = await load<Fixture>(result.fixturePath)
@@ -138,24 +145,33 @@ export async function resultSubmission(result: ResultsSubmitCommand) {
 }
 
 async function updateCompletedFixtureSetSummaries(fixtureSetPaths: string[]) {
+  const completedFixtureSetPaths = new Set<string>()
+
   for (const fixtureSetPath of fixtureSetPaths) {
     try {
-      await updateCompletedFixtureSetSummary(fixtureSetPath)
+      if (await updateCompletedFixtureSetSummary(fixtureSetPath)) {
+        completedFixtureSetPaths.add(fixtureSetPath)
+      }
     } catch (error) {
       console.error(`Failed to update fixture set results summary for ${fixtureSetPath}`, error)
     }
   }
+
+  return completedFixtureSetPaths
 }
 
 async function updateCompletedFixtureSetSummary(fixtureSetPath: string) {
   const fixtureSet = await load<Fixtures>(fixtureSetPath)
-  if (!fixtureSet) return
+  if (!fixtureSet) return false
 
   const fixtures = await list<Fixture>('fixture', fixtureSet.path)
-  if (fixtures.length === 0 || fixtures.some((fixture) => !fixture.result)) return
+  if (fixtures.length === 0 || fixtures.some((fixture) => !fixture.result)) return false
 
+  queueFixtureSetStatisticsRecalculation(fixtureSet.path)
   await updateAggregationForCompletedFixtureSet(fixtureSet.path)
   await generateAndSaveFixtureSetResultsSummary(fixtureSet, fixtures, false)
+
+  return true
 }
 
 export async function regenerateFixtureSetResultsSummary(fixtureSetPath: string) {
@@ -287,8 +303,29 @@ function compactReportText(text: string) {
   return compacted.length > 1200 ? `${compacted.slice(0, 1197)}...` : compacted
 }
 
-export async function statsRegenerate(seasonId: string) {
-  const season = await load<Season>(entityPath('season', seasonId))
+function queueFixtureSetStatisticsRecalculation(fixtureSetPath: string) {
+  queueSeasonStatisticsRecalculation(parseParent(parseParent(fixtureSetPath)))
+}
 
-  queueMicrotask(() => calculateStats(season))
+function queueSeasonStatisticsRecalculation(seasonPath: string) {
+  if (!seasonPath) return
+
+  queueMicrotask(() => {
+    void recalculateSeasonStatistics(seasonPath)
+  })
+}
+
+async function recalculateSeasonStatistics(seasonPath: string) {
+  try {
+    const season = await load<Season>(seasonPath)
+    if (!season) return
+
+    await calculateStats(season)
+  } catch (error) {
+    console.error(`Failed to recalculate team statistics for ${seasonPath}`, error)
+  }
+}
+
+export function statsRegenerate(seasonId: string) {
+  queueSeasonStatisticsRecalculation(entityPath('season', seasonId))
 }
