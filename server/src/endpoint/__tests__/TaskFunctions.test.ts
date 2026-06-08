@@ -53,7 +53,11 @@ describe('TaskFunctions', () => {
   })
 
   it('generates a Gemini summary when the submitted result completes the fixture set', async () => {
+    const queueMicrotaskSpy = vi
+      .spyOn(globalThis, 'queueMicrotask')
+      .mockImplementation((callback: () => void) => callback())
     const user = { id: 'user-1', path: 'user/user-1' }
+    const season = { id: 'season-1', path: 'season/season-1' }
     const teamA = {
       id: 'team-a',
       path: 'team/team-a',
@@ -106,6 +110,7 @@ describe('TaskFunctions', () => {
     mocks.load.mockImplementation(async (pathish) => {
       const path = typeof pathish === 'string' ? pathish : pathish.path
       if (path === 'user/user-1') return user
+      if (path === 'season/season-1') return season
       if (path === 'season/season-1/competition/league') {
         return { id: 'league', path, name: 'League', _name: 'league' }
       }
@@ -151,6 +156,7 @@ describe('TaskFunctions', () => {
       reportText: 'Submitted report',
       userID: 'user-1',
     })
+    await Promise.resolve()
 
     expect(mocks.generateFixtureSetResultsSummary).toHaveBeenCalledWith({
       competitionName: 'League',
@@ -173,6 +179,9 @@ describe('TaskFunctions', () => {
         },
       ],
     })
+    expect(queueMicrotaskSpy).toHaveBeenCalledWith(expect.any(Function))
+    expect(mocks.calculateStats).toHaveBeenCalledWith(season)
+    expect(mocks.updateForFixture).not.toHaveBeenCalled()
     expect(mocks.updateAggregationForCompletedFixtureSet).toHaveBeenCalledWith(fixtureSetPath)
     expect(fixtureSet).toEqual(
       expect.objectContaining({
@@ -190,9 +199,14 @@ describe('TaskFunctions', () => {
       }),
     )
     expect(mocks.save).toHaveBeenCalledWith(fixtureSet)
+
+    queueMicrotaskSpy.mockRestore()
   })
 
   it('does not generate a summary while any fixture in the set is missing a result', async () => {
+    const queueMicrotaskSpy = vi
+      .spyOn(globalThis, 'queueMicrotask')
+      .mockImplementation((callback: () => void) => callback())
     const user = { id: 'user-1', path: 'user/user-1' }
     const teamA = {
       id: 'team-a',
@@ -243,6 +257,10 @@ describe('TaskFunctions', () => {
 
     expect(mocks.generateFixtureSetResultsSummary).not.toHaveBeenCalled()
     expect(mocks.updateAggregationForCompletedFixtureSet).not.toHaveBeenCalled()
+    expect(queueMicrotaskSpy).not.toHaveBeenCalled()
+    expect(mocks.calculateStats).not.toHaveBeenCalled()
+
+    queueMicrotaskSpy.mockRestore()
   })
 
   it('leaves completed fixture set summaries unchanged when Gemini returns empty text', async () => {

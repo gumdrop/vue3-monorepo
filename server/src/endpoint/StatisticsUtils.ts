@@ -254,9 +254,9 @@ export async function calculateStats(season: Season) {
 
   for (const f of fixtures) {
     const fixtureList = await list<Fixture>('fixture', f.path)
+    dummyTables = recalculateTables(dummyTables, fixtureList)
 
     for (const r of fixtureList) {
-      dummyTables = recalculateTables(dummyTables, [r])
       startingStats = await updateStats(
         r,
         LocalDate.parse(f.date),
