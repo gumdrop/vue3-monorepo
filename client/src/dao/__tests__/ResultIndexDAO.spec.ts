@@ -172,4 +172,10 @@ describe('ResultIndexDAO', () => {
 
     expect(mocks.where).toHaveBeenCalledWith('teamIds', 'array-contains', 'team-b')
   })
+
+  it('skips the limit call when take is Number.MAX_SAFE_INTEGER', async () => {
+    await ResultIndexDAO.teamFixtureDocuments('team-b', 'season-1', Number.MAX_SAFE_INTEGER)
+
+    expect(mocks.limit).not.toHaveBeenCalled()
+  })
 })

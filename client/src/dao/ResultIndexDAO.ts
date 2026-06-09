@@ -89,7 +89,9 @@ class CompleteResultIndexStatusDAO extends ResultIndexStatusDAO {
 }
 
 function withOptionalLimit<T>(baseQuery: Query<T>, take?: number) {
-  return take === undefined ? baseQuery : query(baseQuery, firestoreLimit(take))
+  return take === undefined || take >= Number.MAX_SAFE_INTEGER
+    ? baseQuery
+    : query(baseQuery, firestoreLimit(take))
 }
 
 function seasonIdFromCompetitionPath(competitionPath: string) {
