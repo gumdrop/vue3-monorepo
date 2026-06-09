@@ -5,6 +5,8 @@ const { Given, Then, When } = createBdd()
 
 const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
+const maintenanceUrl = (route) => `/maintain${route.startsWith('/') ? route : `/${route}`}`
+
 const fieldValue = async (locator, page) => {
   const deadline = Date.now() + Number(process.env.CUCUMBER_TIMEOUT ?? 30000)
   let value = ''
@@ -36,39 +38,39 @@ Given('maintenance authentication is bypassed for acceptance tests', () => {
 })
 
 When('I open the maintenance application context page', async ({ page }) => {
-  await page.goto('/maintain/#/applicationcontext')
+  await page.goto(maintenanceUrl('/applicationcontext'))
 })
 
 When('I open the maintenance {string} page', async ({ page }, route) => {
-  await page.goto(`/maintain/#${route}`)
+  await page.goto(maintenanceUrl(route))
 })
 
 When('I open the maintenance teams page', async ({ page }) => {
-  await page.goto('/maintain/#/team')
+  await page.goto(maintenanceUrl('/team'))
 })
 
 When('I open the maintenance venues page', async ({ page }) => {
-  await page.goto('/maintain/#/venue')
+  await page.goto(maintenanceUrl('/venue'))
 })
 
 When('I open the maintenance users page', async ({ page }) => {
-  await page.goto('/maintain/#/user')
+  await page.goto(maintenanceUrl('/user'))
 })
 
 When('I open the maintenance site users page', async ({ page }) => {
-  await page.goto('/maintain/#/siteuser')
+  await page.goto(maintenanceUrl('/siteuser'))
 })
 
 When('I open the maintenance global text page', async ({ page }) => {
-  await page.goto('/maintain/#/globaltext')
+  await page.goto(maintenanceUrl('/globaltext'))
 })
 
 When('I open the maintenance competition statistics page', async ({ page }) => {
-  await page.goto('/maintain/#/competitionstatistics')
+  await page.goto(maintenanceUrl('/competitionstatistics'))
 })
 
 When('I open the maintenance statistics page', async ({ page }) => {
-  await page.goto('/maintain/#/statistics')
+  await page.goto(maintenanceUrl('/statistics'))
 })
 
 When('I choose {string} from the maintain team list', async ({ page }, teamName) => {
@@ -109,9 +111,9 @@ When('I click the {string} button', async ({ page }, label) => {
 Then('I should be on the maintenance {string} page', async ({ page }, expectedRoute) => {
   const routePath = (url) => {
     const parsedUrl = new URL(url)
-    return `${decodeURIComponent(parsedUrl.pathname)}${decodeURIComponent(parsedUrl.hash)}`
+    return decodeURIComponent(parsedUrl.pathname)
   }
-  const expectedPath = `/maintain/#${expectedRoute}`
+  const expectedPath = maintenanceUrl(expectedRoute)
 
   await page.waitForURL((url) => routePath(url) === expectedPath)
   assert.equal(routePath(page.url()), expectedPath)

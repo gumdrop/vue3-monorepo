@@ -11,6 +11,8 @@ export type EntityType =
   | 'leaguetable'
   | 'member'
   | 'report'
+  | 'resultindex'
+  | 'resultindexstatus'
   | 'season'
   | 'seasonstatisticsaggregation'
   | 'siteuser'

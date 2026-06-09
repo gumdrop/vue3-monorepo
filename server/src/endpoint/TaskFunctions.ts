@@ -24,6 +24,7 @@ import {
 } from './GeminiResultsSummary'
 import { updateAggregationForCompletedFixtureSet } from './SeasonStatisticsAggregationUtils'
 import { teamForUser } from './TeamMembership'
+import { upsertResultIndexForCompletedFixtureSet } from './ResultIndexUtils'
 
 export async function resultSubmission(result: ResultsSubmitCommand) {
   async function haveResults() {
@@ -169,6 +170,7 @@ async function updateCompletedFixtureSetSummary(fixtureSetPath: string) {
 
   queueFixtureSetStatisticsRecalculation(fixtureSet.path)
   await updateAggregationForCompletedFixtureSet(fixtureSet.path)
+  await upsertResultIndexForCompletedFixtureSet(fixtureSet, fixtures)
   await generateAndSaveFixtureSetResultsSummary(fixtureSet, fixtures, false)
 
   return true

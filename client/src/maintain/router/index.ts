@@ -1,4 +1,4 @@
-import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import { getCurrentUser } from 'vuefire'
 
 const maintenanceBasePath = '/maintain/'
@@ -13,9 +13,7 @@ export const isLocalMaintenanceHost = (
 }
 
 export const createMaintenanceHistory = () => {
-  return isLocalMaintenanceHost()
-    ? createWebHashHistory(maintenanceBasePath)
-    : createWebHistory(maintenanceBasePath)
+  return createWebHistory(maintenanceBasePath)
 }
 
 export const currentMaintenancePath = (

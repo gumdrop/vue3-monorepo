@@ -5,6 +5,7 @@ import { regenerateFixtureSetResultsSummary } from '../TaskFunctions'
 import { migrateTeamMemberships } from '../TeamMembershipMigration'
 import { calculateStats } from '../StatisticsUtils'
 import { recalculateSeasonStatisticsAggregation } from '../SeasonStatisticsAggregationUtils'
+import { rebuildSeasonResultIndex } from '../ResultIndexUtils'
 import { load } from '../../storage/Storage'
 
 vi.mock('../TaskFunctions', () => ({
@@ -25,6 +26,16 @@ vi.mock('../SeasonStatisticsAggregationUtils', () => ({
     id: 'season-1',
     path: 'seasonstatisticsaggregation/season-1',
     competitions: [{ competitionName: 'League' }, { competitionName: 'Cup' }],
+  }),
+}))
+
+vi.mock('../ResultIndexUtils', () => ({
+  rebuildSeasonResultIndex: vi.fn().mockResolvedValue({
+    id: 'season-1',
+    path: 'resultindexstatus/season-1',
+    seasonId: 'season-1',
+    rebuiltAt: '2026-06-08T09:00:00.000Z',
+    fixtureSetCount: 12,
   }),
 }))
 
@@ -140,6 +151,30 @@ describe('MaintainEndpoints', () => {
       path: 'season/season-1',
     })
     expect(response.json).toHaveBeenCalledWith({ seasonId: 'season-1', competitions: 2 })
+  })
+
+  it('routes season result index rebuild to the result index helper', async () => {
+    const { app, routes } = createApp()
+    configure(app)
+
+    const response = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as unknown as Response
+
+    routes.get('POST /rest/maintain/season/:seasonId/result-index/rebuild')?.(
+      { params: { seasonId: 'season-1' } } as unknown as Request,
+      response,
+    )
+    await flushPromises()
+
+    expect(load).toHaveBeenCalledWith('season/season-1')
+    expect(rebuildSeasonResultIndex).toHaveBeenCalledWith({
+      id: 'season-1',
+      path: 'season/season-1',
+    })
+    expect(response.json).toHaveBeenCalledWith({ seasonId: 'season-1', fixtureSetCount: 12 })
   })
 
   it('routes team member migration to the migration utility', async () => {

@@ -1,6 +1,7 @@
 import CompetitionDAO from '@/dao/CompetitionDAO'
 import FixturesDAO from '@/dao/FixturesDAO'
 import LeagueTableDAO from '@/dao/LeagueTableDAO'
+import ResultIndexDAO from '@/dao/ResultIndexDAO'
 import SeasonDao from '@/dao/SeasonDAO'
 import type Competition from '@/entity/Competition'
 import type { name } from '@/entity/Competition'
@@ -33,6 +34,12 @@ export const useCompetitions = () => {
   }
 
   async function latestResults(competitionPath: string, take: number | undefined = undefined) {
+    const resultIndexFixtures = await ResultIndexDAO.competitionFixtureSetDocuments(
+      competitionPath,
+      take,
+    )
+    if (resultIndexFixtures) return resultIndexFixtures
+
     const today = currentLocalDate().toString()
     return (
       await completedFixtureSets((await fixtures(competitionPath)).filter((f) => f.date <= today))

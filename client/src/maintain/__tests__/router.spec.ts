@@ -28,7 +28,7 @@ describe('Maintenance Router', () => {
     expect(routes.length).toBeGreaterThan(0)
   })
 
-  it('detects local hosts for hash navigation', () => {
+  it('detects local hosts for local-only auth bypass checks', () => {
     expect(isLocalMaintenanceHost('localhost', false)).toBe(true)
     expect(isLocalMaintenanceHost('127.0.0.1', false)).toBe(true)
     expect(isLocalMaintenanceHost('::1', false)).toBe(true)
@@ -38,13 +38,13 @@ describe('Maintenance Router', () => {
 
   it('builds login redirect URLs with the maintain path as forward target', () => {
     const path = currentMaintenancePath({
-      pathname: '/maintain/',
+      pathname: '/maintain/season',
       search: '?mode=edit',
-      hash: '#/season',
+      hash: '',
     })
 
-    expect(path).toBe('/maintain/?mode=edit#/season')
-    expect(loginRedirectUrl(path)).toBe('/login?forward=%2Fmaintain%2F%3Fmode%3Dedit%23%2Fseason')
+    expect(path).toBe('/maintain/season?mode=edit')
+    expect(loginRedirectUrl(path)).toBe('/login?forward=%2Fmaintain%2Fseason%3Fmode%3Dedit')
   })
 
   it('allows maintain navigation for authenticated users', async () => {
@@ -69,12 +69,12 @@ describe('Maintenance Router', () => {
   })
 
   it('redirects anonymous users to login', async () => {
-    window.history.pushState({}, '', '/maintain/#/season')
+    window.history.pushState({}, '', '/maintain/season')
     vi.mocked(getCurrentUser).mockResolvedValue(null)
     const redirect = vi.fn()
 
     await expect(requireAuthenticatedUser(redirect)).resolves.toBe(false)
-    expect(redirect).toHaveBeenCalledWith('/login?forward=%2Fmaintain%2F%23%2Fseason')
+    expect(redirect).toHaveBeenCalledWith('/login?forward=%2Fmaintain%2Fseason')
   })
 
   it('contains season route', () => {
