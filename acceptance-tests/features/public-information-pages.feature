@@ -51,6 +51,7 @@ Feature: Public information pages
     Then I should see text matching "Contact League Secretary"
     And the "Your email address" field should be visible
     And the "Message" field should be visible
+    And the "Security check" field should be visible
     And the "Send" button should be visible
 
   Scenario: Visitors can read the help page sections

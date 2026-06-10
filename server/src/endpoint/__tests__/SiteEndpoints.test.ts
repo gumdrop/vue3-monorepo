@@ -2,13 +2,22 @@ import type { Application, Request, Response } from 'express'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import configure from '../SiteEndpoints'
 import { resultSubmission } from '../TaskFunctions'
-import { contactPerson, contactTeam, siteUserForEmail } from '../SiteFunctions'
+import {
+  contactCaptchaChallenge,
+  contactPerson,
+  contactTeam,
+  siteUserForEmail,
+} from '../SiteFunctions'
 
 vi.mock('../TaskFunctions', () => ({
   resultSubmission: vi.fn().mockResolvedValue(undefined),
 }))
 
 vi.mock('../SiteFunctions', () => ({
+  contactCaptchaChallenge: vi.fn().mockReturnValue({
+    question: 'What is 2 + 3?',
+    token: 'captcha-token',
+  }),
   contactPerson: vi.fn().mockResolvedValue([]),
   contactTeam: vi.fn().mockResolvedValue([]),
   siteUserForEmail: vi.fn().mockResolvedValue({
@@ -116,6 +125,7 @@ describe('SiteEndpoints', () => {
       sender: 'sender@example.com',
       text: 'Can someone contact me?',
       teamId: 'team-1',
+      captcha: { token: 'captcha-token', answer: '5' },
     }
     const response = {
       json: vi.fn(),
@@ -141,6 +151,7 @@ describe('SiteEndpoints', () => {
       sender: 'sender@example.com',
       text: 'Can someone contact me?',
       alias: 'secretary',
+      captcha: { token: 'captcha-token', answer: '5' },
     }
     const response = {
       json: vi.fn(),
@@ -153,5 +164,25 @@ describe('SiteEndpoints', () => {
 
     expect(contactPerson).toHaveBeenCalledWith(command)
     expect(response.json).toHaveBeenCalledWith([])
+  })
+
+  it('routes contact captcha challenge requests to the site function', async () => {
+    const { app, routes } = createApp()
+    configure(app)
+
+    const response = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as unknown as Response
+
+    routes.get('GET /rest/site/contact/captcha')?.({} as Request, response)
+    await flushPromises()
+
+    expect(contactCaptchaChallenge).toHaveBeenCalled()
+    expect(response.json).toHaveBeenCalledWith({
+      question: 'What is 2 + 3?',
+      token: 'captcha-token',
+    })
   })
 })

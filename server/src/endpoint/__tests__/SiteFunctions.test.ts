@@ -1,6 +1,11 @@
 import sendGridMail from '@sendgrid/mail'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { contactPerson, contactTeam, siteUserForEmail } from '../SiteFunctions'
+import {
+  contactCaptchaChallenge,
+  contactPerson,
+  contactTeam,
+  siteUserForEmail,
+} from '../SiteFunctions'
 import { list, load, save } from '../../storage/Storage'
 
 vi.mock('@sendgrid/mail', () => ({
@@ -91,6 +96,22 @@ function mockContactLoads() {
 
     throw new Error(`Unexpected load for ${path}`)
   })
+}
+
+function solvedCaptcha() {
+  const challenge = contactCaptchaChallenge()
+  const [, left, right] = challenge.question.match(/^What is (\d+) \+ (\d+)\?$/) ?? []
+
+  return {
+    token: challenge.token,
+    answer: String(Number(left) + Number(right)),
+  }
+}
+
+function decodedCaptchaPayload() {
+  const challenge = contactCaptchaChallenge()
+  const [payload] = challenge.token.split('.')
+  return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as Record<string, unknown>
 }
 
 describe('SiteFunctions', () => {
@@ -202,6 +223,7 @@ describe('SiteFunctions', () => {
         sender: 'sender@example.com',
         text: 'Hello <team>\nPlease reply.',
         teamId: 'team-1',
+        captcha: solvedCaptcha(),
       }),
     ).resolves.toEqual([])
 
@@ -236,6 +258,7 @@ describe('SiteFunctions', () => {
         sender: 'sender@example.com',
         text: 'Hello',
         teamId: 'team-1',
+        captcha: solvedCaptcha(),
       }),
     ).resolves.toEqual([])
 
@@ -250,6 +273,7 @@ describe('SiteFunctions', () => {
         sender: 'sender@example.com',
         text: 'Hello alias',
         alias: 'secretary',
+        captcha: solvedCaptcha(),
       }),
     ).resolves.toEqual([])
 
@@ -275,6 +299,7 @@ describe('SiteFunctions', () => {
         sender: 'sender@example.com',
         text: 'Hello alias',
         alias: 'missing',
+        captcha: solvedCaptcha(),
       }),
     ).resolves.toEqual([])
 
@@ -295,10 +320,71 @@ describe('SiteFunctions', () => {
         sender: 'sender@example.com',
         text: 'Hello',
         teamId: 'team-1',
+        captcha: solvedCaptcha(),
       }),
     ).rejects.toMatchObject({
       statusCode: 500,
       statusMessage: 'Internal server error',
     })
+  })
+
+  it('creates contact captcha challenges that can be solved by the submitted answer', async () => {
+    const captcha = solvedCaptcha()
+    mockContactLoads()
+
+    await expect(
+      contactPerson({
+        sender: 'sender@example.com',
+        text: 'Hello alias',
+        alias: 'secretary',
+        captcha,
+      }),
+    ).resolves.toEqual([])
+    expect(sendGridMail.send).toHaveBeenCalled()
+  })
+
+  it('does not expose the contact captcha answer in the client token', () => {
+    const payload = decodedCaptchaPayload()
+
+    expect(payload).toHaveProperty('answerHash')
+    expect(payload).toHaveProperty('expiresAt')
+    expect(payload).toHaveProperty('nonce')
+    expect(payload).not.toHaveProperty('answer')
+  })
+
+  it('rejects contact email when captcha verification fails', async () => {
+    mockContactLoads()
+
+    await expect(
+      contactPerson({
+        sender: 'sender@example.com',
+        text: 'Hello alias',
+        alias: 'secretary',
+        captcha: { token: 'bad-token', answer: '5' },
+      }),
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+    })
+
+    expect(sendGridMail.send).not.toHaveBeenCalled()
+  })
+
+  it('rejects contact email when the captcha answer is wrong', async () => {
+    mockContactLoads()
+
+    await expect(
+      contactPerson({
+        sender: 'sender@example.com',
+        text: 'Hello alias',
+        alias: 'secretary',
+        captcha: { ...solvedCaptcha(), answer: '999' },
+      }),
+    ).rejects.toMatchObject({
+      statusCode: 400,
+      statusMessage: 'Bad Request',
+    })
+
+    expect(sendGridMail.send).not.toHaveBeenCalled()
   })
 })
