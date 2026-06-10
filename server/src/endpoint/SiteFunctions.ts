@@ -1,4 +1,5 @@
 import sendGridMail from '@sendgrid/mail'
+import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto'
 import {
   ApplicationContext,
   SiteUser,
@@ -16,13 +17,34 @@ export interface TeamEmailCommand {
   sender: string
   text: string
   teamId: string
+  captcha: ContactCaptchaResponse
 }
 
 export interface AliasEmailCommand {
   sender: string
   text: string
   alias: string
+  captcha: ContactCaptchaResponse
 }
+
+export interface ContactCaptchaChallenge {
+  question: string
+  token: string
+}
+
+export interface ContactCaptchaResponse {
+  token: string
+  answer: string
+}
+
+interface ContactCaptchaPayload {
+  answerHash: string
+  expiresAt: number
+  nonce: string
+}
+
+const captchaLifetimeMs = 10 * 60 * 1000
+const fallbackCaptchaSecret = randomBytes(32).toString('base64url')
 
 function sendGridApiKey() {
   const apiKey = process.env['SENDGRID_API_KEY']?.trim()
@@ -30,6 +52,38 @@ function sendGridApiKey() {
     throw new HttpError(500, 'SENDGRID_API_KEY is not configured', 'Internal server error')
   }
   return apiKey
+}
+
+function contactCaptchaSecret() {
+  return process.env['CONTACT_CAPTCHA_SECRET']?.trim() || fallbackCaptchaSecret
+}
+
+function signCaptchaPayload(payload: string) {
+  return createHmac('sha256', contactCaptchaSecret()).update(payload).digest('base64url')
+}
+
+function captchaAnswerHash(nonce: string, answer: string) {
+  return createHmac('sha256', contactCaptchaSecret())
+    .update(`${nonce}:${answer.trim()}`)
+    .digest('base64url')
+}
+
+function encodeCaptchaPayload(payload: ContactCaptchaPayload) {
+  return Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url')
+}
+
+function decodeCaptchaPayload(payload: string) {
+  return JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as ContactCaptchaPayload
+}
+
+function signaturesMatch(actual: string, expected: string) {
+  const actualBuffer = Buffer.from(actual)
+  const expectedBuffer = Buffer.from(expected)
+  return actualBuffer.length === expectedBuffer.length && timingSafeEqual(actualBuffer, expectedBuffer)
+}
+
+function captchaError() {
+  return new HttpError(400, 'Captcha verification failed', 'Bad Request')
 }
 
 function teamPath(teamId: string) {
@@ -129,7 +183,45 @@ export async function siteUserForEmail(email: string) {
   }
 }
 
+export function contactCaptchaChallenge(): ContactCaptchaChallenge {
+  const left = randomInt(2, 10)
+  const right = randomInt(2, 10)
+  const answer = String(left + right)
+  const nonce = randomBytes(16).toString('base64url')
+  const payload = encodeCaptchaPayload({
+    answerHash: captchaAnswerHash(nonce, answer),
+    expiresAt: Date.now() + captchaLifetimeMs,
+    nonce,
+  })
+
+  return {
+    question: `What is ${left} + ${right}?`,
+    token: `${payload}.${signCaptchaPayload(payload)}`,
+  }
+}
+
+export function verifyContactCaptcha(captcha: ContactCaptchaResponse | undefined) {
+  if (!captcha?.token || !captcha.answer) throw captchaError()
+
+  const [payload, signature, ...extraParts] = captcha.token.split('.')
+  if (!payload || !signature || extraParts.length > 0) throw captchaError()
+  if (!signaturesMatch(signature, signCaptchaPayload(payload))) throw captchaError()
+
+  try {
+    const challenge = decodeCaptchaPayload(payload)
+    if (challenge.expiresAt < Date.now()) throw captchaError()
+    if (!signaturesMatch(challenge.answerHash, captchaAnswerHash(challenge.nonce, captcha.answer))) {
+      throw captchaError()
+    }
+  } catch (error) {
+    if (error instanceof HttpError) throw error
+    throw captchaError()
+  }
+}
+
 export async function contactTeam(mail: TeamEmailCommand) {
+  verifyContactCaptcha(mail.captcha)
+
   const [context, team] = await Promise.all([
     applicationContext(),
     load<Team>(teamPath(mail.teamId)),
@@ -142,6 +234,8 @@ export async function contactTeam(mail: TeamEmailCommand) {
 }
 
 export async function contactPerson(mail: AliasEmailCommand) {
+  verifyContactCaptcha(mail.captcha)
+
   const context = await applicationContext()
   const aliases = context.emailAliases.filter((emailAlias) => emailAlias.alias === mail.alias)
 

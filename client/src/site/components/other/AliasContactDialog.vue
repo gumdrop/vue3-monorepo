@@ -24,6 +24,19 @@
                   :rules="[required('Message')]"
                   required
                 ></v-textarea>
+
+                <v-text-field
+                  required
+                  label="Security check"
+                  v-model="captchaAnswer"
+                  inputmode="numeric"
+                  :hint="captchaQuestion"
+                  persistent-hint
+                  :loading="captchaLoading"
+                  :disabled="captchaLoading || !captchaToken"
+                  :rules="[required('Security check')]"
+                  data-test="contact-captcha-answer"
+                ></v-text-field>
               </v-col>
             </v-row>
           </v-container>
@@ -34,7 +47,7 @@
         <v-btn @click="close"><v-icon start>mdi-cancel</v-icon>Cancel</v-btn>
         <v-btn
           color="primary"
-          :disabled="!valid || sending"
+          :disabled="!valid || sending || captchaLoading || !captchaToken"
           :loading="sending"
           data-test="send-contact-email"
           @click="submit"
@@ -56,6 +69,10 @@ const emit = defineEmits<{ close: [] }>()
 
 const email = ref<string>()
 const text = ref<string>()
+const captchaAnswer = ref<string>()
+const captchaQuestion = ref<string>()
+const captchaToken = ref<string>()
+const captchaLoading = ref(false)
 const valid = ref(false)
 const show = ref(props.open)
 const sending = ref(false)
@@ -63,11 +80,12 @@ const error = ref<string>()
 const dialogSize = {}
 
 const { required, isEmail } = useValidations()
-const { sendEmailToAlias, sendEmailToTeam } = useContact()
+const { contactCaptchaChallenge, sendEmailToAlias, sendEmailToTeam } = useContact()
 
 const reset = () => {
   email.value = undefined
   text.value = undefined
+  captchaAnswer.value = undefined
   error.value = undefined
 }
 
@@ -76,21 +94,51 @@ const close = () => {
   emit('close')
 }
 
+const loadCaptcha = async () => {
+  captchaLoading.value = true
+  captchaQuestion.value = undefined
+  captchaToken.value = undefined
+  captchaAnswer.value = undefined
+
+  try {
+    const challenge = await contactCaptchaChallenge()
+    captchaQuestion.value = challenge.question
+    captchaToken.value = challenge.token
+  } catch {
+    error.value = 'Could not load the security check. Please try again.'
+  } finally {
+    captchaLoading.value = false
+  }
+}
+
 const submit = async () => {
-  if (!valid.value || !email.value || !text.value || (!props.alias && !props.teamId)) return
+  if (
+    !valid.value ||
+    !email.value ||
+    !text.value ||
+    !captchaToken.value ||
+    !captchaAnswer.value ||
+    (!props.alias && !props.teamId)
+  )
+    return
 
   sending.value = true
   error.value = undefined
   try {
+    const captcha = {
+      token: captchaToken.value,
+      answer: captchaAnswer.value,
+    }
     if (props.teamId) {
-      await sendEmailToTeam(email.value, text.value, props.teamId)
+      await sendEmailToTeam(email.value, text.value, props.teamId, captcha)
     } else if (props.alias) {
-      await sendEmailToAlias(email.value, text.value, props.alias)
+      await sendEmailToAlias(email.value, text.value, props.alias, captcha)
     }
     reset()
     emit('close')
   } catch {
     error.value = 'Could not send your message. Please try again.'
+    await loadCaptcha()
   } finally {
     sending.value = false
   }
@@ -100,7 +148,11 @@ watch(
   () => props.open,
   (open: boolean) => {
     show.value = open
-    if (open) error.value = undefined
+    if (open) {
+      error.value = undefined
+      void loadCaptcha()
+    }
   },
+  { immediate: true },
 )
 </script>

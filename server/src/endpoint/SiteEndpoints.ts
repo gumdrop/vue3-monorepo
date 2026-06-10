@@ -2,6 +2,7 @@ import { Application, Request, Response } from 'express'
 import type { ResultsSubmitCommand } from '@quizleague/shared'
 import {
   contactPerson,
+  contactCaptchaChallenge,
   contactTeam,
   siteUserForEmail,
   type AliasEmailCommand,
@@ -16,6 +17,7 @@ export default function configure(app: Application) {
   app
     .post(`${root}/result/submit`, postResultSubmit)
     .get(`${root}/site-user-for-email/:email`, getSiteUserForEmail)
+    .get(`${root}/contact/captcha`, getContactCaptcha)
     .post(`${root}/email/team`, postEmailTeam)
     .post(`${root}/email/alias`, postEmailAlias)
   //.post(`$root/save-site-user`, postSaveSiteUser _)
@@ -39,6 +41,11 @@ function parseBody<T>(req: Request) {
 function getSiteUserForEmail(req: Request, res: Response) {
   send(siteUserForEmail(param('email', req)), res)
 }
+
+function getContactCaptcha(_req: Request, res: Response) {
+  send(Promise.resolve(contactCaptchaChallenge()), res)
+}
+
 // function postSaveSiteUser(req: Request, res: Response){ send(saveSiteUser(parse[SiteUser](req)), res)}
 function postEmailTeam(req: Request, res: Response) {
   send(contactTeam(parseBody<TeamEmailCommand>(req)), res)

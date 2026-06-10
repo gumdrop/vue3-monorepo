@@ -121,6 +121,7 @@ const mocks = vi.hoisted(() => ({
   fixtureRefs: [] as unknown[],
   fixtureSets: [] as unknown[],
   fixturesForResultSubmission: vi.fn(),
+  contactCaptchaChallenge: vi.fn(),
   sendEmailToAlias: vi.fn(),
   sendEmailToTeam: vi.fn(),
   getNamedTextId: vi.fn(),
@@ -351,6 +352,7 @@ vi.mock('@/services/CompetitionService', () => ({
 
 vi.mock('@/services/ContactService', () => ({
   useContact: () => ({
+    contactCaptchaChallenge: mocks.contactCaptchaChallenge,
     sendEmailToAlias: mocks.sendEmailToAlias,
     sendEmailToTeam: mocks.sendEmailToTeam,
   }),
@@ -1105,6 +1107,10 @@ beforeEach(() => {
     { fixtures: questionFixtureSet, competition: leagueCompetition },
   ])
   mocks.saveSiteUser.mockResolvedValue(undefined)
+  mocks.contactCaptchaChallenge.mockResolvedValue({
+    question: 'What is 2 + 3?',
+    token: 'captcha-token',
+  })
   mocks.sendEmailToAlias.mockResolvedValue(undefined)
   mocks.sendEmailToTeam.mockResolvedValue(undefined)
   mocks.singleSeasonHighlights.mockReturnValue([
@@ -1423,12 +1429,16 @@ describe('remaining site content and competition components', () => {
         open: true,
       },
     })
+    await flushPromises()
 
     await wrapper.get('button').trigger('click')
 
     expect(wrapper.text()).toContain('Contact League Secretary')
     expect(wrapper.get('input[aria-label="Your email address"]').exists()).toBe(true)
     expect(wrapper.get('textarea[aria-label="Message"]').exists()).toBe(true)
+    expect(wrapper.get('[data-test="contact-captcha-answer"]').attributes('aria-label')).toBe(
+      'Security check',
+    )
     expect(wrapper.emitted('close')).toEqual([[]])
   })
 
@@ -1440,9 +1450,11 @@ describe('remaining site content and competition components', () => {
         open: true,
       },
     })
+    await flushPromises()
 
     await wrapper.get('input[aria-label="Your email address"]').setValue('sender@example.com')
     await wrapper.get('textarea[aria-label="Message"]').setValue('Can someone contact me?')
+    await wrapper.get('[data-test="contact-captcha-answer"]').setValue('5')
     await wrapper.get('[data-test="send-contact-email"]').trigger('click')
     await flushPromises()
 
@@ -1450,6 +1462,7 @@ describe('remaining site content and competition components', () => {
       'sender@example.com',
       'Can someone contact me?',
       'secretary',
+      { token: 'captcha-token', answer: '5' },
     )
     expect(wrapper.emitted('close')).toEqual([[]])
   })
@@ -1463,13 +1476,16 @@ describe('remaining site content and competition components', () => {
         open: true,
       },
     })
+    await flushPromises()
 
     await wrapper.get('input[aria-label="Your email address"]').setValue('sender@example.com')
     await wrapper.get('textarea[aria-label="Message"]').setValue('Can someone contact me?')
+    await wrapper.get('[data-test="contact-captcha-answer"]').setValue('5')
     await wrapper.get('[data-test="send-contact-email"]').trigger('click')
     await flushPromises()
 
     expect(wrapper.text()).toContain('Could not send your message. Please try again.')
+    expect(mocks.contactCaptchaChallenge).toHaveBeenCalledTimes(2)
     expect(wrapper.emitted('close')).toBeUndefined()
   })
 
@@ -1489,8 +1505,10 @@ describe('remaining site content and competition components', () => {
       .findAll('button')
       .find((button) => button.text().includes('Contact Us'))
       ?.trigger('click')
+    await flushPromises()
     await info.get('input[aria-label="Your email address"]').setValue('sender@example.com')
     await info.get('textarea[aria-label="Message"]').setValue('Can someone contact us?')
+    await info.get('[data-test="contact-captcha-answer"]').setValue('5')
     await info.get('[data-test="send-contact-email"]').trigger('click')
     await flushPromises()
 
@@ -1498,6 +1516,7 @@ describe('remaining site content and competition components', () => {
       'sender@example.com',
       'Can someone contact us?',
       team.id,
+      { token: 'captcha-token', answer: '5' },
     )
   })
 
