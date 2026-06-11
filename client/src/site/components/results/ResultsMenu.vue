@@ -8,8 +8,6 @@
 
     <SideMenuItem to="/results/questions" title="Questions" />
 
-    <SideMenuItem to="/results/roundup" title="Roundup" />
-
     <SideMenuItem to="/results/submit" v-if="user" title="Submit Results" />
 
     <SideMenuItem to="/results/submit/instructions" v-if="!user" title="Submit Results" />

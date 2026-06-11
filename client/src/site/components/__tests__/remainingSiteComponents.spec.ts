@@ -60,8 +60,6 @@ import QuestionsPage from '../results/QuestionsPage.vue'
 import QuestionsTitle from '../results/QuestionsTitle.vue'
 import ResultsMenu from '../results/ResultsMenu.vue'
 import ResultsTitle from '../results/ResultsTitle.vue'
-import RoundupPage from '../results/RoundupPage.vue'
-import RoundupTitle from '../results/RoundupTitle.vue'
 import RoundupsPage from '../results/RoundupsPage.vue'
 import RoundupsTitle from '../results/RoundupsTitle.vue'
 import SubmitResult from '../results/SubmitResult.vue'
@@ -985,12 +983,6 @@ const sitePageCases: SitePageCase[] = [
     main: { component: RoundupsPage },
   },
   {
-    name: 'roundup page',
-    title: { component: RoundupTitle },
-    sidenav: { component: ResultsMenu },
-    main: { component: RoundupPage },
-  },
-  {
     name: 'submit result instructions page',
     title: { component: SubmitResultsTitle },
     sidenav: { component: ResultsMenu },
@@ -1363,17 +1355,13 @@ describe('remaining site title and navigation components', () => {
     const roundups = mountSite(RoundupsTitle)
     expect(roundups.text()).toContain('Roundups')
     expect(roundups.text()).toContain('2025/2026')
-
-    const roundup = mountSite(RoundupTitle)
-    expect(roundup.text()).toContain('Roundup')
-    expect(roundup.text()).toContain('2025/2026')
   })
 
   it('renders menus from loaded collections and user state', async () => {
     const resultsMenu = mountSite(ResultsMenu)
     expect(resultsMenu.text()).toContain('All Results')
     expect(resultsMenu.text()).toContain('Questions')
-    expect(resultsMenu.text()).toContain('Roundup')
+    expect(resultsMenu.text()).not.toContain('Roundup\n') // Check for not containing Roundup as a standalone word
     expect(resultsMenu.text()).toContain('Submit Results')
 
     const teamsMenu = mountSite(TeamsMenu)
@@ -1976,10 +1964,13 @@ describe('remaining fixture, home, and result components', () => {
     expect(mocks.spentFixtures).toHaveBeenCalledWith(mocks.seasonId)
     expect(roundupsPage.text()).toContain('2026/06/07: Week 2')
     expect(roundupsPage.text()).toContain('This is an awesome roundup summary!')
+    expect(roundupsPage.text()).toContain('League')
+    expect(roundupsPage.text()).toContain('League season roundup.')
 
     // Test RoundupsPage with no roundups
     mocks.spentFixtures.mockResolvedValue([])
     mocks.fixtureSets = []
+    mocks.roundups.mockResolvedValue([])
     roundupsPage = mountSite(RoundupsPage)
     await flushPromises()
     expect(roundupsPage.text()).toContain('No roundups are available for this season.')
@@ -1998,12 +1989,6 @@ describe('remaining fixture, home, and result components', () => {
     roundupsPage = mountSite(RoundupsPage)
     await flushPromises()
     expect(roundupsPage.text()).toContain('No roundups are available for this season.')
-
-    const roundupPage = mountSite(RoundupPage)
-    await flushPromises()
-    expect(mocks.roundups).toHaveBeenCalledWith(mocks.seasonId)
-    expect(roundupPage.text()).toContain('League')
-    expect(roundupPage.text()).toContain('League season roundup.')
 
     const submitResults = mountSite(SubmitResults, {
       global: { stubs: { ...siteComponentStubs, SubmitResult: simpleStub('submit-result') } },
