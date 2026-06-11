@@ -1,7 +1,7 @@
 import type { Application, Request, Response } from 'express'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import configure from '../MaintainEndpoints'
-import { regenerateFixtureSetResultsSummary } from '../TaskFunctions'
+import { regenerateCompetitionRoundup, regenerateFixtureSetResultsSummary } from '../TaskFunctions'
 import { migrateTeamMemberships } from '../TeamMembershipMigration'
 import { calculateStats } from '../StatisticsUtils'
 import { recalculateSeasonStatisticsAggregation } from '../SeasonStatisticsAggregationUtils'
@@ -9,6 +9,12 @@ import { rebuildSeasonResultIndex } from '../ResultIndexUtils'
 import { load } from '../../storage/Storage'
 
 vi.mock('../TaskFunctions', () => ({
+  regenerateCompetitionRoundup: vi.fn().mockResolvedValue({
+    path: 'season/season-1/competition/league',
+    roundup: { id: 'summary-text', path: 'text/summary-text' },
+    roundupGeneratedAt: '2026-06-11T09:00:00.000Z',
+    roundupModel: 'gemini-test',
+  }),
   regenerateFixtureSetResultsSummary: vi.fn().mockResolvedValue({
     path: 'season/season-1/competition/league/fixtures/week-1',
     resultsSummary: { id: 'summary-text', path: 'text/summary-text' },
@@ -229,6 +235,36 @@ describe('MaintainEndpoints', () => {
       resultsSummaryText: 'Fresh AI summary',
       resultsSummaryGeneratedAt: '2026-05-31T09:00:00.000Z',
       resultsSummaryModel: 'gemini-test',
+    })
+  })
+
+  it('routes AI roundup regeneration to the task function', async () => {
+    const { app, routes } = createApp()
+    configure(app)
+
+    const response = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as unknown as Response
+
+    routes.get('POST /rest/maintain/competition/roundup/regenerate')?.(
+      {
+        body: JSON.stringify({
+          competitionPath: 'season/season-1/competition/league',
+        }),
+      } as Request,
+      response,
+    )
+    await flushPromises()
+
+    expect(regenerateCompetitionRoundup).toHaveBeenCalledWith('season/season-1/competition/league')
+    expect(response.json).toHaveBeenCalledWith({
+      competitionPath: 'season/season-1/competition/league',
+      roundup: { id: 'summary-text', path: 'text/summary-text' },
+      roundupText: 'Fresh AI summary',
+      roundupGeneratedAt: '2026-06-11T09:00:00.000Z',
+      roundupModel: 'gemini-test',
     })
   })
 

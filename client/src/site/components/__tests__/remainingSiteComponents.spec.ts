@@ -8,6 +8,7 @@ import LoginTitle from '../auth/LoginTitle.vue'
 import LoggedOnMenu from '../auth/LoggedOnMenu.vue'
 import SubTitle from '../common/SubTitle.vue'
 import CompetitionLink from '../competition/CompetitionLink.vue'
+import CompetitionRoundup from '../competition/CompetitionRoundup.vue'
 import CompetitionTitle from '../competition/CompetitionTitle.vue'
 import CompetitionsMain from '../competition/CompetitionsMain.vue'
 import CompetitionsMenu from '../competition/CompetitionsMenu.vue'
@@ -59,6 +60,8 @@ import QuestionsPage from '../results/QuestionsPage.vue'
 import QuestionsTitle from '../results/QuestionsTitle.vue'
 import ResultsMenu from '../results/ResultsMenu.vue'
 import ResultsTitle from '../results/ResultsTitle.vue'
+import RoundupPage from '../results/RoundupPage.vue'
+import RoundupTitle from '../results/RoundupTitle.vue'
 import RoundupsPage from '../results/RoundupsPage.vue'
 import RoundupsTitle from '../results/RoundupsTitle.vue'
 import SubmitResult from '../results/SubmitResult.vue'
@@ -139,6 +142,7 @@ const mocks = vi.hoisted(() => ({
   questionPapers: vi.fn(),
   route: { query: {} as Record<string, unknown>, path: '/' },
   routerPush: vi.fn(),
+  roundups: vi.fn(),
   saveSiteUser: vi.fn(),
   setCompetitionSeason: vi.fn(),
   setResultsSeason: vi.fn(),
@@ -347,6 +351,7 @@ vi.mock('@/services/CompetitionService', () => ({
       __data: mocks.collections.get(`${path}/leaguetable`) ?? [],
     }),
     nextFixtures: mocks.nextFixtures,
+    roundups: mocks.roundups,
   }),
 }))
 
@@ -641,6 +646,7 @@ const remainingSiteStubs = {
   AllSeasonsResultTypes: simpleStub('all-seasons-result-types'),
   AllSeasonsStats: simpleStub('all-seasons-stats'),
   CompetitionLink: simpleStub('competition-link'),
+  CompetitionRoundup: simpleStub('competition-roundup'),
   CompetitionStatisticsMenu: simpleStub('competition-statistics-menu'),
   EventsTab: simpleStub('events-tab'),
   FetchActions: simpleStub('fetch-actions'),
@@ -725,6 +731,7 @@ const leagueCompetition = {
   name: 'League',
   icon: 'mdi-trophy',
   text: { id: 'league-text', path: 'text/league-text' },
+  roundup: { id: 'league-roundup', path: 'text/league-roundup' },
 }
 
 const cupCompetition = {
@@ -978,6 +985,12 @@ const sitePageCases: SitePageCase[] = [
     main: { component: RoundupsPage },
   },
   {
+    name: 'roundup page',
+    title: { component: RoundupTitle },
+    sidenav: { component: ResultsMenu },
+    main: { component: RoundupPage },
+  },
+  {
     name: 'submit result instructions page',
     title: { component: SubmitResultsTitle },
     sidenav: { component: ResultsMenu },
@@ -1106,6 +1119,17 @@ beforeEach(() => {
   mocks.questionPapers.mockResolvedValue([
     { fixtures: questionFixtureSet, competition: leagueCompetition },
   ])
+  mocks.roundups.mockResolvedValue([
+    {
+      competition: leagueCompetition,
+      text: {
+        id: 'league-roundup',
+        path: 'text/league-roundup',
+        text: 'League season roundup.',
+        mimeType: 'text/markdown',
+      },
+    },
+  ])
   mocks.saveSiteUser.mockResolvedValue(undefined)
   mocks.contactCaptchaChallenge.mockResolvedValue({
     question: 'What is 2 + 3?',
@@ -1204,6 +1228,12 @@ beforeEach(() => {
     id: 'summary',
     path: 'text/summary',
     text: 'Alpha opened the season with a win.',
+    mimeType: 'text/markdown',
+  })
+  mocks.textsByPath.set('text/league-roundup', {
+    id: 'league-roundup',
+    path: 'text/league-roundup',
+    text: 'League season roundup.',
     mimeType: 'text/markdown',
   })
   mocks.venuesById.set(venue.id, venue)
@@ -1333,12 +1363,17 @@ describe('remaining site title and navigation components', () => {
     const roundups = mountSite(RoundupsTitle)
     expect(roundups.text()).toContain('Roundups')
     expect(roundups.text()).toContain('2025/2026')
+
+    const roundup = mountSite(RoundupTitle)
+    expect(roundup.text()).toContain('Roundup')
+    expect(roundup.text()).toContain('2025/2026')
   })
 
   it('renders menus from loaded collections and user state', async () => {
     const resultsMenu = mountSite(ResultsMenu)
     expect(resultsMenu.text()).toContain('All Results')
     expect(resultsMenu.text()).toContain('Questions')
+    expect(resultsMenu.text()).toContain('Roundup')
     expect(resultsMenu.text()).toContain('Submit Results')
 
     const teamsMenu = mountSite(TeamsMenu)
@@ -1531,6 +1566,9 @@ describe('remaining site content and competition components', () => {
         props: { path: leagueCompetition.path.replaceAll('/', '|') },
       }).text(),
     ).toContain('league-text')
+    expect(
+      mountSite(CompetitionRoundup, { props: { competition: leagueCompetition } }).text(),
+    ).toContain('league-roundup')
     expect(
       mountSite(SubsidiaryCompetition, {
         props: { path: leagueCompetition.path.replaceAll('/', '|') },
@@ -1960,6 +1998,12 @@ describe('remaining fixture, home, and result components', () => {
     roundupsPage = mountSite(RoundupsPage)
     await flushPromises()
     expect(roundupsPage.text()).toContain('No roundups are available for this season.')
+
+    const roundupPage = mountSite(RoundupPage)
+    await flushPromises()
+    expect(mocks.roundups).toHaveBeenCalledWith(mocks.seasonId)
+    expect(roundupPage.text()).toContain('League')
+    expect(roundupPage.text()).toContain('League season roundup.')
 
     const submitResults = mountSite(SubmitResults, {
       global: { stubs: { ...siteComponentStubs, SubmitResult: simpleStub('submit-result') } },

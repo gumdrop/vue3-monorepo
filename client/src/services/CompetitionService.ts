@@ -3,10 +3,19 @@ import FixturesDAO from '@/dao/FixturesDAO'
 import LeagueTableDAO from '@/dao/LeagueTableDAO'
 import ResultIndexDAO from '@/dao/ResultIndexDAO'
 import SeasonDao from '@/dao/SeasonDAO'
+import TextDAO from '@/dao/TextDAO'
 import type Competition from '@/entity/Competition'
 import type { name } from '@/entity/Competition'
+import type Text from '@/entity/Text'
 import { currentLocalDate } from './DateService'
 import { completedFixtureSets } from './FixtureSetCompletion'
+
+export interface CompetitionRoundup {
+  competition: Competition
+  text: Text
+}
+
+const isTeamCompetition = (competition: Competition) => competition._name !== 'singleton'
 
 export const useCompetitions = () => {
   async function competitions(seasonId: string) {
@@ -49,6 +58,21 @@ export const useCompetitions = () => {
       .map((f) => FixturesDAO.getByPath(f.path))
   }
 
+  async function roundups(seasonId: string) {
+    const roundupItems: CompetitionRoundup[] = []
+
+    for (const competition of (await competitions(seasonId)).filter(isTeamCompetition)) {
+      if (!competition.roundup) continue
+
+      const text = await TextDAO.getData(competition.roundup)
+      if (text?.text?.trim()) {
+        roundupItems.push({ competition, text })
+      }
+    }
+
+    return roundupItems.sort((a, b) => a.competition.name.localeCompare(b.competition.name))
+  }
+
   function leagueTables(competitionPath: string) {
     const doc = CompetitionDAO.getByPath(competitionPath)
     return LeagueTableDAO.nestedCollection(doc)
@@ -67,6 +91,7 @@ export const useCompetitions = () => {
     firstClassCompetitions,
     nextFixtures,
     latestResults,
+    roundups,
     leagueTables,
     fixtures,
     competitionOfType,

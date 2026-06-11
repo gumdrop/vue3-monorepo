@@ -12,6 +12,9 @@
       <v-col cols="12">
         <LeagueTables :path="key" />
       </v-col>
+      <v-col cols="12">
+        <CompetitionRoundup :competition="item" />
+      </v-col>
     </v-row>
   </v-container>
 </template>
@@ -24,6 +27,7 @@ import QlNamedText from '../text/QlNamedText.vue'
 import QlText from '../text/QlText.vue'
 import QlTextBox from '../text/QlTextBox.vue'
 import LeagueTables from './LeagueTables.vue'
+import CompetitionRoundup from './CompetitionRoundup.vue'
 import { useLayout } from '@/services/LayoutService'
 const { gridSize } = useLayout()
 

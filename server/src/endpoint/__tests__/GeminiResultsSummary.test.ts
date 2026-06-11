@@ -1,5 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { generateFixtureSetResultsSummary } from '../GeminiResultsSummary'
+import {
+  generateCompetitionRoundup,
+  generateFixtureSetResultsSummary,
+} from '../GeminiResultsSummary'
 
 const input = {
   competitionName: 'League Championship',
@@ -74,6 +77,54 @@ describe('GeminiResultsSummary', () => {
     expect(body.contents[0].parts[0].text).toContain(
       'Return only Markdown body text, with no heading.',
     )
+  })
+
+  it('builds competition roundup prompts from fixture-set summaries and result lines', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            finishReason: 'STOP',
+            content: {
+              parts: [{ text: 'Alpha held off Bravo to take the League Championship.' }],
+            },
+          },
+        ],
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      generateCompetitionRoundup({
+        competitionName: 'League Championship',
+        fixtureSets: [
+          {
+            fixtureSetDescription: 'Week 1',
+            fixtureSetDate: '2026-05-31',
+            summary: 'Alpha opened with a narrow win.',
+            fixtures: [
+              {
+                homeTeam: 'Alpha',
+                awayTeam: 'Bravo',
+                homeScore: 43,
+                awayScore: 42,
+              },
+            ],
+          },
+        ],
+      }),
+    ).resolves.toEqual({
+      text: 'Alpha held off Bravo to take the League Championship.',
+      model: 'gemini-3.5-flash',
+    })
+
+    const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
+    const prompt = body.contents[0].parts[0].text
+    expect(prompt).toContain('completed team competition')
+    expect(prompt).toContain('Fixture-set summary: Alpha opened with a narrow win.')
+    expect(prompt).toContain('- Alpha 43-42 Bravo')
+    expect(prompt).toContain('Return only Markdown body text, with no heading.')
   })
 
   it('rejects summaries that Gemini reports as truncated', async () => {

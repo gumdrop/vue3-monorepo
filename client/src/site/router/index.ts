@@ -121,6 +121,15 @@ const router = createRouter({
           },
         },
         {
+          path: 'roundup',
+          name: 'roundup',
+          components: {
+            default: () => import('../components/results/RoundupPage.vue'),
+            title: () => import('../components/results/RoundupTitle.vue'),
+            sidenav: () => import('../components/results/ResultsMenu.vue'),
+          },
+        },
+        {
           path: 'submit/instructions',
           name: 'submit instructions',
           components: {

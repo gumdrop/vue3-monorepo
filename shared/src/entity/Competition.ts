@@ -9,6 +9,9 @@ export interface Competition extends Entity {
   name: string
   text: PathAndId<Text>
   duration: number
+  roundup?: PathAndId<Text>
+  roundupGeneratedAt?: string
+  roundupModel?: string
   readonly _name: name
   icon?: string
   readonly _type: string

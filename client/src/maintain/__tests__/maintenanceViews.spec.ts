@@ -83,6 +83,10 @@ const mocks = vi.hoisted(() => ({
     saveForTeam: vi.fn(),
   },
   textDAO: {
+    getByPath: vi.fn((pathish: { id?: string; path: string } | string) => {
+      const path = typeof pathish === 'string' ? pathish : pathish.path
+      return { id: path.split('/').at(-1), path }
+    }),
     getData: vi.fn(),
     getDataByPath: vi.fn(),
     save: vi.fn(),
@@ -198,6 +202,10 @@ const resetDaoMocks = () => {
   mocks.teamMemberDAO.saveForTeam.mockResolvedValue(undefined)
   mocks.textDAO.getData.mockResolvedValue(undefined)
   mocks.textDAO.getDataByPath.mockResolvedValue(undefined)
+  mocks.textDAO.getByPath.mockImplementation((pathish: { id?: string; path: string } | string) => {
+    const path = typeof pathish === 'string' ? pathish : pathish.path
+    return { id: path.split('/').at(-1), path }
+  })
   mocks.textDAO.save.mockResolvedValue(undefined)
   mocks.userDAO.getDataById.mockResolvedValue(undefined)
   mocks.userDAO.list.mockResolvedValue([])
@@ -1264,6 +1272,91 @@ describe('maintenance edit views', () => {
         text: { id: 'uuid-1', path: 'text/uuid-1' },
       }),
     )
+  })
+
+  it('loads and saves linked competition roundup text for team competitions', async () => {
+    mocks.route.params = { seasonId: '2026-2027', id: 'league' }
+    mocks.competitionDAO.getDataByPath.mockResolvedValue({
+      id: 'league',
+      path: 'season/2026-2027/competition/league',
+      name: 'League',
+      _name: 'league',
+      duration: 1,
+      roundup: { id: 'league-roundup', path: 'text/league-roundup' },
+    })
+    mocks.textDAO.getData.mockResolvedValue({
+      id: 'league-roundup',
+      path: 'text/league-roundup',
+      text: 'League roundup',
+      mimeType: 'text/markdown',
+    })
+    const wrapper = await mountMaintenance(CompetitionEdit)
+
+    expect(wrapper.text()).toContain('AI Roundup')
+    expect(mocks.textDAO.getData).toHaveBeenCalledWith({
+      id: 'league-roundup',
+      path: 'text/league-roundup',
+    })
+
+    await wrapper.findAll('[data-test="text-edit-save"]')[1].trigger('click')
+
+    expect(mocks.textDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'league-roundup',
+        path: 'text/league-roundup',
+        text: 'League roundup',
+      }),
+    )
+    expect(mocks.competitionDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'league',
+        roundup: { id: 'league-roundup', path: 'text/league-roundup' },
+      }),
+    )
+    expect(wrapper.text()).toContain('AI roundup saved')
+  })
+
+  it('regenerates the AI roundup from the competition page', async () => {
+    mocks.route.params = { seasonId: '2026-2027', id: 'league' }
+    mocks.competitionDAO.getDataByPath.mockResolvedValue({
+      id: 'league',
+      path: 'season/2026-2027/competition/league',
+      name: 'League',
+      _name: 'league',
+      duration: 1,
+    })
+    mocks.axiosPost.mockResolvedValue({
+      data: {
+        roundup: { id: 'league-roundup', path: 'text/league-roundup' },
+        roundupText: 'Fresh AI roundup',
+        roundupGeneratedAt: '2026-06-11T09:00:00.000Z',
+        roundupModel: 'gemini-test',
+      },
+    })
+    const wrapper = await mountMaintenance(CompetitionEdit)
+
+    await wrapper.find('[data-test="regenerate-roundup-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mocks.axiosPost).toHaveBeenCalledWith('/rest/maintain/competition/roundup/regenerate', {
+      competitionPath: 'season/2026-2027/competition/league',
+    })
+    expect(wrapper.text()).toContain('AI roundup regenerated')
+  })
+
+  it('does not show the AI roundup card for singleton competitions', async () => {
+    mocks.route.params = { seasonId: '2026-2027', id: 'finals' }
+    mocks.competitionDAO.getDataByPath.mockResolvedValue({
+      id: 'finals',
+      path: 'season/2026-2027/competition/finals',
+      name: 'Finals Night',
+      _name: 'singleton',
+      duration: 1,
+    })
+    const wrapper = await mountMaintenance(CompetitionEdit)
+
+    expect(wrapper.text()).not.toContain('AI Roundup')
+    expect(wrapper.find('[data-test="regenerate-roundup-button"]').exists()).toBe(false)
   })
 
   it('saves a new competition with a uuid id and path', async () => {
