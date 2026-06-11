@@ -172,7 +172,7 @@ The Competitions public visitor feature reads the canonical data model directly.
 - `globalText/site`
 - referenced `text/{textId}` documents
 
-This public read contract is read-only and does not make `users`, team user subcollections, `ApplicationContext`, match report bodies, private maintenance collections, raw AI/provider data, credentials, or admin-only data public. It also does not add competition season index, competition season summary, or competition summary documents. Public text rendering must resolve references to top-level `text/{textId}` documents rather than embedding text bodies inside other documents.
+This public read contract is read-only and does not make `users`, team user subcollections, `ApplicationContext`, match report bodies, private maintenance collections, raw AI/provider data, credentials, or admin-only data public. It also does not add competition season index, competition season summary, or competition summary documents. Public competition roundups are exposed only as references to top-level `text/{textId}` documents plus safe generation metadata. Public text rendering must resolve references to top-level `text/{textId}` documents rather than embedding text bodies inside other documents.
 
 ## Public Team Browse Access
 
@@ -315,15 +315,18 @@ Current public text keys:
 
 Competitions exist within a season. There is more than one competition type.
 
-| Field      | Type              | Required | Notes                                                                            |
-| ---------- | ----------------- | -------- | -------------------------------------------------------------------------------- |
-| `id`       | `UUID`            | Yes      | Canonical competition identifier within its season.                              |
-| `name`     | `string`          | Yes      | Competition display name.                                                        |
-| `text`     | `Reference<Text>` | Yes      | Reference to competition text.                                                   |
-| `duration` | `number`          | Yes      | Competition duration in minutes.                                                 |
-| `icon`     | `string`          | No       | Icon identifier or asset reference.                                              |
-| `_name`    | `string`          | Yes      | Read-only name of the competition type, such as `league`, `cup`, or `singleton`. |
-| `_type`    | `string`          | Yes      | Internal competition type identifier.                                            |
+| Field                | Type              | Required | Notes                                                                                                                       |
+| -------------------- | ----------------- | -------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `id`                 | `UUID`            | Yes      | Canonical competition identifier within its season.                                                                         |
+| `name`               | `string`          | Yes      | Competition display name.                                                                                                   |
+| `text`               | `Reference<Text>` | Yes      | Reference to competition text.                                                                                              |
+| `duration`           | `number`          | Yes      | Competition duration in minutes.                                                                                            |
+| `roundup`            | `Reference<Text>` | No       | Reference to the normal Markdown text document containing the public AI-generated roundup for a completed team competition. |
+| `roundupGeneratedAt` | `string`          | No       | UTC timestamp string for when the public roundup was generated.                                                             |
+| `roundupModel`       | `string`          | No       | Gemini model name used for the public roundup. Raw prompts and provider responses are not stored.                           |
+| `icon`               | `string`          | No       | Icon identifier or asset reference.                                                                                         |
+| `_name`              | `string`          | Yes      | Read-only name of the competition type, such as `league`, `cup`, or `singleton`.                                            |
+| `_type`              | `string`          | Yes      | Internal competition type identifier.                                                                                       |
 
 ## Competition Subtypes
 

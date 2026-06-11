@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({
     id: typeof entity === 'string' ? entity.split('/').pop() : entity.id,
     path: typeof entity === 'string' ? entity : entity.path,
   })),
+  generateCompetitionRoundup: vi.fn(),
   generateFixtureSetResultsSummary: vi.fn(),
   list: vi.fn(),
   load: vi.fn(),
@@ -25,6 +26,7 @@ vi.mock('../../storage/Storage', () => ({
 }))
 
 vi.mock('../GeminiResultsSummary', () => ({
+  generateCompetitionRoundup: mocks.generateCompetitionRoundup,
   generateFixtureSetResultsSummary: mocks.generateFixtureSetResultsSummary,
 }))
 
@@ -38,6 +40,7 @@ vi.mock('../SeasonStatisticsAggregationUtils', () => ({
 }))
 
 import {
+  regenerateCompetitionRoundup,
   regenerateFixtureSetResultsSummary,
   resultSubmission,
   statsRegenerate,
@@ -201,6 +204,235 @@ describe('TaskFunctions', () => {
     expect(mocks.save).toHaveBeenCalledWith(fixtureSet)
 
     queueMicrotaskSpy.mockRestore()
+  })
+
+  it('creates a competition roundup when the final team competition fixture set is complete', async () => {
+    const user = { id: 'user-1', path: 'user/user-1' }
+    const competition = {
+      id: 'league',
+      path: 'season/season-1/competition/league',
+      name: 'League',
+      _name: 'league',
+    }
+    const teamA = {
+      id: 'team-a',
+      path: 'team/team-a',
+      name: 'Alpha',
+      shortName: 'Alpha',
+    }
+    const teamB = {
+      id: 'team-b',
+      path: 'team/team-b',
+      name: 'Bravo',
+      shortName: 'Bravo',
+    }
+    const teamC = {
+      id: 'team-c',
+      path: 'team/team-c',
+      name: 'Charlie',
+      shortName: 'Charlie',
+    }
+    const teamD = {
+      id: 'team-d',
+      path: 'team/team-d',
+      name: 'Delta',
+      shortName: 'Delta',
+    }
+    const weekTwoPath = 'season/season-1/competition/league/fixtures/week-2'
+    const weekTwoFixturePath = `${weekTwoPath}/fixture/fixture-3`
+    const fixtureOne = {
+      id: 'fixture-1',
+      path: fixturePath('fixture-1'),
+      home: { id: 'team-a', path: 'team/team-a' },
+      away: { id: 'team-b', path: 'team/team-b' },
+    }
+    const fixtureTwo = {
+      id: 'fixture-2',
+      path: fixturePath('fixture-2'),
+      home: { id: 'team-c', path: 'team/team-c' },
+      away: { id: 'team-d', path: 'team/team-d' },
+      result: { homeScore: 44, awayScore: 41 },
+    }
+    const fixtureThree = {
+      id: 'fixture-3',
+      path: weekTwoFixturePath,
+      home: { id: 'team-a', path: 'team/team-a' },
+      away: { id: 'team-d', path: 'team/team-d' },
+      result: { homeScore: 40, awayScore: 39 },
+    }
+    const weekOne = {
+      id: 'week-1',
+      path: fixtureSetPath,
+      description: 'Week 1',
+      date: '2026-05-31',
+      start: '19:30',
+      resultsSummary: { id: 'summary-week-1', path: 'text/summary-week-1' },
+    }
+    const weekTwo = {
+      id: 'week-2',
+      path: weekTwoPath,
+      description: 'Week 2',
+      date: '2026-06-07',
+      start: '19:30',
+      resultsSummary: { id: 'summary-week-2', path: 'text/summary-week-2' },
+    }
+    const weekOneSummary = {
+      id: 'summary-week-1',
+      path: 'text/summary-week-1',
+      text: 'Old week 1 summary',
+      mimeType: 'text/markdown',
+    }
+    const weekTwoSummary = {
+      id: 'summary-week-2',
+      path: 'text/summary-week-2',
+      text: 'Week 2 belonged to Alpha.',
+      mimeType: 'text/markdown',
+    }
+
+    mocks.load.mockImplementation(async (pathish) => {
+      const path = typeof pathish === 'string' ? pathish : pathish.path
+      if (path === 'user/user-1') return user
+      if (path === competition.path) return competition
+      if (path === fixtureOne.path) return fixtureOne
+      if (path === fixtureSetPath) return weekOne
+      if (path === 'team/team-a') return teamA
+      if (path === 'team/team-b') return teamB
+      if (path === 'team/team-c') return teamC
+      if (path === 'team/team-d') return teamD
+      if (path === 'text/summary-week-1') return weekOneSummary
+      if (path === 'text/summary-week-2') return weekTwoSummary
+      return undefined
+    })
+    mocks.list.mockImplementation(async (type, parent) => {
+      if (type === 'fixtures' && parent === competition.path) return [weekTwo, weekOne]
+      if (type === 'fixture' && parent === fixtureSetPath) return [fixtureOne, fixtureTwo]
+      if (type === 'fixture' && parent === weekTwoPath) return [fixtureThree]
+      if (type === 'report') return []
+      return []
+    })
+    mocks.generateFixtureSetResultsSummary.mockResolvedValue({
+      text: 'Week 1 swung on Alpha.',
+      model: 'gemini-week',
+    })
+    mocks.generateCompetitionRoundup.mockResolvedValue({
+      text: 'League season roundup.',
+      model: 'gemini-roundup',
+    })
+
+    await resultSubmission({
+      fixtures: [{ fixturePath: fixtureOne.path, homeScore: 43, awayScore: 42 }],
+      reportText: undefined,
+      userID: 'user-1',
+    })
+
+    expect(mocks.generateCompetitionRoundup).toHaveBeenCalledWith({
+      competitionName: 'League',
+      fixtureSets: [
+        {
+          fixtureSetDescription: 'Week 1',
+          fixtureSetDate: '2026-05-31',
+          summary: 'Week 1 swung on Alpha.',
+          fixtures: [
+            {
+              homeTeam: 'Alpha',
+              awayTeam: 'Bravo',
+              homeScore: 43,
+              awayScore: 42,
+            },
+            {
+              homeTeam: 'Charlie',
+              awayTeam: 'Delta',
+              homeScore: 44,
+              awayScore: 41,
+            },
+          ],
+        },
+        {
+          fixtureSetDescription: 'Week 2',
+          fixtureSetDate: '2026-06-07',
+          summary: 'Week 2 belonged to Alpha.',
+          fixtures: [
+            {
+              homeTeam: 'Alpha',
+              awayTeam: 'Delta',
+              homeScore: 40,
+              awayScore: 39,
+            },
+          ],
+        },
+      ],
+    })
+    expect(mocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: expect.stringMatching(/^text\//),
+        text: 'League season roundup.',
+        mimeType: 'text/markdown',
+      }),
+    )
+    expect(mocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        path: competition.path,
+        roundup: expect.objectContaining({
+          path: expect.stringMatching(/^text\//),
+        }),
+        roundupGeneratedAt: expect.any(String),
+        roundupModel: 'gemini-roundup',
+      }),
+    )
+  })
+
+  it('rejects manual competition roundup regeneration for unsupported or incomplete competitions', async () => {
+    const competitionPath = 'season/season-1/competition/league'
+
+    mocks.load.mockResolvedValueOnce(undefined)
+    await expect(regenerateCompetitionRoundup(competitionPath)).rejects.toThrow(
+      `Competition not found: ${competitionPath}`,
+    )
+
+    mocks.load.mockResolvedValueOnce({
+      id: 'finals',
+      path: 'season/season-1/competition/finals',
+      _name: 'singleton',
+    })
+    await expect(
+      regenerateCompetitionRoundup('season/season-1/competition/finals'),
+    ).rejects.toThrow('Cannot generate a roundup for a singleton competition')
+
+    mocks.load.mockResolvedValueOnce({
+      id: 'league',
+      path: competitionPath,
+      name: 'League',
+      _name: 'league',
+    })
+    mocks.list.mockResolvedValueOnce([])
+    await expect(regenerateCompetitionRoundup(competitionPath)).rejects.toThrow(
+      'Cannot generate a roundup for a competition with no fixture groups',
+    )
+
+    mocks.load.mockResolvedValueOnce({
+      id: 'league',
+      path: competitionPath,
+      name: 'League',
+      _name: 'league',
+    })
+    mocks.list
+      .mockResolvedValueOnce([
+        {
+          id: 'week-1',
+          path: fixtureSetPath,
+          description: 'Week 1',
+          date: '2026-05-31',
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          id: 'fixture-1',
+          path: fixturePath('fixture-1'),
+        },
+      ])
+    await expect(regenerateCompetitionRoundup(competitionPath)).rejects.toThrow(
+      'Cannot generate a roundup until all fixture groups have results',
+    )
   })
 
   it('does not generate a summary while any fixture in the set is missing a result', async () => {

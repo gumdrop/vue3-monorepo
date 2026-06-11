@@ -9,7 +9,10 @@
           </QlTextBox>
         </div>
       </v-col>
-      
+
+      <v-col cols="12">
+        <CompetitionRoundup :competition="item" />
+      </v-col>
       <v-col cols="12" md="6">
         <LatestResults :path="key" />
       </v-col>
@@ -29,6 +32,7 @@ import QlText from '../text/QlText.vue'
 import QlTextBox from '../text/QlTextBox.vue'
 import LatestResults from './LatestResults.vue'
 import NextFixtures from './NextFixtures.vue'
+import CompetitionRoundup from './CompetitionRoundup.vue'
 import { useLayout } from '@/services/LayoutService'
 const { gridSize } = useLayout()
 

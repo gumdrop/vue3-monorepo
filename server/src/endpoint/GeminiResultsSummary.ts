@@ -21,6 +21,25 @@ export interface FixtureSetSummary {
   model: string
 }
 
+export interface CompetitionRoundupFixtureResult {
+  homeTeam: string
+  awayTeam: string
+  homeScore: number
+  awayScore: number
+}
+
+export interface CompetitionRoundupFixtureSet {
+  fixtureSetDescription: string
+  fixtureSetDate: string
+  summary?: string
+  fixtures: CompetitionRoundupFixtureResult[]
+}
+
+export interface CompetitionRoundupInput {
+  competitionName: string
+  fixtureSets: CompetitionRoundupFixtureSet[]
+}
+
 interface GeminiGenerateContentResponse {
   candidates?: Array<{
     content?: {
@@ -88,12 +107,62 @@ Date: ${input.fixtureSetDate}
 Results and reports:
 ${input.fixtures.map(fixtureLine).join('\n')}`
 
+const resultLine = (fixture: CompetitionRoundupFixtureResult) =>
+  `    - ${fixture.homeTeam} ${fixture.homeScore}-${fixture.awayScore} ${fixture.awayTeam}`
+
+const fixtureSetRoundupLine = (fixtureSet: CompetitionRoundupFixtureSet) => {
+  const summary = fixtureSet.summary?.trim()
+    ? `  Fixture-set summary: ${fixtureSet.summary.trim()}`
+    : '  Fixture-set summary: none available'
+
+  return `- ${fixtureSet.fixtureSetDate}: ${fixtureSet.fixtureSetDescription}
+${summary}
+  Results:
+${fixtureSet.fixtures.map(resultLine).join('\n')}`
+}
+
+const buildCompetitionRoundupPrompt = (
+  input: CompetitionRoundupInput,
+) => `You write concise public season roundup copy for the Chiltern Quiz League.
+
+Summarise this completed team competition using only the fixture-set summaries and results below.
+Mention the main story of the competition, notable runs, close matches, or decisive results where useful.
+Do not list every result.
+Keep it under 250 words.
+Produce Markdown.
+Return only Markdown body text, with no heading.
+Do not return JSON, HTML, or a fenced code block.
+
+Competition: ${input.competitionName}
+
+Completed fixture sets:
+${input.fixtureSets.map(fixtureSetRoundupLine).join('\n')}`
+
 export async function generateFixtureSetResultsSummary(
   input: FixtureSetSummaryInput,
 ): Promise<FixtureSetSummary | undefined> {
+  return generateGeminiSummary(buildPrompt(input), {
+    failureLabel: 'fixture set summary',
+    skipLabel: 'fixture set results summary',
+  })
+}
+
+export async function generateCompetitionRoundup(
+  input: CompetitionRoundupInput,
+): Promise<FixtureSetSummary | undefined> {
+  return generateGeminiSummary(buildCompetitionRoundupPrompt(input), {
+    failureLabel: 'competition roundup',
+    skipLabel: 'competition roundup',
+  })
+}
+
+async function generateGeminiSummary(
+  prompt: string,
+  labels: { failureLabel: string; skipLabel: string },
+): Promise<FixtureSetSummary | undefined> {
   const apiKey = geminiApiKey()
   if (!apiKey) {
-    console.warn('Skipping fixture set results summary: GEMINI_API_KEY is not configured')
+    console.warn(`Skipping ${labels.skipLabel}: GEMINI_API_KEY is not configured`)
     return undefined
   }
 
@@ -111,7 +180,7 @@ export async function generateFixtureSetResultsSummary(
         contents: [
           {
             role: 'user',
-            parts: [{ text: buildPrompt(input) }],
+            parts: [{ text: prompt }],
           },
         ],
         generationConfig: {
@@ -126,7 +195,7 @@ export async function generateFixtureSetResultsSummary(
 
   if (!response.ok) {
     const body = await response.text()
-    console.error(`Gemini fixture set summary failed: ${response.status} ${body}`)
+    console.error(`Gemini ${labels.failureLabel} failed: ${response.status} ${body}`)
     return undefined
   }
 
@@ -134,7 +203,7 @@ export async function generateFixtureSetResultsSummary(
   const candidate = data.candidates?.[0]
   if (candidate?.finishReason === 'MAX_TOKENS') {
     throw new Error(
-      `Gemini fixture set summary was truncated by maxOutputTokens${
+      `Gemini ${labels.failureLabel} was truncated by maxOutputTokens${
         candidate.finishMessage ? `: ${candidate.finishMessage}` : ''
       }`,
     )

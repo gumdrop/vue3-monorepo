@@ -87,6 +87,36 @@
       </v-card-text>
     </v-card>
 
+    <v-card class="mt-4" v-if="!isNew && isTeamCompetition">
+      <v-card-title>AI Roundup</v-card-title>
+      <v-card-text>
+        <v-alert v-if="roundupSuccessMessage" type="success" class="mb-4">
+          {{ roundupSuccessMessage }}
+        </v-alert>
+        <v-alert v-if="roundupErrorMessage" type="error" class="mb-4">
+          {{ roundupErrorMessage }}
+        </v-alert>
+        <div v-if="hasRoundup" data-test="competition-roundup-text">
+          <TextEdit v-model="roundupText" @save="saveRoundupText" />
+        </div>
+        <div v-else class="text-body-2 text-medium-emphasis">
+          No AI roundup has been generated for this competition yet.
+        </div>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer></v-spacer>
+        <v-btn
+          data-test="regenerate-roundup-button"
+          color="primary"
+          :loading="regeneratingRoundup"
+          :disabled="regeneratingRoundup"
+          @click="regenerateRoundup"
+        >
+          Regenerate AI Roundup
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+
     <v-card
       class="mt-4"
       v-if="!isNew && (competition._name === 'league' || leagueTables.length > 0)"
@@ -130,7 +160,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import axios from 'axios'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CompetitionDAO from '@/dao/CompetitionDAO'
 import FixturesDAO from '@/dao/FixturesDAO'
@@ -152,13 +183,21 @@ const competition = ref<any | null>(null)
 const fixtures = ref<Fixtures[]>([])
 const leagueTables = ref<LeagueTable[]>([])
 const text = ref<Text | undefined>()
+const roundupText = ref<Text | undefined>()
 const valid = ref(false)
+const regeneratingRoundup = ref(false)
+const roundupSuccessMessage = ref('')
+const roundupErrorMessage = ref('')
 
 const isNew = computed(() => route.params.id === 'new')
 const seasonId = computed(() => route.params.seasonId as string)
 const hasTextReference = computed(() => {
   return Boolean(competition.value?.text?.id && competition.value?.text?.path)
 })
+const isTeamCompetition = computed(() =>
+  ['league', 'cup', 'subsidiary'].includes(competition.value?._name),
+)
+const hasRoundup = computed(() => roundupText.value !== undefined)
 
 onMounted(async () => {
   if (isNew.value) {
@@ -183,14 +222,28 @@ onMounted(async () => {
       if (hasTextReference.value) {
         text.value = await TextDAO.getData(competition.value.text)
       }
+      await loadRoundupText()
     }
   }
 })
+
+watch(
+  roundupText,
+  (value) => {
+    if (!competition.value || !value) return
+    competition.value.roundup = TextDAO.getByPath(value)
+  },
+  { deep: true },
+)
 
 const save = async () => {
   if (competition.value) {
     if (text.value) {
       await TextDAO.save(text.value)
+    }
+    if (roundupText.value) {
+      await TextDAO.save(roundupText.value)
+      competition.value.roundup = TextDAO.getByPath(roundupText.value)
     }
     if (isNew.value) {
       Object.assign(competition.value, newEntityIdentity(`season/${seasonId.value}/competition`))
@@ -226,6 +279,76 @@ const saveText = async (textEntity: Text) => {
   await TextDAO.save(textEntity)
   text.value = textEntity
 }
+
+const regenerateRoundup = async () => {
+  if (!competition.value) return
+
+  regeneratingRoundup.value = true
+  roundupSuccessMessage.value = ''
+  roundupErrorMessage.value = ''
+
+  try {
+    const response = await axios.post('/rest/maintain/competition/roundup/regenerate', {
+      competitionPath: competition.value.path,
+    })
+    if (!isRoundupResponse(response.data)) {
+      throw new Error('AI roundup response did not include roundup text')
+    }
+    competition.value.roundup = TextDAO.getByPath(response.data.roundup)
+    competition.value.roundupGeneratedAt = response.data.roundupGeneratedAt
+    competition.value.roundupModel = response.data.roundupModel
+    roundupText.value = {
+      ...response.data.roundup,
+      text: response.data.roundupText,
+      mimeType: 'text/markdown',
+    }
+    roundupSuccessMessage.value = 'AI roundup regenerated'
+  } catch {
+    roundupErrorMessage.value = 'AI roundup regeneration failed'
+  } finally {
+    regeneratingRoundup.value = false
+  }
+}
+
+const saveRoundupText = async (textEntity: Text) => {
+  if (!competition.value) return
+
+  roundupText.value = textEntity
+  await TextDAO.save(textEntity)
+  competition.value.roundup = TextDAO.getByPath(textEntity)
+  await CompetitionDAO.save(competition.value)
+  roundupErrorMessage.value = ''
+  roundupSuccessMessage.value = 'AI roundup saved'
+}
+
+const loadRoundupText = async () => {
+  if (!competition.value?.roundup) {
+    roundupText.value = undefined
+    return
+  }
+
+  roundupText.value = await TextDAO.getData(competition.value.roundup)
+}
+
+const isRoundupResponse = (
+  value: unknown,
+): value is {
+  roundup: { id: string; path: string }
+  roundupText: string
+  roundupGeneratedAt?: string
+  roundupModel?: string
+} =>
+  value !== null &&
+  typeof value === 'object' &&
+  isTextReference((value as { roundup?: unknown }).roundup) &&
+  typeof (value as { roundupText?: unknown }).roundupText === 'string' &&
+  (value as { roundupText: string }).roundupText.trim().length > 0
+
+const isTextReference = (value: unknown): value is { id: string; path: string } =>
+  value !== null &&
+  typeof value === 'object' &&
+  typeof (value as { id?: unknown }).id === 'string' &&
+  typeof (value as { path?: unknown }).path === 'string'
 
 const addText = async () => {
   if (!competition.value) return

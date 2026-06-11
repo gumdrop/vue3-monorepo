@@ -41,6 +41,7 @@ describe('site router', () => {
     expect(routePathsByName.get('analytics replay')).toBe('/analytics/replay')
     expect(routePathsByName.get('login')).toBe('/login')
     expect(routePathsByName.get('questions')).toBe('/results/questions')
+    expect(routePathsByName.get('roundup')).toBe('/results/roundup')
     expect(router.options.scrollBehavior?.({} as never, {} as never, null)).toEqual({ top: 0 })
   })
 

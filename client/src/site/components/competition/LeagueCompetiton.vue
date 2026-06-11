@@ -14,6 +14,10 @@
         <LeagueTables :path="key" class="mb-6" />
       </v-col>
 
+      <v-col cols="12">
+        <CompetitionRoundup :competition="item" />
+      </v-col>
+
       <v-col cols="12" md="6">
         <LatestResults :path="key" />
       </v-col>
@@ -34,6 +38,7 @@ import QlTextBox from '../text/QlTextBox.vue'
 import LatestResults from './LatestResults.vue'
 import NextFixtures from './NextFixtures.vue'
 import LeagueTables from './LeagueTables.vue'
+import CompetitionRoundup from './CompetitionRoundup.vue'
 import { useLayout } from '@/services/LayoutService'
 const { gridSize } = useLayout()
 

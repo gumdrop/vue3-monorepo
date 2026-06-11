@@ -1,7 +1,7 @@
 import { Season, Text } from '@quizleague/shared'
 import { Application, Request, Response } from 'express'
 import { entityPath, load } from '../storage/Storage'
-import { regenerateFixtureSetResultsSummary } from './TaskFunctions'
+import { regenerateCompetitionRoundup, regenerateFixtureSetResultsSummary } from './TaskFunctions'
 import { migrateTeamMemberships } from './TeamMembershipMigration'
 import { calculateStats } from './StatisticsUtils'
 import { recalculateSeasonStatisticsAggregation } from './SeasonStatisticsAggregationUtils'
@@ -20,6 +20,7 @@ export default function configureMaintain(app: Application) {
     .post(`${root}/season/:seasonId/result-index/rebuild`, rebuildResultIndex)
     .post(`${root}/team-members/migrate`, migrateTeamMembers)
     .post(`${root}/fixtures/results-summary/regenerate`, regenerateResultsSummary)
+    .post(`${root}/competition/roundup/regenerate`, regenerateRoundup)
 }
 
 function recalculateSeasonStatistics(req: Request, res: Response) {
@@ -90,6 +91,31 @@ async function regenerateSummary(command: RegenerateSummaryCommand) {
     resultsSummaryText: summaryText.text,
     resultsSummaryGeneratedAt: fixtureSet.resultsSummaryGeneratedAt,
     resultsSummaryModel: fixtureSet.resultsSummaryModel,
+  }
+}
+
+function regenerateRoundup(req: Request, res: Response) {
+  return send(regenerateCompetitionRoundupResponse(parseBody<RegenerateRoundupCommand>(req)), res)
+}
+
+interface RegenerateRoundupCommand {
+  competitionPath: string
+}
+
+async function regenerateCompetitionRoundupResponse(command: RegenerateRoundupCommand) {
+  const competition = await regenerateCompetitionRoundup(command.competitionPath)
+  const roundupText = competition.roundup ? await load<Text>(competition.roundup) : undefined
+
+  if (!roundupText?.text?.trim()) {
+    throw new Error('Gemini did not return a competition roundup')
+  }
+
+  return {
+    competitionPath: competition.path,
+    roundup: { id: roundupText.id, path: roundupText.path },
+    roundupText: roundupText.text,
+    roundupGeneratedAt: competition.roundupGeneratedAt,
+    roundupModel: competition.roundupModel,
   }
 }
 

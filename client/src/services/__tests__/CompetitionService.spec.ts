@@ -26,6 +26,9 @@ const mocks = vi.hoisted(() => ({
   seasonDAO: {
     getById: vi.fn(),
   },
+  textDAO: {
+    getData: vi.fn(),
+  },
 }))
 
 vi.mock('@/dao/CompetitionDAO', () => ({
@@ -47,6 +50,10 @@ vi.mock('@/dao/ResultIndexDAO', () => ({
 
 vi.mock('@/dao/SeasonDAO', () => ({
   default: mocks.seasonDAO,
+}))
+
+vi.mock('@/dao/TextDAO', () => ({
+  default: mocks.textDAO,
 }))
 
 const completedFixture = (id: string) => ({
@@ -161,6 +168,61 @@ describe('CompetitionService', () => {
     await expect(useCompetitions().latestResults('competition/league', 1)).resolves.toEqual([
       { id: 'competition/league/fixtures/complete', path: 'competition/league/fixtures/complete' },
     ])
+  })
+
+  it('loads linked roundup text for completed team competitions in the season', async () => {
+    const leagueRoundup = {
+      id: 'league-roundup',
+      path: 'text/league-roundup',
+      text: 'League season roundup.',
+      mimeType: 'text/markdown',
+    }
+    const leagueCompetition = {
+      id: 'league',
+      name: 'League',
+      path: 'season/season-1/competition/league',
+      _name: 'league',
+      roundup: { id: 'league-roundup', path: 'text/league-roundup' },
+    }
+    const cupCompetition = {
+      id: 'cup',
+      name: 'Cup',
+      path: 'season/season-1/competition/cup',
+      _name: 'cup',
+      roundup: { id: 'cup-roundup', path: 'text/cup-roundup' },
+    }
+    const singletonCompetition = {
+      id: 'finals',
+      name: 'Finals',
+      path: 'season/season-1/competition/finals',
+      _name: 'singleton',
+      roundup: { id: 'finals-roundup', path: 'text/finals-roundup' },
+    }
+    mocks.competitionDAO.entities.mockResolvedValue([
+      singletonCompetition,
+      leagueCompetition,
+      cupCompetition,
+    ])
+    mocks.textDAO.getData.mockImplementation(async (textRef: { path: string }) =>
+      textRef.path === 'text/league-roundup'
+        ? leagueRoundup
+        : { id: 'empty', path: textRef.path, text: ' ', mimeType: 'text/markdown' },
+    )
+
+    await expect(useCompetitions().roundups('season-1')).resolves.toEqual([
+      {
+        competition: leagueCompetition,
+        text: leagueRoundup,
+      },
+    ])
+    expect(mocks.textDAO.getData).toHaveBeenCalledWith({
+      id: 'cup-roundup',
+      path: 'text/cup-roundup',
+    })
+    expect(mocks.textDAO.getData).not.toHaveBeenCalledWith({
+      id: 'finals-roundup',
+      path: 'text/finals-roundup',
+    })
   })
 
   it('builds league table collections under a competition document', () => {
