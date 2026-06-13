@@ -1,7 +1,7 @@
 <template>
   <div class="hero-header pa-4 mb-6 elevation-2" :style="containerStyle">
     <QlTitle :title="title" />
-    <div class="d-flex align-center flex-wrap">
+    <div class="d-flex align-center flex-wrap w-100">
       <div v-if="icon" class="header-icon-wrapper mr-4">
         <v-icon color="white" size="32">{{ icon }}</v-icon>
       </div>

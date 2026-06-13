@@ -1513,13 +1513,11 @@ describe('remaining site content and competition components', () => {
   })
 
   it('opens the team contact dialog and sends messages to the team endpoint', async () => {
-    const info = mountSite(TeamInfo, {
-      props: { teamId: team.id },
+    const info = mountSite(TeamTitle, {
+      props: { id: team.id },
       global: {
         stubs: {
           ...siteComponentStubs,
-          TeamStandings: simpleStub('team-standings'),
-          VenueLink: simpleStub('venue-link'),
         },
       },
     })
