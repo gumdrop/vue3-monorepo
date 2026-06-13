@@ -162,7 +162,6 @@ const submit = async (team: Team, text: Text | undefined, users: User[] | undefi
   await TeamDAO.update(team.path, {
     name: team.name,
     shortName: team.shortName,
-    users: deleteField(),
   })
 
   success.value = true
@@ -190,8 +189,7 @@ watch(
   async (team) => {
     if (team) {
       const teamMember = await TeamMemberDAO.getDataForTeam(team)
-      const legacyUsers = (team as Team & { users?: TeamMember['users'] }).users
-      users.value = (await UserDAO.entityList(teamMember ? teamMember.users : legacyUsers)) ?? []
+      users.value = (await UserDAO.entityList(teamMember?.users ?? [])) ?? []
       textDoc.value = TextDAO.getByPath(team.text)
     }
   },

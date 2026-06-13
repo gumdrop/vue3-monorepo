@@ -66,28 +66,24 @@ describe('TaskFunctions', () => {
       path: 'team/team-a',
       name: 'Alpha',
       shortName: 'Alpha',
-      users: [user],
     }
     const teamB = {
       id: 'team-b',
       path: 'team/team-b',
       name: 'Bravo',
       shortName: 'Bravo',
-      users: [],
     }
     const teamC = {
       id: 'team-c',
       path: 'team/team-c',
       name: 'Charlie',
       shortName: 'Charlie',
-      users: [],
     }
     const teamD = {
       id: 'team-d',
       path: 'team/team-d',
       name: 'Delta',
       shortName: 'Delta',
-      users: [],
     }
     const fixtureOne = {
       id: 'fixture-1',
@@ -135,6 +131,15 @@ describe('TaskFunctions', () => {
     })
     mocks.list.mockImplementation(async (type, parent) => {
       if (type === 'team') return [teamA, teamB, teamC, teamD]
+      if (type === 'member' && parent === teamA) {
+        return [
+          {
+            id: 'members',
+            path: 'team/team-a/member/members',
+            users: [user],
+          },
+        ]
+      }
       if (type === 'fixture' && parent === fixtureSetPath) return [fixtureOne, fixtureTwo]
       if (type === 'report' && parent === fixturePath('fixture-1')) {
         return [
@@ -443,7 +448,6 @@ describe('TaskFunctions', () => {
     const teamA = {
       id: 'team-a',
       path: 'team/team-a',
-      users: [user],
     }
     const fixtureOne = {
       id: 'fixture-1',
@@ -500,7 +504,6 @@ describe('TaskFunctions', () => {
     const teamA = {
       id: 'team-a',
       path: 'team/team-a',
-      users: [user],
     }
     const fixture = {
       id: 'fixture-1',

@@ -670,8 +670,7 @@ export const useTeams = () => {
     const teams = (await TeamDAO.list()) ?? []
     for (const team of teams) {
       const teamMember = await TeamMemberDAO.getDataForTeam(team)
-      const legacyUsers = (team as Team & { users?: TeamMember['users'] }).users
-      const users = teamMember ? teamMember.users : (legacyUsers ?? [])
+      const users = teamMember ? teamMember.users : []
 
       if (users.some((user) => user.id === userId)) {
         return team
