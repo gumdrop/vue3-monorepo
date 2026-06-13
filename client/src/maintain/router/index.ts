@@ -84,11 +84,6 @@ const router = createRouter({
       component: () => import('../views/team/TeamList.vue'),
     },
     {
-      path: '/team-members/migrate',
-      name: 'team-members-migrate',
-      component: () => import('../views/team/TeamMemberMigration.vue'),
-    },
-    {
       path: '/team/:id',
       name: 'team-edit',
       component: () => import('../views/team/TeamEdit.vue'),

@@ -6,8 +6,7 @@ export async function teamForUser(user: User) {
 
   for (const team of teams) {
     const teamMember = (await list<TeamMember>('member', team))[0]
-    const legacyUsers = (team as Team & { users?: TeamMember['users'] }).users
-    const users = teamMember ? teamMember.users : (legacyUsers ?? [])
+    const users = teamMember ? teamMember.users : []
 
     if (users.some((member) => member.id === user.id)) {
       return team

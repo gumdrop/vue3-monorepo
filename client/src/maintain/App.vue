@@ -28,7 +28,6 @@ const drawer = ref(true)
 const menuItems = [
   { title: 'Seasons', to: '/season', icon: 'mdi-calendar' },
   { title: 'Teams', to: '/team', icon: 'mdi-account-multiple' },
-  { title: 'Team Members', to: '/team-members/migrate', icon: 'mdi-account-group' },
   { title: 'Venues', to: '/venue', icon: 'mdi-map-marker' },
   { title: 'Users', to: '/user', icon: 'mdi-account' },
   { title: 'Site Users', to: '/siteuser', icon: 'mdi-account-circle' },

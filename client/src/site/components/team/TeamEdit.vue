@@ -120,13 +120,12 @@ import TeamMemberDAO from '@/dao/TeamMemberDAO'
 import TextDAO from '@/dao/TextDAO'
 import UserDAO from '@/dao/UserDAO'
 import type Team from '@/entity/Team'
-import type TeamMember from '@/entity/TeamMember'
 import type Text from '@/entity/Text'
 import User from '@/entity/User'
 import { useLayout } from '@/services/LayoutService'
 import { QuillEditor } from '@vueup/vue-quill'
 import '@vueup/vue-quill/dist/vue-quill.snow.css'
-import { deleteField, DocumentReference } from 'firebase/firestore'
+import { DocumentReference } from 'firebase/firestore'
 import { ref, shallowRef, watch } from 'vue'
 import { useDocument } from 'vuefire'
 import { useValidations } from '../Validation'
@@ -162,7 +161,6 @@ const submit = async (team: Team, text: Text | undefined, users: User[] | undefi
   await TeamDAO.update(team.path, {
     name: team.name,
     shortName: team.shortName,
-    users: deleteField(),
   })
 
   success.value = true
@@ -190,8 +188,7 @@ watch(
   async (team) => {
     if (team) {
       const teamMember = await TeamMemberDAO.getDataForTeam(team)
-      const legacyUsers = (team as Team & { users?: TeamMember['users'] }).users
-      users.value = (await UserDAO.entityList(teamMember ? teamMember.users : legacyUsers)) ?? []
+      users.value = (await UserDAO.entityList(teamMember?.users ?? [])) ?? []
       textDoc.value = TextDAO.getByPath(team.text)
     }
   },

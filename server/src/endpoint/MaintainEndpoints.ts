@@ -2,7 +2,6 @@ import { Season, Text } from '@quizleague/shared'
 import { Application, Request, Response } from 'express'
 import { entityPath, load } from '../storage/Storage'
 import { regenerateCompetitionRoundup, regenerateFixtureSetResultsSummary } from './TaskFunctions'
-import { migrateTeamMemberships } from './TeamMembershipMigration'
 import { calculateStats } from './StatisticsUtils'
 import { recalculateSeasonStatisticsAggregation } from './SeasonStatisticsAggregationUtils'
 import { rebuildSeasonResultIndex } from './ResultIndexUtils'
@@ -18,7 +17,6 @@ export default function configureMaintain(app: Application) {
       recalculateSeasonStatisticsAggregationEndpoint,
     )
     .post(`${root}/season/:seasonId/result-index/rebuild`, rebuildResultIndex)
-    .post(`${root}/team-members/migrate`, migrateTeamMembers)
     .post(`${root}/fixtures/results-summary/regenerate`, regenerateResultsSummary)
     .post(`${root}/competition/roundup/regenerate`, regenerateRoundup)
 }
@@ -61,10 +59,6 @@ async function rebuildSeasonResultIndexEndpoint(seasonId: string) {
     seasonId,
     fixtureSetCount: status.fixtureSetCount,
   }
-}
-
-function migrateTeamMembers(_req: Request, res: Response) {
-  return send(migrateTeamMemberships(), res)
 }
 
 function regenerateResultsSummary(req: Request, res: Response) {

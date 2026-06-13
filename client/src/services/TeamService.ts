@@ -13,7 +13,6 @@ import StatisticsDAO from '@/dao/StatisticsDAO'
 import TeamDAO from '@/dao/TeamDAO'
 import TeamMemberDAO from '@/dao/TeamMemberDAO'
 import type Team from '@/entity/Team'
-import type TeamMember from '@/entity/TeamMember'
 
 const { date } = useDateTime()
 
@@ -670,8 +669,7 @@ export const useTeams = () => {
     const teams = (await TeamDAO.list()) ?? []
     for (const team of teams) {
       const teamMember = await TeamMemberDAO.getDataForTeam(team)
-      const legacyUsers = (team as Team & { users?: TeamMember['users'] }).users
-      const users = teamMember ? teamMember.users : (legacyUsers ?? [])
+      const users = teamMember ? teamMember.users : []
 
       if (users.some((user) => user.id === userId)) {
         return team

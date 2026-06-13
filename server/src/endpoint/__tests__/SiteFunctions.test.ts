@@ -240,31 +240,6 @@ describe('SiteFunctions', () => {
     })
   })
 
-  it('does not use legacy team users when no member document exists', async () => {
-    const teamWithLegacyUsers = {
-      ...team,
-      users: [{ id: 'user-1', path: 'user/user-1' }],
-    }
-    vi.mocked(load).mockImplementation(async (pathish) => {
-      const path = pathOf(pathish)
-      if (path === 'applicationcontext/5659313586569216') return contactContext as never
-      if (path === 'team/team-1') return teamWithLegacyUsers as never
-      throw new Error(`Unexpected load for ${path}`)
-    })
-    vi.mocked(list).mockResolvedValue([] as never)
-
-    await expect(
-      contactTeam({
-        sender: 'sender@example.com',
-        text: 'Hello',
-        teamId: 'team-1',
-        captcha: solvedCaptcha(),
-      }),
-    ).resolves.toEqual([])
-
-    expect(sendGridMail.send).not.toHaveBeenCalled()
-  })
-
   it('sends alias email to each matching alias user', async () => {
     mockContactLoads()
 

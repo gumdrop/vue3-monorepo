@@ -147,9 +147,7 @@ onMounted(async () => {
     team.value = loadedTeam ? { ...loadedTeam } : null
     if (team.value) {
       const teamMember = await TeamMemberDAO.getDataForTeam(team.value)
-      const legacyUsers = (loadedTeam as (Team & { users?: TeamMember['users'] }) | undefined)
-        ?.users
-      memberUsers.value = teamMember ? teamMember.users : (legacyUsers ?? [])
+      memberUsers.value = teamMember ? teamMember.users : []
     }
     const textReference = team.value?.text
     if (textReference?.id && textReference.path) {
@@ -184,7 +182,6 @@ const save = async () => {
     }
     const teamToSave = { ...team.value }
     delete (teamToSave as { email?: string }).email
-    delete (teamToSave as { users?: TeamMember['users'] }).users
     if (!teamToSave.text) delete teamToSave.text
     if (!teamToSave.venue) delete teamToSave.venue
     await TeamDAO.save(teamToSave as Team)

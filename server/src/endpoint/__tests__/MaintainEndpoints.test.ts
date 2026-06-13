@@ -2,7 +2,6 @@ import type { Application, Request, Response } from 'express'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import configure from '../MaintainEndpoints'
 import { regenerateCompetitionRoundup, regenerateFixtureSetResultsSummary } from '../TaskFunctions'
-import { migrateTeamMemberships } from '../TeamMembershipMigration'
 import { calculateStats } from '../StatisticsUtils'
 import { recalculateSeasonStatisticsAggregation } from '../SeasonStatisticsAggregationUtils'
 import { rebuildSeasonResultIndex } from '../ResultIndexUtils'
@@ -42,16 +41,6 @@ vi.mock('../ResultIndexUtils', () => ({
     seasonId: 'season-1',
     rebuiltAt: '2026-06-08T09:00:00.000Z',
     fixtureSetCount: 12,
-  }),
-}))
-
-vi.mock('../TeamMembershipMigration', () => ({
-  migrateTeamMemberships: vi.fn().mockResolvedValue({
-    teamsScanned: 2,
-    teamsMigrated: 1,
-    teamsSkipped: 1,
-    usersMigrated: 3,
-    legacyUserArraysDeleted: 1,
   }),
 }))
 
@@ -181,29 +170,6 @@ describe('MaintainEndpoints', () => {
       path: 'season/season-1',
     })
     expect(response.json).toHaveBeenCalledWith({ seasonId: 'season-1', fixtureSetCount: 12 })
-  })
-
-  it('routes team member migration to the migration utility', async () => {
-    const { app, routes } = createApp()
-    configure(app)
-
-    const response = {
-      json: vi.fn(),
-      status: vi.fn().mockReturnThis(),
-      send: vi.fn(),
-    } as unknown as Response
-
-    routes.get('POST /rest/maintain/team-members/migrate')?.({} as Request, response)
-    await flushPromises()
-
-    expect(migrateTeamMemberships).toHaveBeenCalled()
-    expect(response.json).toHaveBeenCalledWith({
-      teamsScanned: 2,
-      teamsMigrated: 1,
-      teamsSkipped: 1,
-      usersMigrated: 3,
-      legacyUserArraysDeleted: 1,
-    })
   })
 
   it('routes AI summary regeneration to the task function', async () => {
