@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs'
 import configureSite from './endpoint/SiteEndpoints'
 import configureCalendar from './endpoint/CalendarEndpoints'
 import configureMaintain from './endpoint/MaintainEndpoints'
+import configureNotifications from './endpoint/NotificationEndpoints'
 
 export const isLocal = () => true && process.env['FIRESTORE_EMULATOR_HOST']
 export const emulatorAddr = () => process.env['FIRESTORE_EMULATOR_HOST']
@@ -43,6 +44,7 @@ const port = process.env['PORT'] || '8000'
 configureSite(app)
 configureCalendar(app)
 configureMaintain(app)
+configureNotifications(app)
 
 app.use('/rest', (req: Request, res: Response) => {
   res.status(404).json({ error: `Unknown REST endpoint: ${req.method} ${req.originalUrl}` })
