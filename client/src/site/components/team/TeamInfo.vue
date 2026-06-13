@@ -1,11 +1,5 @@
 <template><v-slide-y-transition>
     <v-card class="team-info-card elevation-2 overflow-hidden">
-      <AliasContactDialog
-        :open="contact"
-        :team-id="teamId"
-        :alias-text="team?.name"
-        @close="contact = false"
-      />
       <v-toolbar color="grey-lighten-4" density="compact" flat>
         <v-toolbar-title class="text-subtitle-2 font-weight-bold grey--text text--darken-2">
           Team Information
@@ -34,16 +28,6 @@
       <v-divider></v-divider>
       
       <v-card-actions class="pa-4 flex-wrap ga-2">
-        <v-btn
-          variant="tonal"
-          color="primary"
-          prepend-icon="mdi-email"
-          class="flex-grow-1"
-          @click="contact = true"
-        >
-          Contact Us
-        </v-btn>
-
         <v-btn 
           :to="`/team/${teamId}/stats`" 
           variant="tonal" 
@@ -83,15 +67,12 @@
 
 <script setup lang="ts">
 import TeamDAO from '@/dao/TeamDAO';
-import { ref } from 'vue';
 import { useDocument } from 'vuefire';
-import AliasContactDialog from '../other/AliasContactDialog.vue';
 import VenueLink from '../venue/VenueLink.vue';
 import TeamStandings from './TeamStandings.vue';
 
 const props = defineProps<{ teamId: string }>()
 
-const contact = ref(false)
 const team = useDocument(() => TeamDAO.getById(props.teamId))
 
 const copy = (teamId: string) => {
