@@ -13,7 +13,6 @@ import StatisticsDAO from '@/dao/StatisticsDAO'
 import TeamDAO from '@/dao/TeamDAO'
 import TeamMemberDAO from '@/dao/TeamMemberDAO'
 import type Team from '@/entity/Team'
-import type TeamMember from '@/entity/TeamMember'
 
 const { date } = useDateTime()
 
