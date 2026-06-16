@@ -109,55 +109,6 @@ describe('NotificationEndpoints', () => {
     vi.useRealTimers()
   })
 
-  it('can broadcast a notification to all clients and handles write errors', async () => {
-    const { app, routes } = createApp()
-    configureNotifications(app)
-
-    const spyConsole = vi.spyOn(console, 'error').mockImplementation(() => {})
-
-    // Register a client that succeeds and one that throws
-    const clientRes1 = {
-      write: vi.fn(),
-    } as unknown as Response
-    const clientRes2 = {
-      write: vi.fn().mockImplementation(() => {
-        throw new Error('Failed to write')
-      }),
-    } as unknown as Response
-    
-    notificationService.addClient(clientRes1)
-    notificationService.addClient(clientRes2)
-
-    const req = {
-      body: {
-        target: 'all',
-        payload: {
-          title: 'Hello Everyone',
-          body: 'This is a test broadcast',
-        },
-      },
-    } as unknown as Request
-
-    const res = {
-      json: vi.fn(),
-      status: vi.fn().mockReturnThis(),
-    } as unknown as Response
-
-    routes.get('POST /rest/notifications/send')?.(req, res)
-
-    expect(clientRes1.write).toHaveBeenCalledWith(
-      expect.stringContaining('This is a test broadcast')
-    )
-    expect(clientRes2.write).toHaveBeenCalled()
-    expect(spyConsole).toHaveBeenCalled()
-    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({
-      success: true,
-      message: 'Broadcast sent to all clients',
-    }))
-    
-    spyConsole.mockRestore()
-  })
-
   it('can send a targeted notification to specific users and handles targeted write errors', async () => {
     const { app, routes } = createApp()
     configureNotifications(app)
@@ -215,7 +166,9 @@ describe('NotificationEndpoints', () => {
 
     const req = {
       body: {
-        target: 'all',
+        target: {
+          siteUserIds: ['user-abc'],
+        },
         payload: {
           title: '',
           body: 'Missing title',
@@ -233,6 +186,44 @@ describe('NotificationEndpoints', () => {
 
     expect(res.status).toHaveBeenCalledWith(400)
     expect(res.json).toHaveBeenCalledWith({ error: 'Payload with title and body is required' })
+  })
+
+  it('returns 400 if target parameters are completely missing or invalid', async () => {
+    const { app, routes } = createApp()
+    configureNotifications(app)
+
+    // Check totally missing target
+    const req1 = {
+      body: {
+        payload: { title: 'Test', body: 'Test' },
+      },
+    } as unknown as Request
+
+    const res1 = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+    } as unknown as Response
+
+    routes.get('POST /rest/notifications/send')?.(req1, res1)
+    expect(res1.status).toHaveBeenCalledWith(400)
+    expect(res1.json).toHaveBeenCalledWith({ error: 'A target with siteUserIds or uids is required' })
+
+    // Check empty targets list
+    const req2 = {
+      body: {
+        target: { siteUserIds: [], uids: [] },
+        payload: { title: 'Test', body: 'Test' },
+      },
+    } as unknown as Request
+
+    const res2 = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+    } as unknown as Response
+
+    routes.get('POST /rest/notifications/send')?.(req2, res2)
+    expect(res2.status).toHaveBeenCalledWith(400)
+    expect(res2.json).toHaveBeenCalledWith({ error: 'At least one target siteUserId or uid must be specified' })
   })
 
   it('returns 500 if an internal exception is thrown during processing', async () => {

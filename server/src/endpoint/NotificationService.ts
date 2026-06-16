@@ -36,23 +36,7 @@ class NotificationService {
     this.clients.delete(id)
   }
 
-  /**
-   * Send a notification to all active clients (anyone browsing the website).
-   */
-  public broadcast(payload: NotificationPayload) {
-    const data = JSON.stringify({
-      ...payload,
-      timestamp: payload.timestamp || new Date().toISOString(),
-    })
-    
-    for (const client of this.clients.values()) {
-      try {
-        client.res.write(`data: ${data}\n\n`)
-      } catch (err) {
-        console.error(`Failed to send notification to client ${client.id}:`, err)
-      }
-    }
-  }
+
 
   /**
    * Send a notification to specific siteusers (by their siteUserId or firebase auth uid).

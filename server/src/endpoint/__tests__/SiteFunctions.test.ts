@@ -190,10 +190,23 @@ describe('SiteFunctions', () => {
       return [team] as never
     })
 
-    await expect(siteUserForEmail('missing@example.com')).rejects.toThrow(
-      'no user found for email',
-    )
+    await expect(siteUserForEmail('missing@example.com')).rejects.toThrow('no user found for email')
     await expect(siteUserForEmail('missing@example.com')).rejects.toMatchObject({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+    })
+  })
+
+  it('throws when a league user exists but has no team', async () => {
+    vi.mocked(list).mockImplementation(async (type) => {
+      if (type === 'user') return [user] as never
+      if (type === 'team') return [] as never
+      if (type === 'siteuser') return [] as never
+      return [] as never
+    })
+
+    await expect(siteUserForEmail('PLAYER@example.com')).rejects.toThrow('no user found for email')
+    await expect(siteUserForEmail('PLAYER@example.com')).rejects.toMatchObject({
       statusCode: 404,
       statusMessage: 'Not Found',
     })

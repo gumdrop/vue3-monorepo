@@ -52,7 +52,7 @@ function handleNotificationStream(req: Request, res: Response) {
 function postSendNotification(req: Request, res: Response) {
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body
-    const target = body.target as 'all' | { siteUserIds?: string[]; uids?: string[] } | undefined
+    const target = body.target as { siteUserIds?: string[]; uids?: string[] } | undefined
     const payload = body.payload as NotificationPayload | undefined
 
     if (!payload || !payload.title || !payload.body) {
@@ -60,18 +60,24 @@ function postSendNotification(req: Request, res: Response) {
       return
     }
 
-    if (!target || target === 'all') {
-      notificationService.broadcast(payload)
-      res.json({ success: true, message: 'Broadcast sent to all clients' })
-    } else {
-      const siteUserIds = target.siteUserIds || []
-      const uids = target.uids || []
-      notificationService.sendToUsers(payload, { siteUserIds, uids })
-      res.json({
-        success: true,
-        message: `Notification sent to targeted clients (siteUserIds: ${siteUserIds.length}, uids: ${uids.length})`,
-      })
+    if (!target || (!target.siteUserIds && !target.uids)) {
+      res.status(400).json({ error: 'A target with siteUserIds or uids is required' })
+      return
     }
+
+    const siteUserIds = target.siteUserIds || []
+    const uids = target.uids || []
+
+    if (siteUserIds.length === 0 && uids.length === 0) {
+      res.status(400).json({ error: 'At least one target siteUserId or uid must be specified' })
+      return
+    }
+
+    notificationService.sendToUsers(payload, { siteUserIds, uids })
+    res.json({
+      success: true,
+      message: `Notification sent to targeted clients (siteUserIds: ${siteUserIds.length}, uids: ${uids.length})`,
+    })
   } catch (err: any) {
     res.status(500).json({ error: err.message || 'Failed to send notification' })
   }
