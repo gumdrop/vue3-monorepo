@@ -3,7 +3,16 @@ import SiteUserDAO from '@/dao/SiteUserDAO'
 import type Team from '@/entity/Team'
 import { useUserStore } from '@/stores/app'
 import axios from 'axios'
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, type User } from 'firebase/auth'
+import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  type User,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
+} from 'firebase/auth'
 import { REST_ROOT } from './constants'
 
 export const EMAIL_NOT_REGISTERED_MESSAGE =
@@ -78,6 +87,14 @@ export default function useAuth() {
   async function verifyEmail(email: string) {
     try {
       const siteUser = await siteUserForEmail(email)
+      if (siteUser) {
+        const auth = getAuth()
+        await sendSignInLinkToEmail(auth, email, {
+          url: window.location.origin + '/login',
+          handleCodeInApp: true,
+        })
+        window.localStorage.setItem('emailForSignIn', email)
+      }
       return true && siteUser
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,6 +107,27 @@ export default function useAuth() {
     }
   }
 
+  const checkEmailSignInLink = async () => {
+    const auth = getAuth()
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      let email = window.localStorage.getItem('emailForSignIn')
+      if (!email) {
+        email = window.prompt('Please provide your email for confirmation')
+      }
+      if (email) {
+        const result = await signInWithEmailLink(auth, email, window.location.href)
+        window.localStorage.removeItem('emailForSignIn')
+        const siteUser = await siteUserForEmail(email)
+        if (siteUser) {
+          await bindSiteUserToFirebaseUser(siteUser, result.user)
+        }
+        await useUserStore().setUser(result.user)
+        return true
+      }
+    }
+    return false
+  }
+
   function authGuard() {
     const { user } = useUserStore()
     return user !== undefined
@@ -100,5 +138,5 @@ export default function useAuth() {
     return user === undefined
   }
 
-  return { logout, logonWithGoogle, verifyEmail, authGuard, unauthGuard }
+  return { logout, logonWithGoogle, verifyEmail, authGuard, unauthGuard, checkEmailSignInLink }
 }

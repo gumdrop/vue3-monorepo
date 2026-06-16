@@ -178,9 +178,9 @@ export async function siteUserForEmail(email: string) {
         return createAndSave(user)
       }
     }
-  } else {
-    throw new HttpError(404, 'no user found for email', 'Not Found')
   }
+
+  throw new HttpError(404, 'no user found for email', 'Not Found')
 }
 
 export function contactCaptchaChallenge(): ContactCaptchaChallenge {

@@ -158,7 +158,20 @@ flowchart TD
 | `array<T>`      | Embedded ordered array of values inside a document.                                                                                                  |
 | `collection<T>` | Nested or top-level collection of entities.                                                                                                          |
 
-## Public Competition Browse Access
+## SiteUser
+
+A `SiteUser` represents the website-specific profile for a `User`, linking them to a Firebase Authentication `uid`.
+
+| Field    | Type              | Required | Notes                                                  |
+| -------- | ----------------- | -------- | ------------------------------------------------------ |
+| `id`     | `UUID`            | Yes      | Canonical site user identifier.                        |
+| `handle` | `string`          | Yes      | Display name on the site.                              |
+| `avatar` | `string`          | No       | URL to profile picture.                                |
+| `user`   | `Reference<User>` | No       | Reference to the canonical `User` entity.              |
+| `uid`    | `string`          | No       | Firebase Authentication unique ID.                     |
+
+## User
+
 
 The Competitions public visitor feature reads the canonical data model directly. Whole-document read-only access is safe for these existing document paths:
 
@@ -592,5 +605,12 @@ League table rows are embedded entities held in the `rows` property of a `League
   - `season/{seasonId}/competition/{competitionId}/fixtures/{fixturesId}/fixture/{fixtureId}/report`
   - `season/{seasonId}/competition/{competitionId}/leaguetable`
 - This hierarchy is now documented in `AGENTS.md` and `spec/maintenance/spec.md`.
+
+(Recorded by assistant during an interactive session.)
+
+## Session Data Model Notes (2026-06-16)
+
+- Added `SiteUser` entity documentation.
+- Clarified that `siteUserForEmail` backend function requires a user to be associated with a team for a successful lookup/creation during the login flow.
 
 (Recorded by assistant during an interactive session.)

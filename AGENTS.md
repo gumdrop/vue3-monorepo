@@ -39,6 +39,11 @@ A dedicated data maintenance application is available at `/maintain`.
 - If you need implementation help, use a code-focused agent and link the relevant package (`client/`, `server/`, or `shared/`).
 - If you need to update shared APIs, preserve backward compatibility.
 
+## Coding Conventions
+
+- **Lifecycle Hooks**: When implementing or debugging features that depend on external state (like URL parameters or Firebase auth links), always ensure that the appropriate lifecycle hooks (e.g., `onMounted`) are used to initialize or check that state.
+- **Authentication**: Refer to `spec/docs/auth.md` for the detailed authentication flow, especially for email-based login.
+
 ## Notes
 
 If this repo later adds a custom agent manifest or skill directory, extend this file with the new agent names, purpose, and usage examples.

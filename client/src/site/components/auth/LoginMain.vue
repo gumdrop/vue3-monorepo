@@ -59,12 +59,14 @@
 <script setup lang="ts">
 import useAuth from '@/services/AuthService'
 import QlNamedText from '../text/QlNamedText.vue'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useSideMenuStore } from '@/stores/app'
+import { useRouter } from 'vue-router'
 
-const { logonWithGoogle, verifyEmail } = useAuth()
+const { logonWithGoogle, verifyEmail, checkEmailSignInLink } = useAuth()
 const email = ref<string>()
 const { setSidemenu } = useSideMenuStore()
+const router = useRouter()
 setSidemenu(false)
 
 const showAlert = ref(false)
@@ -73,6 +75,12 @@ const showProgress = ref(false)
 const failureText = ref('')
 
 const genericFailureText = 'Unable to sign in'
+
+onMounted(async () => {
+  if (await checkEmailSignInLink()) {
+    router.push('/home')
+  }
+})
 
 const login = async (emailAddress: string | undefined, forward: unknown) => {
   if (!emailAddress) return

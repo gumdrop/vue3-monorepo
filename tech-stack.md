@@ -74,4 +74,10 @@ This repository is a TypeScript monorepo for the QuizLeague website.
 - Maintain the principle of small, package-scoped changes for maintenance work; avoid introducing architectural changes during note-taking.
 - **Maintenance App Architecture**: Implemented a secondary entry point for the client package at `/maintain`. This is configured in `client/vite.config.ts` as a separate rollup input and has its own Vue 3 app instance and router configuration in `client/src/maintain/`. It relies on shared DAOs and entities but is functionally independent of the main site app.
 
+## Session Decisions (2026-06-16)
+
+- **Email Login Fix**: Resolved an issue where "login by email" was failing because the frontend was not checking for Firebase email sign-in links on component mount. Added `checkEmailSignInLink` to `onMounted` in `LoginMain.vue`.
+- **Backend Error Mapping**: Updated `siteUserForEmail` in `SiteFunctions.ts` to throw a 404 error when a user exists but is not associated with any team. This ensures the client displays a consistent "email not registered" message.
+- **Documentation**: Created `spec/docs/auth.md` to document the authentication flow and data model relationships.
+
 (Recorded by assistant during an interactive session.)
