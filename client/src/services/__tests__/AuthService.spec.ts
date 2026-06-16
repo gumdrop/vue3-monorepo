@@ -10,6 +10,9 @@ const mocks = vi.hoisted(() => ({
     this.setCustomParameters = mocks.setCustomParameters
   }),
   saveSiteUser: vi.fn(),
+  sendSignInLinkToEmail: vi.fn(),
+  isSignInWithEmailLink: vi.fn(),
+  signInWithEmailLink: vi.fn(),
   setCustomParameters: vi.fn(),
   setUser: vi.fn(),
   signInWithPopup: vi.fn(),
@@ -37,6 +40,9 @@ vi.mock('firebase/auth', () => ({
   GoogleAuthProvider: mocks.googleAuthProvider,
   signInWithPopup: mocks.signInWithPopup,
   signOut: mocks.signOut,
+  sendSignInLinkToEmail: mocks.sendSignInLinkToEmail,
+  isSignInWithEmailLink: mocks.isSignInWithEmailLink,
+  signInWithEmailLink: mocks.signInWithEmailLink,
 }))
 
 vi.mock('@/stores/app', () => ({
@@ -56,6 +62,9 @@ describe('AuthService', () => {
       },
     })
     mocks.saveSiteUser.mockResolvedValue(undefined)
+    mocks.sendSignInLinkToEmail.mockResolvedValue(undefined)
+    mocks.isSignInWithEmailLink.mockReturnValue(false)
+    mocks.signInWithEmailLink.mockResolvedValue({ user: { uid: 'firebase-uid' } })
     mocks.userStore.setUser = mocks.setUser
     mocks.userStore.user = undefined
   })
@@ -173,5 +182,45 @@ describe('AuthService', () => {
 
     expect(auth.authGuard()).toBe(true)
     expect(auth.unauthGuard()).toBe(false)
+  })
+
+  describe('checkEmailSignInLink', () => {
+    it('returns false when the URL is not a sign-in link', async () => {
+      mocks.isSignInWithEmailLink.mockReturnValue(false)
+      expect(await useAuth().checkEmailSignInLink()).toBe(false)
+    })
+
+    it('completes the sign-in when the URL is a valid link and email is in storage', async () => {
+      const siteUser = { id: 'site-user-1', path: 'siteuser/site-user-1' }
+      mocks.isSignInWithEmailLink.mockReturnValue(true)
+      vi.spyOn(Storage.prototype, 'getItem').mockReturnValue('captain@example.com')
+      const removeItem = vi.spyOn(Storage.prototype, 'removeItem')
+      mocks.axiosGet.mockResolvedValue({ data: siteUser })
+
+      expect(await useAuth().checkEmailSignInLink()).toBe(true)
+
+      expect(mocks.signInWithEmailLink).toHaveBeenCalledWith(
+        { id: 'auth' },
+        'captain@example.com',
+        window.location.href,
+      )
+      expect(removeItem).toHaveBeenCalledWith('emailForSignIn')
+      expect(mocks.setUser).toHaveBeenCalledWith({ uid: 'firebase-uid' })
+    })
+
+    it('prompts for email when not in storage', async () => {
+      mocks.isSignInWithEmailLink.mockReturnValue(true)
+      vi.spyOn(Storage.prototype, 'getItem').mockReturnValue(null)
+      const prompt = vi.spyOn(window, 'prompt').mockReturnValue('prompted@example.com')
+      mocks.axiosGet.mockResolvedValue({ data: { id: 'su-1' } })
+
+      expect(await useAuth().checkEmailSignInLink()).toBe(true)
+      expect(prompt).toHaveBeenCalled()
+      expect(mocks.signInWithEmailLink).toHaveBeenCalledWith(
+        { id: 'auth' },
+        'prompted@example.com',
+        window.location.href,
+      )
+    })
   })
 })

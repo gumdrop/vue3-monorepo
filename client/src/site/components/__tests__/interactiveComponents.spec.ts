@@ -69,6 +69,7 @@ vi.mock('@/services/AuthService', () => ({
     authGuard: vi.fn(),
     logonWithGoogle: mocks.logonWithGoogle,
     verifyEmail: mocks.verifyEmail,
+    checkEmailSignInLink: vi.fn(),
   }),
 }))
 
