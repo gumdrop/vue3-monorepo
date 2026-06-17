@@ -293,6 +293,42 @@ describe('TaskFunctions', () => {
       text: 'Week 2 belonged to Alpha.',
       mimeType: 'text/markdown',
     }
+    const aggregation = {
+      id: 'season-1',
+      path: 'seasonstatisticsaggregation/season-1',
+      competitions: [
+        {
+          competition: { id: 'league', path: competition.path },
+          averageScore: 45.5,
+          averageWinningScore: 48.2,
+          averageLosingScore: 42.8,
+          tableSnapshots: [
+            {
+              fixtureSetDescription: 'Week 1',
+              fixtureSetDate: '2026-05-31',
+              tables: [
+                {
+                  description: 'Main',
+                  rows: [
+                    {
+                      team: { id: 'team-a', path: 'team/team-a' },
+                      played: 1,
+                      won: 1,
+                      drawn: 0,
+                      lost: 0,
+                      matchPointsFor: 43,
+                      matchPointsAgainst: 42,
+                      leaguePoints: 2,
+                      position: '1',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }
 
     mocks.load.mockImplementation(async (pathish) => {
       const path = typeof pathish === 'string' ? pathish : pathish.path
@@ -306,6 +342,7 @@ describe('TaskFunctions', () => {
       if (path === 'team/team-d') return teamD
       if (path === 'text/summary-week-1') return weekOneSummary
       if (path === 'text/summary-week-2') return weekTwoSummary
+      if (path === 'seasonstatisticsaggregation/season-1') return aggregation
       return undefined
     })
     mocks.list.mockImplementation(async (type, parent) => {
@@ -366,6 +403,35 @@ describe('TaskFunctions', () => {
           ],
         },
       ],
+      statistics: {
+        averageScore: 45.5,
+        averageWinningScore: 48.2,
+        averageLosingScore: 42.8,
+        tableSnapshots: [
+          {
+            fixtureSetDescription: 'Week 1',
+            fixtureSetDate: '2026-05-31',
+            tables: [
+              {
+                description: 'Main',
+                rows: [
+                  {
+                    played: 1,
+                    won: 1,
+                    drawn: 0,
+                    lost: 0,
+                    matchPointsFor: 43,
+                    matchPointsAgainst: 42,
+                    leaguePoints: 2,
+                    position: '1',
+                    team: 'Alpha',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     })
     expect(mocks.save).toHaveBeenCalledWith(
       expect.objectContaining({

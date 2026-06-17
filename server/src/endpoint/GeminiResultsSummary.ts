@@ -35,9 +35,34 @@ export interface CompetitionRoundupFixtureSet {
   fixtures: CompetitionRoundupFixtureResult[]
 }
 
+export interface CompetitionRoundupTableSnapshot {
+  fixtureSetDescription: string
+  fixtureSetDate: string
+  tables: Array<{
+    description?: string
+    rows: Array<{
+      team: string
+      played: number
+      won: number
+      drawn: number
+      lost: number
+      matchPointsFor: number
+      matchPointsAgainst: number
+      leaguePoints: number
+      position: string
+    }>
+  }>
+}
+
 export interface CompetitionRoundupInput {
   competitionName: string
   fixtureSets: CompetitionRoundupFixtureSet[]
+  statistics?: {
+    averageScore: number
+    averageWinningScore: number
+    averageLosingScore: number
+    tableSnapshots: CompetitionRoundupTableSnapshot[]
+  }
 }
 
 interface GeminiGenerateContentResponse {
@@ -121,12 +146,38 @@ ${summary}
 ${fixtureSet.fixtures.map(resultLine).join('\n')}`
 }
 
-const buildCompetitionRoundupPrompt = (
-  input: CompetitionRoundupInput,
-) => `You write concise public season roundup copy for the Chiltern Quiz League.
+const buildCompetitionRoundupPrompt = (input: CompetitionRoundupInput) => {
+  const stats = input.statistics
+    ? `
+Season statistics:
+- Average score: ${input.statistics.averageScore.toFixed(2)}
+- Average winning score: ${input.statistics.averageWinningScore.toFixed(2)}
+- Average losing score: ${input.statistics.averageLosingScore.toFixed(2)}
 
-Summarise this completed team competition using only the fixture-set summaries and results below.
+League table snapshots (showing progression):
+${input.statistics.tableSnapshots
+  .map(
+    (s) => `  - ${s.fixtureSetDate}: ${s.fixtureSetDescription}
+${s.tables
+  .map(
+    (t) => `    ${t.description ?? 'Table'}:
+${t.rows
+  .map(
+    (r) =>
+      `      ${r.position}. ${r.team} P:${r.played} W:${r.won} D:${r.drawn} L:${r.lost} F:${r.matchPointsFor} A:${r.matchPointsAgainst} Pts:${r.leaguePoints}`,
+  )
+  .join('\n')}`,
+  )
+  .join('\n')}`,
+  )
+  .join('\n')}`
+    : ''
+
+  return `You write concise public season roundup copy for the Chiltern Quiz League.
+
+Summarise this completed team competition using only the fixture-set summaries, results, and league table progression below.
 Mention the main story of the competition, notable runs, close matches, or decisive results where useful.
+Use the league table snapshots to describe how the title race or positions changed over time.
 Do not list every result.
 Keep it under 250 words.
 Produce Markdown.
@@ -134,9 +185,11 @@ Return only Markdown body text, with no heading.
 Do not return JSON, HTML, or a fenced code block.
 
 Competition: ${input.competitionName}
+${stats}
 
 Completed fixture sets:
 ${input.fixtureSets.map(fixtureSetRoundupLine).join('\n')}`
+}
 
 export async function generateFixtureSetResultsSummary(
   input: FixtureSetSummaryInput,

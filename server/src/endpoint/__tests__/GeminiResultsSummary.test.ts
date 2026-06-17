@@ -127,6 +127,77 @@ describe('GeminiResultsSummary', () => {
     expect(prompt).toContain('Return only Markdown body text, with no heading.')
   })
 
+  it('includes league statistics and table progression in competition roundup prompts', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        candidates: [
+          {
+            finishReason: 'STOP',
+            content: {
+              parts: [{ text: 'Alpha dominated the league from start to finish.' }],
+            },
+          },
+        ],
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(
+      generateCompetitionRoundup({
+        competitionName: 'Premier League',
+        fixtureSets: [
+          {
+            fixtureSetDescription: 'Final Day',
+            fixtureSetDate: '2026-06-15',
+            summary: 'Alpha secured the title.',
+            fixtures: [{ homeTeam: 'Alpha', awayTeam: 'Bravo', homeScore: 50, awayScore: 40 }],
+          },
+        ],
+        statistics: {
+          averageScore: 45.5,
+          averageWinningScore: 48.2,
+          averageLosingScore: 42.8,
+          tableSnapshots: [
+            {
+              fixtureSetDescription: 'Final Day',
+              fixtureSetDate: '2026-06-15',
+              tables: [
+                {
+                  description: 'Main Table',
+                  rows: [
+                    {
+                      team: 'Alpha',
+                      played: 10,
+                      won: 8,
+                      drawn: 1,
+                      lost: 1,
+                      matchPointsFor: 450,
+                      matchPointsAgainst: 400,
+                      leaguePoints: 17,
+                      position: '1',
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    ).resolves.toEqual({
+      text: 'Alpha dominated the league from start to finish.',
+      model: 'gemini-3.5-flash',
+    })
+
+    const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
+    const prompt = body.contents[0].parts[0].text
+    expect(prompt).toContain('Season statistics:')
+    expect(prompt).toContain('- Average score: 45.50')
+    expect(prompt).toContain('League table snapshots (showing progression):')
+    expect(prompt).toContain('1. Alpha P:10 W:8 D:1 L:1 F:450 A:400 Pts:17')
+    expect(prompt).toContain('Use the league table snapshots to describe how the title race or positions changed over time.')
+  })
+
   it('rejects summaries that Gemini reports as truncated', async () => {
     vi.stubGlobal(
       'fetch',
