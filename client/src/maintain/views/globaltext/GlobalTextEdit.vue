@@ -17,11 +17,20 @@
               <v-btn color="primary" @click="addTextReference">Add Text Reference</v-btn>
             </v-card-title>
             <v-card-text>
+              <v-text-field
+                v-model="textKeyFilter"
+                label="Filter text keys"
+                clearable
+                prepend-inner-icon="mdi-magnify"
+                hide-details
+                density="compact"
+                class="mb-4"
+              />
               <v-alert v-if="hasDuplicateTextNames" type="error" class="mb-4">
                 Text names must be unique.
               </v-alert>
               <div v-if="!textRows.length">No text references</div>
-              <v-row v-for="(row, index) in textRows" :key="row.uid" align="center">
+              <v-row v-for="(row, index) in filteredTextRows" :key="row.uid" align="center">
                 <v-col cols="12" md="8">
                   <v-text-field
                     v-model="row.name"
@@ -111,6 +120,7 @@ const rules = useValidations()
 
 const globalText = ref<EditableGlobalText | null>(null)
 const textRows = ref<TextReferenceRow[]>([])
+const textKeyFilter = ref('')
 const selectedRowUid = ref('')
 const selectedText = ref<Text | undefined>()
 const textEditorOpen = ref(false)
@@ -126,6 +136,12 @@ const textNames = computed(() =>
 const hasDuplicateTextNames = computed(
   () => new Set(textNames.value).size !== textNames.value.length,
 )
+const filteredTextRows = computed(() => {
+  const sorted = [...textRows.value].sort((a, b) => a.name.localeCompare(b.name))
+  if (!textKeyFilter.value) return sorted
+  const search = textKeyFilter.value.toLowerCase()
+  return sorted.filter((row) => row.name.toLowerCase().includes(search))
+})
 const canSave = computed(
   () =>
     valid.value && !hasDuplicateTextNames.value && textRows.value.every((row) => row.name.trim()),
