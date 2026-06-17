@@ -10,8 +10,13 @@ import {
   ResultsSubmitCommand,
   ResultValues,
   Season,
+  SeasonStatisticsAggregation,
+  LeagueTableRow,
+  LeagueTableSnapshot,
+  LeagueTableSnapshotTable,
   Team,
   Text,
+  toPath,
   User,
 } from '@quizleague/shared'
 import { v4 as uuid } from 'uuid'
@@ -270,6 +275,7 @@ async function generateAndSaveCompetitionRoundup(
   const roundup = await generateCompetitionRoundup({
     competitionName: competition.name ?? competition.id,
     fixtureSets: await Promise.all(completedFixtureSets.map(competitionRoundupFixtureSetInput)),
+    statistics: await competitionStatisticsAggregationInput(competition),
   })
   if (!roundup) {
     if (failOnEmptyRoundup) {
@@ -442,6 +448,63 @@ async function reportSummaries(fixture: Fixture) {
   }
 
   return summaries
+}
+
+async function competitionStatisticsAggregationInput(competition: Competition) {
+  if (competition._name !== 'league') return undefined
+
+  const seasonPath = parseParent(competition.path)
+  const seasonId = seasonPath.split('/').pop()
+  if (!seasonId) return undefined
+
+  const aggregation = await load<SeasonStatisticsAggregation>(
+    entityPath('seasonstatisticsaggregation', seasonId),
+  )
+  if (!aggregation) return undefined
+
+  const competitionAggregation = aggregation.competitions.find(
+    (c) => toPath(c.competition) === competition.path,
+  )
+  if (!competitionAggregation) return undefined
+
+  return {
+    averageScore: competitionAggregation.averageScore,
+    averageWinningScore: competitionAggregation.averageWinningScore,
+    averageLosingScore: competitionAggregation.averageLosingScore,
+    tableSnapshots: await Promise.all(
+      competitionAggregation.tableSnapshots.map(competitionRoundupTableSnapshotInput),
+    ),
+  }
+}
+
+async function competitionRoundupTableSnapshotInput(snapshot: LeagueTableSnapshot) {
+  return {
+    fixtureSetDescription: snapshot.fixtureSetDescription,
+    fixtureSetDate: snapshot.fixtureSetDate,
+    tables: await Promise.all(snapshot.tables.map(competitionRoundupTableSnapshotTableInput)),
+  }
+}
+
+async function competitionRoundupTableSnapshotTableInput(table: LeagueTableSnapshotTable) {
+  return {
+    description: table.description,
+    rows: await Promise.all(table.rows.map(competitionRoundupTableSnapshotRowInput)),
+  }
+}
+
+async function competitionRoundupTableSnapshotRowInput(row: LeagueTableRow) {
+  const team = await load<Team>(row.team)
+  return {
+    played: row.played,
+    won: row.won,
+    drawn: row.drawn,
+    lost: row.lost,
+    matchPointsFor: row.matchPointsFor,
+    matchPointsAgainst: row.matchPointsAgainst,
+    leaguePoints: row.leaguePoints,
+    position: row.position,
+    team: teamName(team, toPath(row.team).split('/').pop()!),
+  }
 }
 
 function teamName(team: Team | undefined, fallback: string) {
