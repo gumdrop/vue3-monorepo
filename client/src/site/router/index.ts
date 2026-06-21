@@ -300,6 +300,15 @@ const router = createRouter({
       },
       // beforeEnter: unauthGuard,
     },
+    {
+      path: '/login/profile',
+      name: 'profile',
+      components: {
+        title: () => import('../components/auth/ProfileEditTitle.vue'),
+        default: () => import('../components/auth/ProfileEdit.vue'),
+      },
+      beforeEnter: authGuard,
+    },
 
     {
       path: '/home',

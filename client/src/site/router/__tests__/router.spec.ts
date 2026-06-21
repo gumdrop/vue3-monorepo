@@ -40,6 +40,7 @@ describe('site router', () => {
     expect(routePathsByName.get('analytics')).toBe('/analytics')
     expect(routePathsByName.get('analytics replay')).toBe('/analytics/replay')
     expect(routePathsByName.get('login')).toBe('/login')
+    expect(routePathsByName.get('profile')).toBe('/login/profile')
     expect(routePathsByName.get('questions')).toBe('/results/questions')
     expect(router.options.scrollBehavior?.({} as never, {} as never, null)).toEqual({ top: 0 })
   })
@@ -51,6 +52,7 @@ describe('site router', () => {
 
     expect(routeGuardsByName.get('submit results')).toBe(mocks.authGuard)
     expect(routeGuardsByName.get('team edit')).toBe(mocks.authGuard)
+    expect(routeGuardsByName.get('profile')).toBe(mocks.authGuard)
   })
 
   it('redirects logged-in users from the team index to their team page', () => {

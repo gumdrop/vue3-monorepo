@@ -5,6 +5,7 @@ import { computed, defineComponent, h, ref, type Component } from 'vue'
 import { fixtureDAO } from '@/dao/FixturesDAO'
 import LoginMain from '../auth/LoginMain.vue'
 import LoginTitle from '../auth/LoginTitle.vue'
+import ProfileEditTitle from '../auth/ProfileEditTitle.vue'
 import LoggedOnMenu from '../auth/LoggedOnMenu.vue'
 import SubTitle from '../common/SubTitle.vue'
 import CompetitionLink from '../competition/CompetitionLink.vue'
@@ -1264,6 +1265,7 @@ describe('remaining site title and navigation components', () => {
   it('renders static title components through SubTitle', () => {
     const cases: Array<[unknown, string]> = [
       [LoginTitle, 'Login'],
+      [ProfileEditTitle, 'Profile'],
       [AllFixturesTitle, 'All Fixtures'],
       [ContactUsTitle, 'Contact Us'],
       [HelpTitle, 'Help'],

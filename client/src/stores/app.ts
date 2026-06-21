@@ -23,7 +23,7 @@ export const useUserStore = defineStore('user', () => {
       const siteUser = await SiteUserDAO.siteUserForUid(fbUser.uid)
       const team = await teamForUser(siteUser?.user?.id)
       if (siteUser && team && email) {
-        _user.value = { siteUser, team, email: fbUser.email }
+        _user.value = { siteUser, team: team ?? undefined, email: fbUser.email }
       }
     } else {
       _user.value = undefined

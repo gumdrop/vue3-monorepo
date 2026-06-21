@@ -140,7 +140,7 @@ const { gridSize } = useLayout()
 const { required, isEmail } = useValidations()
 
 const { user: loggedInUser } = storeToRefs(useUserStore())
-const team = useDocument(() => TeamDAO.getById(loggedInUser.value?.team.id), { maxRefDepth: 0 })
+const team = useDocument(() => TeamDAO.getById(loggedInUser.value?.team?.id), { maxRefDepth: 0 })
 const textDoc = ref<DocumentReference<Text>>()
 const text = useDocument(textDoc)
 

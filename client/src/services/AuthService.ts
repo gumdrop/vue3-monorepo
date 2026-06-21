@@ -3,6 +3,7 @@ import SiteUserDAO from '@/dao/SiteUserDAO'
 import type Team from '@/entity/Team'
 import { useUserStore } from '@/stores/app'
 import axios from 'axios'
+import { getCurrentUser } from 'vuefire'
 import {
   getAuth,
   GoogleAuthProvider,
@@ -21,7 +22,7 @@ export const EMAIL_NOT_REGISTERED_MESSAGE =
 export interface LoggedInUser {
   siteUser: SiteUser
   email: string
-  team: Team
+  team?: Team
 }
 
 export default function useAuth() {
@@ -128,12 +129,14 @@ export default function useAuth() {
     return false
   }
 
-  function authGuard() {
+  async function authGuard() {
+    await getCurrentUser()
     const { user } = useUserStore()
     return user !== undefined
   }
 
-  function unauthGuard() {
+  async function unauthGuard() {
+    await getCurrentUser()
     const { user } = useUserStore()
     return user === undefined
   }
