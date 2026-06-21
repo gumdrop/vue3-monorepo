@@ -31,7 +31,7 @@ const { gridSize } = useLayout()
 
 const { user } = storeToRefs(useUserStore())
 
-const fixtures = usePromise(() => fixturesForResultSubmission(user.value?.team.id))
+const fixtures = usePromise(() => fixturesForResultSubmission(user.value?.team?.id))
 </script>
 <style scoped>
 .submission-container {

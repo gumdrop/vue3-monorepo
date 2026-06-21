@@ -70,7 +70,7 @@ const teamPath = computed(() => {
 })
 
 const teamId = computed(() => teamPath.value.split('/').filter(Boolean).pop() ?? '')
-const isUserTeam = computed(() => userStore.user?.team.id === teamId.value)
+const isUserTeam = computed(() => userStore.user?.team?.id === teamId.value)
 
 const team = useDocument(() => (teamId.value ? TeamDAO.getById(teamId.value) : undefined), {
   maxRefDepth: 0,
