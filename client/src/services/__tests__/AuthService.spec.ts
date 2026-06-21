@@ -17,10 +17,15 @@ const mocks = vi.hoisted(() => ({
   setUser: vi.fn(),
   signInWithPopup: vi.fn(),
   signOut: vi.fn(),
+  getCurrentUser: vi.fn(),
   userStore: {
     user: undefined as unknown,
     setUser: vi.fn(),
   },
+}))
+
+vi.mock('vuefire', () => ({
+  getCurrentUser: mocks.getCurrentUser,
 }))
 
 vi.mock('@/dao/SiteUserDAO', () => ({
@@ -65,6 +70,7 @@ describe('AuthService', () => {
     mocks.sendSignInLinkToEmail.mockResolvedValue(undefined)
     mocks.isSignInWithEmailLink.mockReturnValue(false)
     mocks.signInWithEmailLink.mockResolvedValue({ user: { uid: 'firebase-uid' } })
+    mocks.getCurrentUser.mockResolvedValue({ uid: 'firebase-uid' })
     mocks.userStore.setUser = mocks.setUser
     mocks.userStore.user = undefined
   })
@@ -172,16 +178,16 @@ describe('AuthService', () => {
     expect(mocks.signOut).toHaveBeenCalledWith({ id: 'auth' })
   })
 
-  it('guards routes based on the current user store state', () => {
+  it('guards routes based on the current user store state', async () => {
     const auth = useAuth()
 
-    expect(auth.authGuard()).toBe(false)
-    expect(auth.unauthGuard()).toBe(true)
+    expect(await auth.authGuard()).toBe(false)
+    expect(await auth.unauthGuard()).toBe(true)
 
     mocks.userStore.user = { id: 'user-1' }
 
-    expect(auth.authGuard()).toBe(true)
-    expect(auth.unauthGuard()).toBe(false)
+    expect(await auth.authGuard()).toBe(true)
+    expect(await auth.unauthGuard()).toBe(false)
   })
 
   describe('checkEmailSignInLink', () => {
