@@ -7,14 +7,14 @@
           <v-text-field v-model.email="email" label="Enter your email address"></v-text-field>
         </v-card-text>
         <v-card-actions>
+          <v-btn button v-on:click="googleLogin(email)" :disabled="!email"
+            >Sign in with Google</v-btn
+          >
           <v-btn
             button
             v-on:click="login(email, $route.query.forward ? $route.query.forward : '/home')"
             :disabled="!email"
             >Sign in by email</v-btn
-          >
-          <v-btn button v-on:click="googleLogin(email)" :disabled="!email"
-            >Sign with Google</v-btn
           >
           <v-btn button v-on:click="doPasswordLogin(email)" :disabled="!email"
             >Sign in with password</v-btn

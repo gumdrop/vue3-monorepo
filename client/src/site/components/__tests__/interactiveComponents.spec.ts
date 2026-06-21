@@ -400,7 +400,7 @@ describe('interactive site components', () => {
         expectedCall: mocks.verifyEmail,
       },
       {
-        button: 'Sign with Google',
+        button: 'Sign in with Google',
         setup: () => mocks.logonWithGoogle.mockRejectedValue(new Error(missingUserMessage)),
         expectedCall: mocks.logonWithGoogle,
       },
