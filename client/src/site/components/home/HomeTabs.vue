@@ -1,6 +1,6 @@
 <template>
-  <v-card>
-    <v-card-text>
+  <v-card class="rounded-0 rounded-sm-md elevation-0 elevation-sm-1">
+    <v-card-text class="px-0 px-sm-4">
       <v-row justify="center" class="mb-1">
         <v-tabs ripple v-model="activeTab" slider-color="yellow" @click="haltTabs()">
           <v-tab :key="1">Tables</v-tab>

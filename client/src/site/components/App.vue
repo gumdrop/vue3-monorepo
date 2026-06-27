@@ -48,7 +48,7 @@
     </v-navigation-drawer>
 
     <v-main class="app-content">
-      <v-container fluid class="pa-6">
+      <v-container fluid class="px-0 px-sm-6 py-6">
         <v-row justify="start">
           <v-col cols="12">
             <div class="title-view-container mb-4">
