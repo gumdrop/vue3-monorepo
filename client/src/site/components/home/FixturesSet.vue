@@ -1,6 +1,11 @@
 <template>
   <div v-if="results">
-    <FixturesCard :fixtures="result" v-for="result in results" :key="result.id" :title="title" />
+    <FixturesCard
+      :fixtures="result"
+      v-for="(result, index) in results"
+      :key="result.id"
+      :title="index === 0 ? title : undefined"
+    />
   </div>
 </template>
 <script setup lang="ts">

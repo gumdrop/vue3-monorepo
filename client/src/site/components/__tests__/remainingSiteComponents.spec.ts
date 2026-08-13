@@ -151,6 +151,7 @@ const mocks = vi.hoisted(() => ({
   singleSeasonHighlights: vi.fn(),
   singleSeasonResultTypes: vi.fn(),
   spentFixtures: vi.fn(),
+  spentFixturesForDay: vi.fn(),
   standings: vi.fn(),
   submitResult: vi.fn(),
   teamCount: vi.fn(),
@@ -389,6 +390,7 @@ vi.mock('@/services/FixturesService', () => ({
     activeFixtures: mocks.activeFixtures,
     questionPapers: mocks.questionPapers,
     spentFixtures: mocks.spentFixtures,
+    spentFixturesForDay: mocks.spentFixturesForDay,
   }),
 }))
 

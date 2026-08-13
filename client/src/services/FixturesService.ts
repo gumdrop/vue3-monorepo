@@ -35,6 +35,22 @@ export const useFixtures = () => {
       .map((f) => FixturesDAO.getByPath(`${f.path}`))
   }
 
+  const spentFixturesForDay = async (seasonId: string) => {
+    const resultIndexFixtures = await ResultIndexDAO.seasonFixtureSetDocumentsForDay(seasonId)
+    if (resultIndexFixtures) return resultIndexFixtures
+
+    const today = currentLocalDate().toString()
+    const completed = await completedFixtureSets(
+      (await seasonFixtures(seasonId)).filter((f) => f.date <= today),
+    )
+    const sorted = completed.sort((a, b) => b.date.localeCompare(a.date))
+    if (!sorted.length) return []
+    const latestDate = sorted[0].date
+    return sorted
+      .filter((f) => f.date === latestDate)
+      .map((f) => FixturesDAO.getByPath(`${f.path}`))
+  }
+
   const questionPapers = async (seasonId: string) => {
     const competitions = await firstClassCompetitions(seasonId)
     const questions: QuestionPaper[] = []
@@ -60,7 +76,7 @@ export const useFixtures = () => {
     return interim
   }
 
-  return { activeFixtures, questionPapers, seasonFixtures, spentFixtures }
+  return { activeFixtures, questionPapers, seasonFixtures, spentFixtures, spentFixturesForDay }
 }
 
 // def activeFixtures(seasonId: String, take:Int = Integer.MAX_VALUE) = {

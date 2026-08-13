@@ -24,6 +24,19 @@ class ResultIndexDAO extends DAO<ResultIndex> {
     ).map((result) => FixturesDAO.getByPath(result.fixtureSetPath))
   }
 
+  async seasonFixtureSetDocumentsForDay(seasonId: string) {
+    if (!(await resultIndexStatusDAO.isComplete(seasonId))) return undefined
+
+    const results = await this.entities(
+      this.seasonResultsQuery(seasonId, currentLocalDate().toString()),
+    )
+    if (!results.length) return []
+    const latestDate = results[0].fixtureSetDate
+    return results
+      .filter((result) => result.fixtureSetDate === latestDate)
+      .map((result) => FixturesDAO.getByPath(result.fixtureSetPath))
+  }
+
   async competitionFixtureSetDocuments(competitionPath: string, take?: number) {
     const seasonId = seasonIdFromCompetitionPath(competitionPath)
     if (!seasonId || !(await resultIndexStatusDAO.isComplete(seasonId))) return undefined

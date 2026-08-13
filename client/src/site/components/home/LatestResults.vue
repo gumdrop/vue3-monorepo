@@ -9,7 +9,7 @@ import FixturesSet from './FixturesSet.vue';
 
 const { seasonId } = defineProps<{ seasonId: string }>()
 
-const { spentFixtures } = useFixtures()
+const { spentFixturesForDay } = useFixtures()
 
-const fixtures = () => spentFixtures(seasonId, 1)
+const fixtures = () => spentFixturesForDay(seasonId)
 </script>

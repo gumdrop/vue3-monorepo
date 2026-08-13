@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   },
   resultIndexDAO: {
     seasonFixtureSetDocuments: vi.fn(),
+    seasonFixtureSetDocumentsForDay: vi.fn(),
   },
 }))
 
@@ -56,6 +57,7 @@ describe('FixturesService', () => {
     mocks.fixtureDAO.subCollection.mockImplementation((path: string) => `${path}/fixture`)
     mocks.fixtureDAO.entities.mockResolvedValue([completedFixture('fixture-1')])
     mocks.resultIndexDAO.seasonFixtureSetDocuments.mockResolvedValue(undefined)
+    mocks.resultIndexDAO.seasonFixtureSetDocumentsForDay.mockResolvedValue(undefined)
   })
 
   it('returns spent fixtures from the result index when the season has been rebuilt', async () => {
@@ -141,6 +143,27 @@ describe('FixturesService', () => {
       {
         id: 'season/season-1/competition/league/fixtures/complete',
         path: 'season/season-1/competition/league/fixtures/complete',
+      },
+    ])
+  })
+
+  it('returns all completed fixture sets for the latest day using spentFixturesForDay', async () => {
+    mocks.firstClassCompetitions.mockResolvedValue([{ id: 'league', path: 'competition/league' }])
+    mocks.fixtures.mockResolvedValue([
+      fixturesSet('older-1', '2000-01-01'),
+      fixturesSet('latest-div1', '2000-01-08'),
+      fixturesSet('latest-div2', '2000-01-08'),
+      fixturesSet('future', '2999-01-01'),
+    ])
+
+    await expect(useFixtures().spentFixturesForDay('season-1')).resolves.toEqual([
+      {
+        id: 'season/season-1/competition/league/fixtures/latest-div1',
+        path: 'season/season-1/competition/league/fixtures/latest-div1',
+      },
+      {
+        id: 'season/season-1/competition/league/fixtures/latest-div2',
+        path: 'season/season-1/competition/league/fixtures/latest-div2',
       },
     ])
   })
