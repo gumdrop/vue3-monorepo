@@ -1,6 +1,6 @@
 <template>
   <v-card class="mb-1" min-width="100%" :loading="!fixtures" elevation="0">
-    <v-card-title primary-title>{{ title }}</v-card-title>
+    <v-card-title v-if="title" primary-title>{{ title }}</v-card-title>
     <v-card-text v-if="fixtures">
       <v-container>
         <v-row>
@@ -29,7 +29,7 @@ import AISummaryButton from '@/site/components/common/AISummaryButton.vue';
 const { date } = useDateTime()
 
 
-const props = defineProps<{ fixtures: DocumentReference<Fixtures>; title: string }>()
+const props = defineProps<{ fixtures: DocumentReference<Fixtures>; title?: string }>()
 
 const fixtures = useDocument(props.fixtures)
 
