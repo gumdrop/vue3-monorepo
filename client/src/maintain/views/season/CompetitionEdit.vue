@@ -42,6 +42,15 @@
             ></v-text-field>
           </template>
 
+          <template v-if="competition._name === 'singleton'">
+            <v-text-field
+              v-model="competition.event.date"
+              label="Date"
+              type="date"
+            ></v-text-field>
+            <EntitySelect v-model="competition.event.venue" :dao="VenueDAO" label="Venue" />
+          </template>
+
           <template v-if="competition._name === 'league'">
             <v-row>
               <v-col
@@ -167,6 +176,7 @@ import CompetitionDAO from '@/dao/CompetitionDAO'
 import FixturesDAO from '@/dao/FixturesDAO'
 import LeagueTableDAO from '@/dao/LeagueTableDAO'
 import TextDAO from '@/dao/TextDAO'
+import VenueDAO from '@/dao/VenueDAO'
 import type Competition from '@/entity/Competition'
 import type Fixtures from '@/entity/Fixtures'
 import type LeagueTable from '@/entity/LeagueTable'
@@ -174,6 +184,7 @@ import type Text from '@/entity/Text'
 import { newEntityIdentity } from '@/maintain/utils/entityIds'
 import { useValidations } from '@/site/components/Validation'
 import TextEdit from '@/site/components/text/TextEdit.vue'
+import EntitySelect from '../../components/EntitySelect.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -198,6 +209,20 @@ const isTeamCompetition = computed(() =>
   ['league', 'cup', 'subsidiary'].includes(competition.value?._name),
 )
 const hasRoundup = computed(() => roundupText.value !== undefined)
+
+const ensureSingletonEvent = () => {
+  if (!competition.value) return
+  if (competition.value._name === 'singleton') {
+    if (!competition.value.event) {
+      competition.value.event = {
+        date: '',
+        time: competition.value.startTime || '20:00',
+        duration: competition.value.duration || 1,
+        venue: undefined,
+      }
+    }
+  }
+}
 
 onMounted(async () => {
   if (isNew.value) {
@@ -225,7 +250,15 @@ onMounted(async () => {
       await loadRoundupText()
     }
   }
+  ensureSingletonEvent()
 })
+
+watch(
+  () => competition.value?._name,
+  () => {
+    ensureSingletonEvent()
+  },
+)
 
 watch(
   roundupText,
@@ -238,6 +271,18 @@ watch(
 
 const save = async () => {
   if (competition.value) {
+    if (competition.value._name === 'singleton') {
+      ensureSingletonEvent()
+      if (competition.value.event) {
+        competition.value.event.time = competition.value.startTime || ''
+        competition.value.event.duration = competition.value.duration || 1
+        if (!competition.value.event.venue || !competition.value.event.venue.id) {
+          delete competition.value.event.venue
+        }
+      }
+    } else {
+      delete competition.value.event
+    }
     if (text.value) {
       await TextDAO.save(text.value)
     }

@@ -1335,6 +1335,47 @@ describe('maintenance edit views', () => {
     expect(wrapper.find('[data-test="regenerate-roundup-button"]').exists()).toBe(false)
   })
 
+  it('renders date and venue fields when editing singleton competitions and saves event data', async () => {
+    mocks.route.params = { seasonId: '2026-2027', id: 'finals' }
+    mocks.competitionDAO.getDataByPath.mockResolvedValue({
+      id: 'finals',
+      path: 'season/2026-2027/competition/finals',
+      name: 'Finals Night',
+      _name: 'singleton',
+      duration: 1,
+      startTime: '19:30',
+      event: {
+        date: '2026-06-01',
+        time: '19:30',
+        duration: 1,
+        venue: { id: 'venue-1', path: 'venue/venue-1' },
+      },
+    })
+    mocks.venueDAO.list.mockResolvedValue([
+      { id: 'venue-1', path: 'venue/venue-1', name: 'Town Hall' },
+      { id: 'venue-2', path: 'venue/venue-2', name: 'Village Club' },
+    ])
+    const wrapper = await mountMaintenance(CompetitionEdit)
+
+    expect(wrapper.find('input[type="date"]').exists()).toBe(true)
+
+    await setField(wrapper, 'Date', '2026-06-15')
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.competitionDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'finals',
+        _name: 'singleton',
+        event: expect.objectContaining({
+          date: '2026-06-15',
+          time: '19:30',
+          duration: 1,
+          venue: { id: 'venue-1', path: 'venue/venue-1' },
+        }),
+      }),
+    )
+  })
+
   it('saves a new competition with a uuid id and path', async () => {
     mocks.route.params = { seasonId: '2026-2027', id: 'new' }
     const wrapper = await mountMaintenance(CompetitionEdit)
