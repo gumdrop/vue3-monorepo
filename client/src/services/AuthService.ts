@@ -37,7 +37,7 @@ export default function useAuth() {
 
   const logonWithGoogle = async (email: string | undefined) => {
     if (email) {
-      const siteUser = await verifyEmail(email)
+      const siteUser = await siteUserForEmail(email)
 
       if (siteUser) {
         const provider = new GoogleAuthProvider()
@@ -54,17 +54,6 @@ export default function useAuth() {
         await useUserStore().setUser(result.user)
         return savedSiteUser
       }
-
-      //     .catch((error) => {
-      //       // Handle Errors here.
-      //       const errorCode = error.code
-      //       const errorMessage = error.message
-      //       // The email of the user's account used.
-      //       const email = error.customData.email
-      //       // The AuthCredential type that was used.
-      //       const credential = GoogleAuthProvider.credentialFromError(error)
-      //       // ...
-      //     })
     }
   }
 
@@ -81,8 +70,15 @@ export default function useAuth() {
   }
 
   async function siteUserForEmail(email: string | null) {
-    const response = await axios.get<SiteUser | string>(`${REST_ROOT}/site-user-for-email/${email}`)
-    return typeof response.data === 'string' ? (JSON.parse(response.data) as SiteUser) : response.data
+    try {
+      const response = await axios.get<SiteUser | string>(`${REST_ROOT}/site-user-for-email/${email}`)
+      return typeof response.data === 'string' ? (JSON.parse(response.data) as SiteUser) : response.data
+    } catch (e: any) {
+      if (e?.response?.status === 404) {
+        throw new Error(EMAIL_NOT_REGISTERED_MESSAGE)
+      }
+      return false
+    }
   }
 
   async function verifyEmail(email: string) {
@@ -96,15 +92,10 @@ export default function useAuth() {
         })
         window.localStorage.setItem('emailForSignIn', email)
       }
-      return true && siteUser
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return siteUser
     } catch (e: any) {
-      if (e?.response?.status === 404) {
-        throw new Error(EMAIL_NOT_REGISTERED_MESSAGE)
-      }
       console.error(`Error getting site user : ${e.message}`)
-      return false
+      throw e
     }
   }
 
