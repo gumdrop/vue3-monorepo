@@ -11,6 +11,10 @@ const localProjectId = () => process.env['FIREBASE_PROJECT_ID'] ?? 'chiltern-ql-
 const db = () => {
   if (!_db) {
     if (isLocal()) {
+      const host = emulatorAddr()
+      if (host) {
+        process.env['FIRESTORE_EMULATOR_HOST'] = host
+      }
       _db = new Firestore({ projectId: localProjectId() })
       _db.settings({ host: emulatorAddr(), ssl: false })
     } else {
