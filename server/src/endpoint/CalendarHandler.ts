@@ -36,9 +36,8 @@ interface CalendarCache extends Entity {
 export async function teamCalendar(id: string) {
   async function saveNewIcal() {
     const ical = await makeICal(await load<Team>(`team/${id}`))
-    const newid = randomUUID()
     const cacheEntry: CalendarCache = {
-      id: newid,
+      id,
       path: `calendarcache/${id}`,
       ical,
       updated: LocalDateTime.now().toString(),
@@ -188,6 +187,22 @@ async function teamCompetitions(season: Season) {
   return competitions.filter((c) => c._name === 'league' || c._name === 'cup')
 }
 
+function matchesTeam(ref: unknown, team: Team): boolean {
+  if (!ref) return false
+  if (typeof ref === 'string') {
+    return ref === team.id || ref === team.path || ref.endsWith(`/${team.id}`)
+  }
+  if (typeof ref === 'object') {
+    if ('id' in ref && (ref as { id: string }).id === team.id) return true
+    if ('path' in ref && (ref as { path: string }).path === team.path) return true
+  }
+  return false
+}
+
+function fixtureInvolvesTeam(fixture: Fixture, team: Team): boolean {
+  return matchesTeam(fixture.home, team) || matchesTeam(fixture.away, team)
+}
+
 async function teamFixtureList(team: Team, currentSeason: Season) {
   const teamFixtures: { competition: Competition; fixtures: Fixtures; fixtureList: Fixture[] }[] =
     []
@@ -197,7 +212,8 @@ async function teamFixtureList(team: Team, currentSeason: Season) {
     const fixtures = await list<Fixtures>('fixtures', competition.path)
     for (const fixs of fixtures) {
       const fixtureList = await list<Fixture>('fixture', fixs.path)
-      teamFixtures.push({ competition, fixtures: fixs, fixtureList })
+      const matchingFixtures = fixtureList.filter((f) => fixtureInvolvesTeam(f, team))
+      teamFixtures.push({ competition, fixtures: fixs, fixtureList: matchingFixtures })
     }
   }
 
