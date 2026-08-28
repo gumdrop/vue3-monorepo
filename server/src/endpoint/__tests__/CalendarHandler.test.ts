@@ -151,4 +151,59 @@ describe('CalendarHandler', () => {
       }),
     )
   })
+
+  it('only includes fixtures involving the specified team', async () => {
+    const team1 = { id: 'team-1', path: 'team/team-1', name: 'Alpha Quiz Team', shortName: 'Alpha' }
+    const team2 = { id: 'team-2', path: 'team/team-2', name: 'Bravo Quiz Team', shortName: 'Bravo' }
+    const team3 = { id: 'team-3', path: 'team/team-3', name: 'Charlie Quiz Team', shortName: 'Charlie' }
+    const team4 = { id: 'team-4', path: 'team/team-4', name: 'Delta Quiz Team', shortName: 'Delta' }
+
+    const leagueComp = {
+      id: 'league',
+      path: 'season/season-1/competition/league',
+      _name: 'league',
+      name: 'League',
+      duration: 7200,
+    }
+    const fixtureSet = {
+      id: 'week-1',
+      path: `${leagueComp.path}/fixtures/week-1`,
+      date: '2026-01-13',
+      start: '19:30',
+      description: 'Week 1',
+    }
+    const fixture1 = {
+      id: 'fixture-1',
+      path: `${fixtureSet.path}/fixture/fixture-1`,
+      home: { id: 'team-1', path: 'team/team-1' },
+      away: { id: 'team-2', path: 'team/team-2' },
+    }
+    const fixture2 = {
+      id: 'fixture-2',
+      path: `${fixtureSet.path}/fixture/fixture-2`,
+      home: { id: 'team-3', path: 'team/team-3' },
+      away: { id: 'team-4', path: 'team/team-4' },
+    }
+
+    vi.mocked(runQuery).mockResolvedValue([] as never)
+    vi.mocked(load).mockImplementation(async (pathish) => {
+      const path = typeof pathish === 'string' ? pathish : 'path' in pathish ? pathish.path : ''
+      if (path === 'team/team-1') return team1 as never
+      if (path === 'team/team-2') return team2 as never
+      if (path === 'team/team-3') return team3 as never
+      if (path === 'team/team-4') return team4 as never
+      return undefined as never
+    })
+    vi.mocked(list).mockImplementation(async (type, parent) => {
+      if (type === 'competition' && parent === 'season/season-1') return [leagueComp] as never
+      if (type === 'fixtures' && parent === leagueComp.path) return [fixtureSet] as never
+      if (type === 'fixture' && parent === fixtureSet.path) return [fixture1, fixture2] as never
+      return [] as never
+    })
+
+    const ical = await teamCalendar('team-1')
+
+    expect(ical).toContain('SUMMARY:Alpha - Bravo : League Week 1')
+    expect(ical).not.toContain('Charlie - Delta')
+  })
 })
