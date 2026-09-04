@@ -23,7 +23,9 @@ export const allocatedFixtureTeamPaths = (fixtures: Partial<Fixture>[]) => {
 
 export const unallocatedFixtureTeams = (teams: Team[], fixtures: Partial<Fixture>[]) => {
   const allocatedPaths = allocatedFixtureTeamPaths(fixtures)
-  return teams.filter((team) => !allocatedPaths.has(team.path))
+  return teams
+    .filter((team) => !team.retired && !allocatedPaths.has(team.path))
+    .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 export const canSaveFixtureEdit = (fixture: FixtureEdit) => {
@@ -60,11 +62,14 @@ export const availableTeamsForFixtureSlot = (
   const otherSelectedPath = slot === 'home' ? fixtureToEdit.awayPath : fixtureToEdit.homePath
   const allocatedToOtherFixtures = allocatedTeamPathsForOtherFixtures(fixtures, fixtureToEdit.id)
 
-  return teams.filter((team) => {
-    if (team.path === selectedPath) return true
-    if (team.path === otherSelectedPath) return false
-    return !allocatedToOtherFixtures.has(team.path)
-  })
+  return teams
+    .filter((team) => {
+      if (team.retired) return false
+      if (team.path === selectedPath) return true
+      if (team.path === otherSelectedPath) return false
+      return !allocatedToOtherFixtures.has(team.path)
+    })
+    .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 export const applyHomeTeamSelection = (fixture: FixtureEdit, teams: Team[], homePath: string | null): FixtureEdit => {
