@@ -18,10 +18,14 @@ describe('useValidations', () => {
 
     expect(validator('ABC')).toBe(true)
     expect(validator('abd')).toBe('Must be abc')
+    expect(validator('')).toBe(true)
+    expect(validator(undefined)).toBe(true)
   })
 
   it('validates email addresses and reports the failing field name', () => {
     expect(isEmail('Contact')('alice@example.com')).toBe(true)
     expect(isEmail('Contact')('not-an-email')).toBe('Contact must be an email address')
+    expect(isEmail('Contact')('')).toBe(true)
+    expect(isEmail('Contact')(undefined)).toBe(true)
   })
 })

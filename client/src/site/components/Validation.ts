@@ -6,7 +6,7 @@ export const useValidations = () => {
   }
 
   const regex = (regx: RegExp, message: string) => (v: string | undefined) => {
-    return v!.toLowerCase().match(regx) ? true : message
+    return !v || v.toLowerCase().match(regx) ? true : message
   }
 
   const email = (name: string) => regex(emailRegex, `${name} must be an email address`)

@@ -59,6 +59,28 @@ describe('fixture edit helpers', () => {
     ])
   })
 
+  it('sorts teams alphabetically and excludes retired teams from fixture entry', () => {
+    const unsortedTeams = [
+      team('Zebra'),
+      { ...team('Retired Team'), retired: true },
+      team('Alpha'),
+      team('Mango'),
+    ]
+    const fixtureToEdit = {}
+
+    expect(unallocatedFixtureTeams(unsortedTeams, []).map((t) => t.name)).toEqual([
+      'Alpha',
+      'Mango',
+      'Zebra',
+    ])
+
+    expect(availableTeamsForFixtureSlot(unsortedTeams, [], fixtureToEdit, 'home').map((t) => t.name)).toEqual([
+      'Alpha',
+      'Mango',
+      'Zebra',
+    ])
+  })
+
   it('sets the venue from the selected home team', () => {
     const edit = applyHomeTeamSelection({ awayPath: 'team/bravo', venuePath: 'venue/old' }, teams, 'team/alpha')
 
