@@ -56,6 +56,13 @@ export const normaliseLeagueTableRow = (row: LeagueTableRow): LeagueTableRow => 
   const teamId = row.team?.id || ''
   return {
     ...row,
+    played: Number(row.played) || 0,
+    won: Number(row.won) || 0,
+    lost: Number(row.lost) || 0,
+    drawn: Number(row.drawn) || 0,
+    leaguePoints: Number(row.leaguePoints) || 0,
+    matchPointsFor: Number(row.matchPointsFor) || 0,
+    matchPointsAgainst: Number(row.matchPointsAgainst) || 0,
     team: {
       id: teamId,
       path: row.team?.path || (teamId ? `team/${teamId}` : ''),
