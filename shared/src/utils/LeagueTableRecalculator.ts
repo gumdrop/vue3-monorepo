@@ -43,30 +43,41 @@ export function recalculateTables(tables: LeagueTable[], fixtures: Fixture[]): L
       return {
         team: row1.team,
         position: '',
-        won: row1.won + row2.won,
-        lost: row1.lost + row2.lost,
-        drawn: row1.drawn + row2.drawn,
-        leaguePoints: row1.leaguePoints + row2.leaguePoints,
-        matchPointsFor: row1.matchPointsFor + row2.matchPointsFor,
-        matchPointsAgainst: row1.matchPointsAgainst + row2.matchPointsAgainst,
-        played: row1.played + row2.played,
+        won: (Number(row1.won) || 0) + (Number(row2.won) || 0),
+        lost: (Number(row1.lost) || 0) + (Number(row2.lost) || 0),
+        drawn: (Number(row1.drawn) || 0) + (Number(row2.drawn) || 0),
+        leaguePoints: (Number(row1.leaguePoints) || 0) + (Number(row2.leaguePoints) || 0),
+        matchPointsFor: (Number(row1.matchPointsFor) || 0) + (Number(row2.matchPointsFor) || 0),
+        matchPointsAgainst: (Number(row1.matchPointsAgainst) || 0) + (Number(row2.matchPointsAgainst) || 0),
+        played: (Number(row1.played) || 0) + (Number(row2.played) || 0),
       }
     }
 
     return (table: LeagueTable) => {
       function compareRows(a: LeagueTableRow, b: LeagueTableRow) {
+        const bPts = Number(b.leaguePoints) || 0
+        const aPts = Number(a.leaguePoints) || 0
+        const bFor = Number(b.matchPointsFor) || 0
+        const aFor = Number(a.matchPointsFor) || 0
+        const aAgainst = Number(a.matchPointsAgainst) || 0
+        const bAgainst = Number(b.matchPointsAgainst) || 0
+        const bWon = Number(b.won) || 0
+        const aWon = Number(a.won) || 0
+        const bDrawn = Number(b.drawn) || 0
+        const aDrawn = Number(a.drawn) || 0
+
         return (
-          b.leaguePoints - a.leaguePoints ||
-          b.matchPointsFor - a.matchPointsFor ||
-          a.matchPointsAgainst - b.matchPointsAgainst ||
-          b.won - a.won ||
-          b.drawn - a.drawn
+          bPts - aPts ||
+          bFor - aFor ||
+          aAgainst - bAgainst ||
+          bWon - aWon ||
+          bDrawn - aDrawn
         )
       }
 
       const newRows = table.rows
         .map((r) => {
-          const filtered = rows.filter((row) => row.team.id === r.team.id)
+          const filtered = rows.filter((row) => Boolean(row.team?.id) && row.team?.id === r.team?.id)
           return filtered.reduce((a, b) => addRows(a, b), r)
         })
         .sort(compareRows)

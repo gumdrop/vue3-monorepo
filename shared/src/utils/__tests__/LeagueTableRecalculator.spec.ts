@@ -162,6 +162,40 @@ describe('League Table Recalculator', () => {
       expect(recalculated[0].rows.map((row) => row.team.id)).toEqual(['2', '1'])
       expect(recalculated[0].rows.map((row) => row.position)).toEqual(['1', '2'])
     })
+
+    it('should safely sort rows with undefined or missing numeric values without failing or producing NaN', () => {
+      const tableWithMissingValues: LeagueTable = {
+        path: 'table/missing',
+        id: 'missing',
+        rows: [
+          {
+            team: { path: 'team/1', id: '1' },
+            position: '',
+            played: undefined as unknown as number,
+            won: undefined as unknown as number,
+            drawn: undefined as unknown as number,
+            lost: undefined as unknown as number,
+            leaguePoints: 10,
+            matchPointsFor: 50,
+            matchPointsAgainst: 20,
+          },
+          {
+            team: { path: 'team/2', id: '2' },
+            position: '',
+            played: undefined as unknown as number,
+            won: undefined as unknown as number,
+            drawn: undefined as unknown as number,
+            lost: undefined as unknown as number,
+            leaguePoints: 14,
+            matchPointsFor: undefined as unknown as number,
+            matchPointsAgainst: undefined as unknown as number,
+          },
+        ],
+      }
+      const recalculated = recalculateTables([tableWithMissingValues], [])
+      expect(recalculated[0].rows.map((row) => row.team.id)).toEqual(['2', '1'])
+      expect(recalculated[0].rows.map((row) => row.position)).toEqual(['1', '2'])
+    })
   })
 
   describe('Multiple Tables', () => {
