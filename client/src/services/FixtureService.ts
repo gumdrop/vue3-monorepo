@@ -25,6 +25,11 @@ export const useFixture = () => {
     return fixtureSet
   }
 
+  const competitionFixtureList = async (competitionPath: string) => {
+    const fixtureSets = await FixturesDAO.entities(FixturesDAO.subCollection(competitionPath))
+    return fixtureList(fixtureSets)
+  }
+
   const fixturesForResultSubmission = async (teamId: string | undefined) => {
     const now = LocalDateTime.now().toString()
 
@@ -104,7 +109,7 @@ export const useFixture = () => {
     })
   }
 
-  return { fixturesForResultSubmission, teamFixtures, teamResults, fixtureList, submitResult }
+  return { fixturesForResultSubmission, teamFixtures, teamResults, fixtureList, submitResult, competitionFixtureList }
 }
 
 // def fixturesForResultSubmission(teamId:String) = {

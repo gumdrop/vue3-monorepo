@@ -36,16 +36,16 @@ import { upsertResultIndexForCompletedFixtureSet } from './ResultIndexUtils'
 const teamCompetitionTypes = new Set<Competition['_name']>(['league', 'cup', 'subsidiary'])
 
 export async function resultSubmission(result: ResultsSubmitCommand) {
-  async function haveResults() {
-    let fixturesExist = true
+  async function haveExistingResults() {
+    let existingResults = true
     for (const fixture of result.fixtures) {
       const f = await load<Fixture>(fixture.fixturePath)
-      fixturesExist = fixturesExist && f !== null && f !== undefined
+      existingResults = existingResults && Boolean(f?.result)
     }
-    return fixturesExist
+    return existingResults
   }
 
-  const hasResults = await haveResults()
+  const hasExistingResults = await haveExistingResults()
 
   const user = await load<User>(entityPath('user', result.userID))
   const fixtureSetPaths = new Set<string>()
@@ -57,7 +57,7 @@ export async function resultSubmission(result: ResultsSubmitCommand) {
 
   for (const f of result.fixtures) {
     const fixture = await load<Fixture>(f.fixturePath)
-    if (!hasResults) {
+    if (!hasExistingResults) {
       const isSubsidiary = await subsidiary(fixture)
       const leagueTables = await tables(fixture)
       if (leagueTables.length > 0) {

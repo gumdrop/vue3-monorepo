@@ -76,7 +76,7 @@ export const useFixtures = () => {
     return interim
   }
 
-  return { activeFixtures, questionPapers, seasonFixtures, spentFixtures, spentFixturesForDay }
+  return { activeFixtures, questionPapers, seasonFixtures, spentFixtures, spentFixturesForDay, competitionFixtures }
 }
 
 // def activeFixtures(seasonId: String, take:Int = Integer.MAX_VALUE) = {
