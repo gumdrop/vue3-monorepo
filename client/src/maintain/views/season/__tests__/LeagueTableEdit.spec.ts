@@ -22,6 +22,7 @@ const mocks = vi.hoisted(() => ({
   teamDAO: {
     list: vi.fn(),
   },
+  competitionFixtureList: vi.fn(),
   uuid: vi.fn(),
 }))
 
@@ -36,6 +37,12 @@ vi.mock('@/dao/LeagueTableDAO', () => ({
 
 vi.mock('@/dao/TeamDAO', () => ({
   default: mocks.teamDAO,
+}))
+
+vi.mock('@/services/FixtureService', () => ({
+  useFixture: () => ({
+    competitionFixtureList: mocks.competitionFixtureList,
+  }),
 }))
 
 vi.mock('uuid', () => ({ v4: mocks.uuid }))
@@ -89,6 +96,7 @@ describe('LeagueTableEdit', () => {
       description: 'Main',
       rows: [row('alpha', 1, 10), row('bravo', 3, 8)],
     } as LeagueTable)
+    mocks.competitionFixtureList.mockResolvedValue([])
     mocks.uuid.mockReturnValue('uuid-1')
   })
 
@@ -134,9 +142,17 @@ describe('LeagueTableEdit', () => {
   })
 
   it('recalculates row positions and saves the normalised table', async () => {
+    mocks.competitionFixtureList.mockResolvedValue([
+      {
+        home: { id: 'bravo', path: 'team/bravo' },
+        away: { id: 'alpha', path: 'team/alpha' },
+        result: { homeScore: 10, awayScore: 5 },
+      },
+    ])
     const wrapper = await mountLeagueTableEdit()
 
     await wrapper.find('[data-test="recalculate-positions-button"]').trigger('click')
+    await flushPromises()
     await wrapper.find('[data-test="save-league-table-button"]').trigger('click')
 
     expect(mocks.leagueTableDAO.save).toHaveBeenCalledWith(
