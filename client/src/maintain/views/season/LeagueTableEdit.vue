@@ -99,6 +99,7 @@ import {
   setLeagueTableRowTeam,
   unallocatedLeagueTableTeams,
 } from './leagueTableEditHelpers'
+import { useFixture } from '@/services/FixtureService'
 
 const route = useRoute()
 const router = useRouter()
@@ -150,10 +151,27 @@ const tableForSave = (table: LeagueTable): LeagueTable => {
   return leagueTableForSave(table, compPath.value, route.params.id as string, isNew.value)
 }
 
-const recalculatePositions = () => {
+const { competitionFixtureList } = useFixture()
+
+const recalculatePositions = async () => {
   if (!leagueTable.value) return
 
-  const [recalculated] = recalculateTables([tableForSave(leagueTable.value)], [])
+  const blankTable = {
+    ...tableForSave(leagueTable.value),
+    rows: leagueTable.value.rows.map((r) => ({
+      ...r,
+      played: 0,
+      won: 0,
+      drawn: 0,
+      lost: 0,
+      leaguePoints: 0,
+      matchPointsFor: 0,
+      matchPointsAgainst: 0,
+    })),
+  }
+
+  const allFixtures = await competitionFixtureList(compPath.value)
+  const [recalculated] = recalculateTables([blankTable], allFixtures)
   leagueTable.value.rows = recalculated.rows
 }
 
