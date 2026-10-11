@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   save: vi.fn(),
   saveAll: vi.fn(),
   calculateStats: vi.fn(),
+  currentSeason: vi.fn(),
   updateAggregationForCompletedFixtureSet: vi.fn(),
   updateForFixture: vi.fn(),
 }))
@@ -37,6 +38,10 @@ vi.mock('../StatisticsUtils', () => ({
 
 vi.mock('../SeasonStatisticsAggregationUtils', () => ({
   updateAggregationForCompletedFixtureSet: mocks.updateAggregationForCompletedFixtureSet,
+}))
+
+vi.mock('../util', () => ({
+  currentSeason: mocks.currentSeason,
 }))
 
 import {
@@ -209,6 +214,131 @@ describe('TaskFunctions', () => {
     expect(mocks.save).toHaveBeenCalledWith(fixtureSet)
 
     queueMicrotaskSpy.mockRestore()
+  })
+
+  it('recalculates league tables incrementally when a result is submitted for the first time', async () => {
+    const queueMicrotaskSpy = vi
+      .spyOn(globalThis, 'queueMicrotask')
+      .mockImplementation((callback: () => void) => callback())
+    const user = { id: 'user-1', path: 'user/user-1' }
+    const season = { id: 'season-1', path: 'season/season-1' }
+    const competitionPath = 'season/season-1/competition/league'
+    const fixture = {
+      id: 'fixture-1',
+      path: fixturePath('fixture-1'),
+      home: { id: 'team-a', path: 'team/team-a' },
+      away: { id: 'team-b', path: 'team/team-b' },
+    }
+    const table = {
+      id: 'table-1',
+      path: `${competitionPath}/leaguetable/table-1`,
+      description: 'Main',
+      rows: [
+        {
+          team: { id: 'team-a', path: 'team/team-a' },
+          position: '',
+          played: 0,
+          won: 0,
+          drawn: 0,
+          lost: 0,
+          matchPointsFor: 0,
+          matchPointsAgainst: 0,
+          leaguePoints: 0,
+        },
+        {
+          team: { id: 'team-b', path: 'team/team-b' },
+          position: '',
+          played: 0,
+          won: 0,
+          drawn: 0,
+          lost: 0,
+          matchPointsFor: 0,
+          matchPointsAgainst: 0,
+          leaguePoints: 0,
+        },
+      ],
+    }
+
+    mocks.currentSeason.mockResolvedValue(season)
+    mocks.load.mockImplementation(async (pathish) => {
+      const path = typeof pathish === 'string' ? pathish : pathish.path
+      if (path === 'user/user-1') return user
+      if (path === 'season/season-1') return season
+      if (path === competitionPath) return { id: 'league', path, name: 'League', _name: 'league' }
+      if (path === fixture.path) return fixture
+      return undefined
+    })
+    mocks.list.mockImplementation(async (type, parent) => {
+      if (type === 'leaguetable' && parent === competitionPath) return [table]
+      return []
+    })
+
+    await resultSubmission({
+      fixtures: [{ fixturePath: fixture.path, homeScore: 43, awayScore: 42 }],
+      reportText: undefined,
+      userID: 'user-1',
+    })
+
+    expect(mocks.saveAll).toHaveBeenCalledWith([
+      expect.objectContaining({
+        path: table.path,
+        rows: [
+          expect.objectContaining({
+            team: { id: 'team-a', path: 'team/team-a' },
+            played: 1,
+            won: 1,
+            drawn: 0,
+            lost: 0,
+            leaguePoints: 2,
+            matchPointsFor: 43,
+            matchPointsAgainst: 42,
+            position: '1',
+          }),
+          expect.objectContaining({
+            team: { id: 'team-b', path: 'team/team-b' },
+            played: 1,
+            won: 0,
+            drawn: 0,
+            lost: 1,
+            leaguePoints: 0,
+            matchPointsFor: 42,
+            matchPointsAgainst: 43,
+            position: '2',
+          }),
+        ],
+      }),
+    ])
+
+    queueMicrotaskSpy.mockRestore()
+  })
+
+  it('does not recalculate league tables when the result was already submitted', async () => {
+    const user = { id: 'user-1', path: 'user/user-1' }
+    const competitionPath = 'season/season-1/competition/league'
+    const fixture = {
+      id: 'fixture-1',
+      path: fixturePath('fixture-1'),
+      home: { id: 'team-a', path: 'team/team-a' },
+      away: { id: 'team-b', path: 'team/team-b' },
+      result: { homeScore: 43, awayScore: 42 },
+    }
+
+    mocks.load.mockImplementation(async (pathish) => {
+      const path = typeof pathish === 'string' ? pathish : pathish.path
+      if (path === 'user/user-1') return user
+      if (path === competitionPath) return { id: 'league', path, name: 'League', _name: 'league' }
+      if (path === fixture.path) return fixture
+      return undefined
+    })
+    mocks.list.mockResolvedValue([])
+
+    await resultSubmission({
+      fixtures: [{ fixturePath: fixture.path, homeScore: 43, awayScore: 42 }],
+      reportText: undefined,
+      userID: 'user-1',
+    })
+
+    expect(mocks.saveAll).not.toHaveBeenCalled()
   })
 
   it('creates a competition roundup when the final team competition fixture set is complete', async () => {
