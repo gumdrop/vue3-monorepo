@@ -90,8 +90,8 @@ Server-side runtime variables used during local development and deployment:
 
 - `FIRESTORE_EMULATOR_HOST` - enables local server access to the Firestore emulator.
 - `FIREBASE_PROJECT_ID` - optional project id override; defaults to `chiltern-ql-firestore`.
-- `GEMINI_API_KEY` - enables generated fixture-set and competition roundup summaries. If unset, the server also checks `gemini-api-key.txt` in the project root.
-- `GEMINI_MODEL` - optional Gemini model override; defaults to `gemini-3.5-flash`.
+- `DEEPSEEK_API_KEY` - enables generated fixture-set and competition roundup summaries. If unset, the server also checks `deepseek-api-key.txt` in the project root.
+- `DEEPSEEK_MODEL` - optional DeepSeek model override; defaults to `deepseek-chat`.
 - `SENDGRID_API_KEY` - required for contact email endpoints and deployment YAML generation.
 - `CONTACT_CAPTCHA_SECRET` - optional stable signing secret for contact-form captcha tokens.
 
@@ -203,9 +203,9 @@ This script:
 
 Deployment secrets:
 
-- `gemini-api-key.txt` at the repository root is required for deployment YAML generation.
+- `deepseek-api-key.txt` at the repository root is required for deployment YAML generation.
 - `SENDGRID_API_KEY` must be set in the build environment.
-- `GEMINI_MODEL` is optional and defaults to `gemini-3.5-flash`.
+- `DEEPSEEK_MODEL` is optional and defaults to `deepseek-chat`.
 
 Deploy to Google App Engine:
 

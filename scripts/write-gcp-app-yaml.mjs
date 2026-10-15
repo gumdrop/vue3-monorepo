@@ -3,20 +3,20 @@ import Path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const repoRoot = Path.resolve(Path.dirname(fileURLToPath(import.meta.url)), '..')
-const apiKeyPath = Path.join(repoRoot, 'gemini-api-key.txt')
+const apiKeyPath = Path.join(repoRoot, 'deepseek-api-key.txt')
 const appYamlPath = Path.join(repoRoot, 'server', 'deploy', 'app.yaml')
 
 if (!existsSync(apiKeyPath)) {
-  throw new Error('Missing gemini-api-key.txt in the project root')
+  throw new Error('Missing deepseek-api-key.txt in the project root')
 }
 
 const apiKey = readFileSync(apiKeyPath, 'utf8').trim()
 if (!apiKey) {
-  throw new Error('gemini-api-key.txt is empty')
+  throw new Error('deepseek-api-key.txt is empty')
 }
 
 const yamlString = (value) => JSON.stringify(value)
-const geminiModel = process.env.GEMINI_MODEL ?? 'gemini-3.5-flash'
+const deepseekModel = process.env.DEEPSEEK_MODEL ?? 'deepseek-chat'
 const sendgridApiKey = process.env.SENDGRID_API_KEY?.trim()
 
 if (!sendgridApiKey) {
@@ -28,8 +28,8 @@ instance_class: F1
 
 env_variables:
   SENDGRID_API_KEY: ${yamlString(sendgridApiKey)}
-  GEMINI_API_KEY: ${yamlString(apiKey)}
-  GEMINI_MODEL: ${yamlString(geminiModel)}
+  DEEPSEEK_API_KEY: ${yamlString(apiKey)}
+  DEEPSEEK_MODEL: ${yamlString(deepseekModel)}
 automatic_scaling:
   max_instances: 1
 handlers:

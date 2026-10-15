@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   generateCompetitionRoundup,
   generateFixtureSetResultsSummary,
-} from '../GeminiResultsSummary'
+} from '../DeepSeekResultsSummary'
 
 const input = {
   competitionName: 'League Championship',
@@ -19,26 +19,26 @@ const input = {
   ],
 }
 
-const previousApiKey = process.env['GEMINI_API_KEY']
-const previousModel = process.env['GEMINI_MODEL']
+const previousApiKey = process.env['DEEPSEEK_API_KEY']
+const previousModel = process.env['DEEPSEEK_MODEL']
 
-describe('GeminiResultsSummary', () => {
+describe('DeepSeekResultsSummary', () => {
   beforeEach(() => {
-    process.env['GEMINI_API_KEY'] = 'test-api-key'
-    delete process.env['GEMINI_MODEL']
+    process.env['DEEPSEEK_API_KEY'] = 'test-api-key'
+    delete process.env['DEEPSEEK_MODEL']
   })
 
   afterEach(() => {
     if (previousApiKey === undefined) {
-      delete process.env['GEMINI_API_KEY']
+      delete process.env['DEEPSEEK_API_KEY']
     } else {
-      process.env['GEMINI_API_KEY'] = previousApiKey
+      process.env['DEEPSEEK_API_KEY'] = previousApiKey
     }
 
     if (previousModel === undefined) {
-      delete process.env['GEMINI_MODEL']
+      delete process.env['DEEPSEEK_MODEL']
     } else {
-      process.env['GEMINI_MODEL'] = previousModel
+      process.env['DEEPSEEK_MODEL'] = previousModel
     }
 
     vi.unstubAllGlobals()
@@ -49,12 +49,10 @@ describe('GeminiResultsSummary', () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        candidates: [
+        choices: [
           {
-            finishReason: 'STOP',
-            content: {
-              parts: [{ text: 'Alpha won a close Round 3 match.' }],
-            },
+            finish_reason: 'stop',
+            message: { content: 'Alpha won a close Round 3 match.' },
           },
         ],
       }),
@@ -63,18 +61,24 @@ describe('GeminiResultsSummary', () => {
 
     await expect(generateFixtureSetResultsSummary(input)).resolves.toEqual({
       text: 'Alpha won a close Round 3 match.',
-      model: 'gemini-3.5-flash',
+      model: 'deepseek-chat',
     })
 
+    expect(fetchMock.mock.calls[0][0]).toBe('https://api.deepseek.com/chat/completions')
     const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
-    expect(body.generationConfig).toEqual({
+    expect(body).toEqual({
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'user',
+          content: expect.stringContaining('Produce Markdown.'),
+        },
+      ],
       temperature: 0.3,
-      responseMimeType: 'text/plain',
-      maxOutputTokens: 8192,
-      thinkingConfig: { thinkingLevel: 'minimal' },
+      max_tokens: 8192,
+      stream: false,
     })
-    expect(body.contents[0].parts[0].text).toContain('Produce Markdown.')
-    expect(body.contents[0].parts[0].text).toContain(
+    expect(body.messages[0].content).toContain(
       'Return only Markdown body text, with no heading.',
     )
   })
@@ -83,12 +87,10 @@ describe('GeminiResultsSummary', () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        candidates: [
+        choices: [
           {
-            finishReason: 'STOP',
-            content: {
-              parts: [{ text: 'Alpha held off Bravo to take the League Championship.' }],
-            },
+            finish_reason: 'stop',
+            message: { content: 'Alpha held off Bravo to take the League Championship.' },
           },
         ],
       }),
@@ -116,11 +118,11 @@ describe('GeminiResultsSummary', () => {
       }),
     ).resolves.toEqual({
       text: 'Alpha held off Bravo to take the League Championship.',
-      model: 'gemini-3.5-flash',
+      model: 'deepseek-chat',
     })
 
     const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
-    const prompt = body.contents[0].parts[0].text
+    const prompt = body.messages[0].content
     expect(prompt).toContain('completed team competition')
     expect(prompt).toContain('Fixture-set summary: Alpha opened with a narrow win.')
     expect(prompt).toContain('- Alpha 43-42 Bravo')
@@ -131,12 +133,10 @@ describe('GeminiResultsSummary', () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        candidates: [
+        choices: [
           {
-            finishReason: 'STOP',
-            content: {
-              parts: [{ text: 'Alpha dominated the league from start to finish.' }],
-            },
+            finish_reason: 'stop',
+            message: { content: 'Alpha dominated the league from start to finish.' },
           },
         ],
       }),
@@ -186,11 +186,11 @@ describe('GeminiResultsSummary', () => {
       }),
     ).resolves.toEqual({
       text: 'Alpha dominated the league from start to finish.',
-      model: 'gemini-3.5-flash',
+      model: 'deepseek-chat',
     })
 
     const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
-    const prompt = body.contents[0].parts[0].text
+    const prompt = body.messages[0].content
     expect(prompt).toContain('Season statistics:')
     expect(prompt).toContain('- Average score: 45.50')
     expect(prompt).toContain('League table snapshots (showing progression):')
@@ -198,19 +198,16 @@ describe('GeminiResultsSummary', () => {
     expect(prompt).toContain('Use the league table snapshots to describe how the title race or positions changed over time.')
   })
 
-  it('rejects summaries that Gemini reports as truncated', async () => {
+  it('rejects summaries that DeepSeek reports as truncated', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
         json: async () => ({
-          candidates: [
+          choices: [
             {
-              finishReason: 'MAX_TOKENS',
-              finishMessage: 'The configured output token limit was reached.',
-              content: {
-                parts: [{ text: 'In Round 3 of the League Championship,' }],
-              },
+              finish_reason: 'length',
+              message: { content: 'In Round 3 of the League Championship,' },
             },
           ],
         }),
@@ -218,13 +215,13 @@ describe('GeminiResultsSummary', () => {
     )
 
     await expect(generateFixtureSetResultsSummary(input)).rejects.toThrow(
-      'Gemini fixture set summary was truncated by maxOutputTokens',
+      'DeepSeek fixture set summary was truncated by max_tokens',
     )
   })
 
   it('skips generation when no API key is configured', async () => {
-    delete process.env['GEMINI_API_KEY']
-    vi.spyOn(process, 'cwd').mockReturnValue('/tmp/no-gemini-key')
+    delete process.env['DEEPSEEK_API_KEY']
+    vi.spyOn(process, 'cwd').mockReturnValue('/tmp/no-deepseek-key')
     vi.stubGlobal('fetch', vi.fn())
     vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
@@ -232,50 +229,19 @@ describe('GeminiResultsSummary', () => {
 
     expect(fetch).not.toHaveBeenCalled()
     expect(console.warn).toHaveBeenCalledWith(
-      'Skipping fixture set results summary: GEMINI_API_KEY is not configured',
+      'Skipping fixture set results summary: DEEPSEEK_API_KEY is not configured',
     )
   })
 
-  it('uses the configured Gemini model and matching thinking config', async () => {
-    process.env['GEMINI_MODEL'] = 'gemini-2.5-flash'
+  it('uses the configured DeepSeek model and includes no-report fixture text', async () => {
+    process.env['DEEPSEEK_MODEL'] = 'deepseek-reasoner'
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
-        candidates: [
+        choices: [
           {
-            finishReason: 'STOP',
-            content: {
-              parts: [{ text: 'Alpha won.' }],
-            },
-          },
-        ],
-      }),
-    })
-    vi.stubGlobal('fetch', fetchMock)
-
-    await expect(generateFixtureSetResultsSummary(input)).resolves.toEqual({
-      text: 'Alpha won.',
-      model: 'gemini-2.5-flash',
-    })
-
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
-    )
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string)
-    expect(body.generationConfig.thinkingConfig).toEqual({ thinkingBudget: 0 })
-  })
-
-  it('omits thinking config for older models and includes no-report fixture text', async () => {
-    process.env['GEMINI_MODEL'] = 'models/gemini-1.5-flash'
-    const fetchMock = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        candidates: [
-          {
-            finishReason: 'STOP',
-            content: {
-              parts: [{ text: 'No reports were submitted.' }],
-            },
+            finish_reason: 'stop',
+            message: { content: 'No reports were submitted.' },
           },
         ],
       }),
@@ -289,18 +255,16 @@ describe('GeminiResultsSummary', () => {
       }),
     ).resolves.toEqual({
       text: 'No reports were submitted.',
-      model: 'models/gemini-1.5-flash',
+      model: 'deepseek-reasoner',
     })
 
-    expect(fetchMock.mock.calls[0][0]).toBe(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-    )
-    const body = JSON.parse(fetchMock.mock.calls[0][1].body as string)
-    expect(body.contents[0].parts[0].text).toContain('Report: none submitted')
-    expect(body.generationConfig).not.toHaveProperty('thinkingConfig')
+    expect(fetchMock.mock.calls[0][0]).toBe('https://api.deepseek.com/chat/completions')
+    const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
+    expect(body.model).toBe('deepseek-reasoner')
+    expect(body.messages[0].content).toContain('Report: none submitted')
   })
 
-  it('returns undefined for failed or empty Gemini responses', async () => {
+  it('returns undefined for failed or empty DeepSeek responses', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     vi.stubGlobal(
       'fetch',
@@ -312,13 +276,13 @@ describe('GeminiResultsSummary', () => {
     )
 
     await expect(generateFixtureSetResultsSummary(input)).resolves.toBeUndefined()
-    expect(errorSpy).toHaveBeenCalledWith('Gemini fixture set summary failed: 400 bad request')
+    expect(errorSpy).toHaveBeenCalledWith('DeepSeek fixture set summary failed: 400 bad request')
 
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ candidates: [{ finishReason: 'STOP', content: { parts: [] } }] }),
+        json: async () => ({ choices: [{ finish_reason: 'stop', message: { content: '' } }] }),
       }),
     )
 

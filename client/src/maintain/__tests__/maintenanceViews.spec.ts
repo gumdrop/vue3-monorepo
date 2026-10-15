@@ -1306,7 +1306,7 @@ describe('maintenance edit views', () => {
         roundup: { id: 'league-roundup', path: 'text/league-roundup' },
         roundupText: 'Fresh AI roundup',
         roundupGeneratedAt: '2026-06-11T09:00:00.000Z',
-        roundupModel: 'gemini-test',
+        roundupModel: 'deepseek-test',
       },
     })
     const wrapper = await mountMaintenance(CompetitionEdit)

@@ -13,6 +13,7 @@ dist
 dist-ssr
 coverage
 *.local
+/deepseek-api-key.txt
 /gemini-api-key.txt
 
 /cypress/videos/

@@ -65,44 +65,27 @@ export interface CompetitionRoundupInput {
   }
 }
 
-interface GeminiGenerateContentResponse {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{
-        text?: string
-      }>
+interface DeepSeekChatCompletionResponse {
+  choices?: Array<{
+    message?: {
+      content?: string
     }
-    finishReason?: string
-    finishMessage?: string
+    finish_reason?: string
   }>
 }
 
-const geminiModel = () => process.env['GEMINI_MODEL'] ?? 'gemini-3.5-flash'
+const deepseekModel = () => process.env['DEEPSEEK_MODEL'] ?? 'deepseek-chat'
 
-const geminiApiKey = () => {
-  const apiKey = process.env['GEMINI_API_KEY']?.trim()
+const deepseekApiKey = () => {
+  const apiKey = process.env['DEEPSEEK_API_KEY']?.trim()
   if (apiKey) return apiKey
 
   const candidatePaths = [
-    Path.join(process.cwd(), 'gemini-api-key.txt'),
-    Path.join(process.cwd(), '..', 'gemini-api-key.txt'),
+    Path.join(process.cwd(), 'deepseek-api-key.txt'),
+    Path.join(process.cwd(), '..', 'deepseek-api-key.txt'),
   ]
   const apiKeyPath = candidatePaths.find((path) => existsSync(path))
   return apiKeyPath ? readFileSync(apiKeyPath, 'utf8').trim() : undefined
-}
-
-const modelPath = (model: string) => (model.startsWith('models/') ? model : `models/${model}`)
-
-const thinkingConfig = (model: string) => {
-  if (/^gemini-3/i.test(model)) {
-    return { thinkingLevel: 'minimal' }
-  }
-
-  if (/^gemini-2\.5/i.test(model)) {
-    return { thinkingBudget: 0 }
-  }
-
-  return undefined
 }
 
 const fixtureLine = (fixture: FixtureSetSummaryFixture) => {
@@ -194,7 +177,7 @@ ${input.fixtureSets.map(fixtureSetRoundupLine).join('\n')}`
 export async function generateFixtureSetResultsSummary(
   input: FixtureSetSummaryInput,
 ): Promise<FixtureSetSummary | undefined> {
-  return generateGeminiSummary(buildPrompt(input), {
+  return generateDeepSeekSummary(buildPrompt(input), {
     failureLabel: 'fixture set summary',
     skipLabel: 'fixture set results summary',
   })
@@ -203,69 +186,50 @@ export async function generateFixtureSetResultsSummary(
 export async function generateCompetitionRoundup(
   input: CompetitionRoundupInput,
 ): Promise<FixtureSetSummary | undefined> {
-  return generateGeminiSummary(buildCompetitionRoundupPrompt(input), {
+  return generateDeepSeekSummary(buildCompetitionRoundupPrompt(input), {
     failureLabel: 'competition roundup',
     skipLabel: 'competition roundup',
   })
 }
 
-async function generateGeminiSummary(
+async function generateDeepSeekSummary(
   prompt: string,
   labels: { failureLabel: string; skipLabel: string },
 ): Promise<FixtureSetSummary | undefined> {
-  const apiKey = geminiApiKey()
+  const apiKey = deepseekApiKey()
   if (!apiKey) {
-    console.warn(`Skipping ${labels.skipLabel}: GEMINI_API_KEY is not configured`)
+    console.warn(`Skipping ${labels.skipLabel}: DEEPSEEK_API_KEY is not configured`)
     return undefined
   }
 
-  const model = geminiModel()
-  const thinking = thinkingConfig(model)
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/${modelPath(model)}:generateContent`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey,
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.3,
-          responseMimeType: 'text/plain',
-          maxOutputTokens: 8192,
-          ...(thinking ? { thinkingConfig: thinking } : {}),
-        },
-      }),
+  const model = deepseekModel()
+  const response = await fetch('https://api.deepseek.com/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
     },
-  )
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+      max_tokens: 8192,
+      stream: false,
+    }),
+  })
 
   if (!response.ok) {
     const body = await response.text()
-    console.error(`Gemini ${labels.failureLabel} failed: ${response.status} ${body}`)
+    console.error(`DeepSeek ${labels.failureLabel} failed: ${response.status} ${body}`)
     return undefined
   }
 
-  const data = (await response.json()) as GeminiGenerateContentResponse
-  const candidate = data.candidates?.[0]
-  if (candidate?.finishReason === 'MAX_TOKENS') {
-    throw new Error(
-      `Gemini ${labels.failureLabel} was truncated by maxOutputTokens${
-        candidate.finishMessage ? `: ${candidate.finishMessage}` : ''
-      }`,
-    )
+  const data = (await response.json()) as DeepSeekChatCompletionResponse
+  const choice = data.choices?.[0]
+  if (choice?.finish_reason === 'length') {
+    throw new Error(`DeepSeek ${labels.failureLabel} was truncated by max_tokens`)
   }
 
-  const text = candidate?.content?.parts
-    ?.map((part) => part.text ?? '')
-    .join('')
-    .trim()
-
+  const text = choice?.message?.content?.trim()
   return text ? { text, model } : undefined
 }

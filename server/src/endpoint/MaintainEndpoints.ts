@@ -76,7 +76,7 @@ async function regenerateSummary(command: RegenerateSummaryCommand) {
     : undefined
 
   if (!summaryText?.text?.trim()) {
-    throw new Error('Gemini did not return a fixture set results summary')
+    throw new Error('DeepSeek did not return a fixture set results summary')
   }
 
   return {
@@ -101,7 +101,7 @@ async function regenerateCompetitionRoundupResponse(command: RegenerateRoundupCo
   const roundupText = competition.roundup ? await load<Text>(competition.roundup) : undefined
 
   if (!roundupText?.text?.trim()) {
-    throw new Error('Gemini did not return a competition roundup')
+    throw new Error('DeepSeek did not return a competition roundup')
   }
 
   return {

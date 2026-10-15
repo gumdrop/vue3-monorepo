@@ -28,7 +28,7 @@ import {
   generateFixtureSetResultsSummary,
   type CompetitionRoundupFixtureResult,
   type FixtureSetSummaryFixture,
-} from './GeminiResultsSummary'
+} from './DeepSeekResultsSummary'
 import { updateAggregationForCompletedFixtureSet } from './SeasonStatisticsAggregationUtils'
 import { teamForUser } from './TeamMembership'
 import { upsertResultIndexForCompletedFixtureSet } from './ResultIndexUtils'
@@ -217,7 +217,7 @@ export async function regenerateFixtureSetResultsSummary(fixtureSetPath: string)
     true,
   )
   if (!updatedFixtureSet) {
-    throw new Error('Gemini did not return a fixture set results summary')
+    throw new Error('DeepSeek did not return a fixture set results summary')
   }
   return updatedFixtureSet
 }
@@ -234,7 +234,7 @@ export async function regenerateCompetitionRoundup(competitionPath: string) {
 
   const updatedCompetition = await generateAndSaveCompetitionRoundup(competition, true)
   if (!updatedCompetition) {
-    throw new Error('Gemini did not return a competition roundup')
+    throw new Error('DeepSeek did not return a competition roundup')
   }
   return updatedCompetition
 }
@@ -279,7 +279,7 @@ async function generateAndSaveCompetitionRoundup(
   })
   if (!roundup) {
     if (failOnEmptyRoundup) {
-      throw new Error('Gemini did not return a competition roundup')
+      throw new Error('DeepSeek did not return a competition roundup')
     }
     return undefined
   }
@@ -316,7 +316,7 @@ async function generateAndSaveFixtureSetResultsSummary(
   })
 
   if (!summary && failOnEmptySummary) {
-    throw new Error('Gemini did not return a fixture set results summary')
+    throw new Error('DeepSeek did not return a fixture set results summary')
   }
   if (!summary) return undefined
 

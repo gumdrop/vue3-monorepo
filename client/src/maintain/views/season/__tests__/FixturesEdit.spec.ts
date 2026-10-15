@@ -377,7 +377,7 @@ describe('FixturesEdit', () => {
         resultsSummary: { id: 'summary-text', path: 'text/summary-text' },
         resultsSummaryText: 'Fresh AI summary',
         resultsSummaryGeneratedAt: '2026-05-31T09:00:00.000Z',
-        resultsSummaryModel: 'gemini-test',
+        resultsSummaryModel: 'deepseek-test',
       },
     })
     const wrapper = await mountFixturesEdit()
