@@ -4,6 +4,7 @@ import {
   LocalTime,
   LocalDateTime,
   ZonedDateTime,
+  ZoneId,
 } from '@js-joda/core'
 import '@js-joda/timezone'
 import { Locale } from '@js-joda/locale_en-gb'
@@ -12,11 +13,14 @@ const DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE
 const TIME_FORMAT = DateTimeFormatter.ISO_LOCAL_TIME
 const DATE_TIME_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE_TIME
 const ZONED_DATE_TIME_FORMAT = DateTimeFormatter.ISO_ZONED_DATE_TIME
+const LEAGUE_ZONE = ZoneId.of('Europe/London')
 
 export const currentLocalDate = () => {
   const configuredDate = import.meta.env.VITE_CURRENT_DATE
 
-  return configuredDate ? LocalDate.parse(configuredDate, DATE_FORMAT) : LocalDate.now()
+  return configuredDate
+    ? LocalDate.parse(configuredDate, DATE_FORMAT)
+    : ZonedDateTime.now(LEAGUE_ZONE).toLocalDate()
 }
 
 export const useDateTime = () => {

@@ -31,4 +31,14 @@ describe('DateService', () => {
 
     vi.unstubAllEnvs()
   })
+
+  it('anchors the current date to the league timezone', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-06-15T23:30:00Z'))
+
+    // At 23:30 UTC it is already 00:30 the next day in Europe/London (BST).
+    expect(currentLocalDate().toString()).toBe('2026-06-16')
+
+    vi.useRealTimers()
+  })
 })
