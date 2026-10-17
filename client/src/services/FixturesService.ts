@@ -12,6 +12,8 @@ export type QuestionPaper = {
   competition: Competition
 }
 
+const QUESTION_PAPER_EMBARGO_WEEKS = 3
+
 export const useFixtures = () => {
   const activeFixtures = async (seasonId: string, take?: number) => {
     const today = currentLocalDate().toString()
@@ -54,9 +56,12 @@ export const useFixtures = () => {
   const questionPapers = async (seasonId: string) => {
     const competitions = await firstClassCompetitions(seasonId)
     const questions: QuestionPaper[] = []
+    // Question papers stay under embargo until three weeks after their quiz date.
+    const embargoCutoff = currentLocalDate().minusWeeks(QUESTION_PAPER_EMBARGO_WEEKS).toString()
     for (const competition of competitions) {
       ;(await fixtures(`${competition.path}`))
         .filter((fixtures) => fixtures.questionsUrl?.trim())
+        .filter((fixtures) => fixtures.date <= embargoCutoff)
         .forEach((fixtureSet) => questions.push({ fixtures: fixtureSet, competition }))
     }
     return questions.sort((a, b) => b.fixtures.date.localeCompare(a.fixtures.date))

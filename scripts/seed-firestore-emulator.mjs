@@ -1214,6 +1214,17 @@ const documents = [
     data,
   })),
   ...generatedSeasonStatisticsAggregations,
+  fixtureSet('cup-main', 'cup-semi-final', 'Semi-final', '2026-04-23', '20:00:00', seasonId, {
+    questionsUrl: cupFinalQuestionsUrl,
+  }),
+  fixture(
+    'cup-main',
+    'cup-semi-final',
+    'fixture-cup-semi-1',
+    'team-ashridge-arms',
+    'team-chesham-comets',
+    'venue-ashridge-arms',
+  ),
   fixtureSet('cup-main', 'cup-quarter-final', 'Quarter-final', '2026-06-11', '20:00:00', seasonId, {
     questionsUrl: cupFinalQuestionsUrl,
   }),

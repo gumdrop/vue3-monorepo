@@ -45,8 +45,14 @@ Feature: Results pages
     Then I should be on the "/results/questions" page
     And I should see the "Questions" title
     And I should see text matching "2025/2026"
-    And I should see text matching "11 June 2026\s+:\s+Challenge Cup\s+:\s+Quarter-final"
-    And the "11 June 2026 : Challenge Cup : Quarter-final" link should target "https://storage.googleapis.com/public.chilternquizleague.uk/questions/2025-26/cup%20final.pdf"
+    And I should see text matching "23 April 2026\s+:\s+Challenge Cup\s+:\s+Semi-final"
+    And the "23 April 2026 : Challenge Cup : Semi-final" link should target "https://storage.googleapis.com/public.chilternquizleague.uk/questions/2025-26/cup%20final.pdf"
+
+  Scenario: Visitors cannot open a question paper that is still under embargo
+    When I open the questions page
+    Then I should be on the "/results/questions" page
+    And I should see the "Questions" title
+    And I should not see text matching "11 June 2026\s+:\s+Challenge Cup\s+:\s+Quarter-final"
 
   Scenario: Public visitors can open result submission guidance
     When I open the submit result instructions page
