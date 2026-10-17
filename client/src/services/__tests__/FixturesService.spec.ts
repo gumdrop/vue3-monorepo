@@ -169,6 +169,7 @@ describe('FixturesService', () => {
   })
 
   it('returns question paper fixture groups sorted descending', async () => {
+    vi.stubEnv('VITE_CURRENT_DATE', '2026-06-04')
     const competition = { id: 'league', path: 'competition/league', name: 'League' }
     mocks.firstClassCompetitions.mockResolvedValue([competition])
     mocks.fixtures.mockResolvedValue([
@@ -182,5 +183,25 @@ describe('FixturesService', () => {
       { fixtures: expect.objectContaining({ id: 'new-paper' }), competition },
       { fixtures: expect.objectContaining({ id: 'old-paper' }), competition },
     ])
+
+    vi.unstubAllEnvs()
+  })
+
+  it('only returns question papers whose quiz date is at least three weeks old', async () => {
+    vi.stubEnv('VITE_CURRENT_DATE', '2026-06-21')
+    const competition = { id: 'league', path: 'competition/league', name: 'League' }
+    mocks.firstClassCompetitions.mockResolvedValue([competition])
+    mocks.fixtures.mockResolvedValue([
+      fixturesSet('recent', '2026-06-20', 'https://example.com/recent.pdf'),
+      fixturesSet('exactly-three-weeks', '2026-05-31', 'https://example.com/three-weeks.pdf'),
+      fixturesSet('older', '2026-05-30', 'https://example.com/older.pdf'),
+    ])
+
+    await expect(useFixtures().questionPapers('season-1')).resolves.toEqual([
+      { fixtures: expect.objectContaining({ id: 'exactly-three-weeks' }), competition },
+      { fixtures: expect.objectContaining({ id: 'older' }), competition },
+    ])
+
+    vi.unstubAllEnvs()
   })
 })
