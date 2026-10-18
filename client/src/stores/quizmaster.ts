@@ -11,6 +11,8 @@ export interface SelectedFixture {
   date: string
   homeName: string
   awayName: string
+  homeId: string
+  awayId: string
 }
 
 export interface InvokedSpare {
