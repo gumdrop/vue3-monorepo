@@ -32,6 +32,8 @@ export default mergeConfig(
           'src/entity/TeamMember.ts',
           'src/entity/Text.ts',
           'src/entity/Venue.ts',
+          'src/site/components/quizmaster/**',
+          'src/stores/quizmaster.ts',
         ],
         thresholds: {
           perFile: true,

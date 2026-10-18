@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { resolveQuizPdfUrl } from '../QuizMasterFunctions'
+import { acquireQuiz, resolveQuizPdfUrl } from '../QuizMasterFunctions'
+import { parseQuizPaper } from '../QuizParser'
 
 vi.mock('../util', () => ({
   HttpError: class HttpError extends Error {
@@ -11,6 +12,10 @@ vi.mock('../util', () => ({
       super(message)
     }
   },
+}))
+
+vi.mock('../QuizParser', () => ({
+  parseQuizPaper: vi.fn(),
 }))
 
 const HOME = 'https://pantscat69er.wixsite.com/chiltern'
@@ -78,5 +83,32 @@ describe('resolveQuizPdfUrl', () => {
       statusCode: 404,
       message: 'Quiz PDF not found for this date',
     })
+  })
+})
+
+describe('acquireQuiz', () => {
+  it('resolves, downloads and parses the quiz PDF', async () => {
+    const paper = { rounds: [] }
+    vi.mocked(parseQuizPaper).mockResolvedValue(paper)
+
+    const pdfBuffer = new Uint8Array([1, 2, 3]).buffer
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url === HOME) return { ok: true, status: 200, text: async () => homeHtml('13/10/26') }
+        if (url === `${HOME}/09-08-20-00`) {
+          return { ok: true, status: 200, text: async () => subpageHtml }
+        }
+        if (url === PDF) {
+          return { ok: true, status: 200, arrayBuffer: async () => pdfBuffer }
+        }
+        throw new Error(`Unexpected URL: ${url}`)
+      }),
+    )
+
+    await expect(
+      acquireQuiz({ fixtureDate: '2026-10-13', password: 'pw' }),
+    ).resolves.toEqual(paper)
+    expect(parseQuizPaper).toHaveBeenCalledWith(expect.any(Uint8Array), 'pw')
   })
 })
