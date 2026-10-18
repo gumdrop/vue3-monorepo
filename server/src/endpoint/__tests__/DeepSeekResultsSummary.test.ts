@@ -195,7 +195,7 @@ describe('DeepSeekResultsSummary', () => {
     expect(prompt).toContain('- Average score: 45.50')
     expect(prompt).toContain('League table snapshots (showing progression):')
     expect(prompt).toContain('1. Alpha P:10 W:8 D:1 L:1 F:450 A:400 Pts:17')
-    expect(prompt).toContain('Use the league table snapshots to describe how the title race or positions changed over time.')
+    expect(prompt).toContain('Use the league table snapshots to describe how the race and positions changed over time')
   })
 
   it('rejects summaries that DeepSeek reports as truncated', async () => {

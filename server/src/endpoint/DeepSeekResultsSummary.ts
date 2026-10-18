@@ -100,11 +100,13 @@ const fixtureLine = (fixture: FixtureSetSummaryFixture) => {
 
 const buildPrompt = (
   input: FixtureSetSummaryInput,
-) => `You write concise public homepage copy for the Chiltern Quiz League.
+) => `You write the weekly matchday roundup for the Chiltern Quiz League homepage.
 
-Summarise this completed fixture set using only the results and reports below.
-Mention notable scores or report details where useful.
-Keep it under 120 words.
+Write an engaging, journalistic summary of this completed fixture set, drawing on the results and match reports below.
+Open with a sentence that frames the matchday (for example, note whether it delivered high scores, close finishes, or surprises).
+Then cover the matches in flowing, varied prose rather than a plain list: highlight standout scores, comebacks, narrow margins, half-time positions, and any colourful detail from the reports, including the beer leg where one is mentioned.
+Use vivid but accurate language. Do not pad or invent facts.
+Keep it around 150 words.
 Produce Markdown.
 Return only Markdown body text, with no heading.
 Do not return JSON, HTML, or a fenced code block.
@@ -157,13 +159,12 @@ ${t.rows
   .join('\n')}`
     : ''
 
-  return `You write concise public season roundup copy for the Chiltern Quiz League.
+  return `You write the season roundup for the Chiltern Quiz League homepage.
 
-Summarise this completed team competition using only the fixture-set summaries, results, and league table progression below.
-Mention the main story of the competition, notable runs, close matches, or decisive results where useful.
-Use the league table snapshots to describe how the title race or positions changed over time.
-Do not list every result.
-Keep it under 250 words.
+Write an engaging, journalistic summary of this completed team competition, drawing on the fixture-set summaries, results, and league table progression below.
+Tell the story of the season: the main narrative of the title race, notable runs, close or decisive matches, and any turning points. Use the league table snapshots to describe how the race and positions changed over time, and mention the champion by name where one is clear.
+Do not list every result. Use flowing, varied prose and vivid but accurate language; do not pad or invent facts.
+Keep it around 250 words.
 Produce Markdown.
 Return only Markdown body text, with no heading.
 Do not return JSON, HTML, or a fenced code block.
