@@ -27,7 +27,7 @@
           </v-alert>
 
           <p class="text-h6 mb-1">
-            <strong>{{ question.number }}.</strong> {{ displayQuestion }}
+            <strong>{{ question.number }}.</strong> <span v-html="questionHtml" />
           </p>
           <p class="text-subtitle-1">
             For
@@ -36,7 +36,7 @@
           </p>
 
           <v-alert type="info" density="compact" class="mt-2">
-            <strong>Answer:</strong> {{ displayAnswer }}
+            <strong>Answer:</strong> <span v-html="answerHtml" />
           </v-alert>
 
           <div class="d-flex flex-wrap ga-2 mt-4">
@@ -93,7 +93,9 @@
               <v-list density="compact">
                 <v-list-item v-for="(q, i) in store.beerRound?.questions ?? []" :key="i">
                   <v-list-item-title>{{ q.number }}. {{ q.question }}</v-list-item-title>
-                  <v-list-item-subtitle>Answer: {{ q.answer }}</v-list-item-subtitle>
+                  <v-list-item-subtitle>
+                    Answer: <span v-html="underlineHtml(q.answer)" />
+                  </v-list-item-subtitle>
                 </v-list-item>
               </v-list>
             </v-expansion-panel-text>
@@ -132,6 +134,7 @@ import { computed, ref } from 'vue'
 import type { QuizQuestionOutcome } from '@quizleague/shared'
 import { isIndividualRound } from '@/services/QuizScoring'
 import { useQuizmasterStore } from '@/stores/quizmaster'
+import { underlineHtml } from '@/utils/underlines'
 import IndividualRoundSetup from './IndividualRoundSetup.vue'
 
 const emit = defineEmits<{ back: []; done: [] }>()
@@ -173,6 +176,8 @@ const primaryName = computed(() => {
 
 const displayQuestion = computed(() => spare.value?.question ?? question.value?.question ?? '')
 const displayAnswer = computed(() => spare.value?.answer ?? question.value?.answer ?? '')
+const questionHtml = computed(() => underlineHtml(displayQuestion.value))
+const answerHtml = computed(() => underlineHtml(displayAnswer.value))
 
 function jokerPoints(base: number): number {
   if (!subject.value || !question.value) return base

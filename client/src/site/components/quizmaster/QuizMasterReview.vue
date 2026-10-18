@@ -18,7 +18,9 @@
                 <v-list-item-title>
                   {{ question.number }}. {{ question.question }}
                 </v-list-item-title>
-                <v-list-item-subtitle>Answer: {{ question.answer }}</v-list-item-subtitle>
+                <v-list-item-subtitle>
+                  Answer: <span v-html="underlineHtml(question.answer)" />
+                </v-list-item-subtitle>
               </v-list-item>
             </v-list>
           </v-expansion-panel-text>
@@ -34,6 +36,7 @@
 </template>
 <script setup lang="ts">
 import { useQuizmasterStore } from '@/stores/quizmaster'
+import { underlineHtml } from '@/utils/underlines'
 
 const emit = defineEmits<{ back: []; start: [] }>()
 const store = useQuizmasterStore()

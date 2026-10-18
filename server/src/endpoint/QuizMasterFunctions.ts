@@ -1,6 +1,7 @@
 import type { QuizAcquireCommand, QuizPaper } from '@quizleague/shared'
 import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
 import { parseQuiz } from './DeepSeekResultsSummary'
+import { markUnderlinesInItem, underlineRectsForPage } from './QuizUnderline'
 import { HttpError } from './util'
 
 const WIX_HOME = 'https://pantscat69er.wixsite.com/chiltern'
@@ -39,8 +40,19 @@ export async function decryptQuizText(pdfBytes: Uint8Array, password: string): P
   const pages: string[] = []
   for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber++) {
     const page = await doc.getPage(pageNumber)
+    const underlines = await underlineRectsForPage(page)
     const content = await page.getTextContent()
-    pages.push(content.items.map((item) => ('str' in item ? item.str : '')).join('\n'))
+    pages.push(
+      content.items
+        .map((item) =>
+          'str' in item && item.str.trim()
+            ? markUnderlinesInItem(item, underlines)
+            : 'str' in item
+              ? item.str
+              : '',
+        )
+        .join('\n'),
+    )
   }
 
   return pages.join('\n\n')

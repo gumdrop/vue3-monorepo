@@ -209,8 +209,8 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
 
           return {
             number: question.number,
-            question: spare?.question ?? question.question,
-            answer: spare?.answer ?? question.answer,
+            question: stripUnderlineMarkers(spare?.question ?? question.question),
+            answer: stripUnderlineMarkers(spare?.answer ?? question.answer),
             outcome: outcomes.value[key] ?? 'unanswered',
             category,
             contestant,
@@ -313,4 +313,8 @@ function errorMessage(error: unknown, fallback: string): string {
     return typeof message === 'string' && message ? message : fallback
   }
   return fallback
+}
+
+function stripUnderlineMarkers(text: string): string {
+  return text.replace(/<\/?u>/g, '')
 }

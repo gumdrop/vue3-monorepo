@@ -259,6 +259,7 @@ Rules:
 - If a round name contains the word "Individual", add a "subjects" array listing the subject headings in the order they appear in the document. Do not add "subjects" to other rounds.
 - Preserve question numbers exactly (e.g. 1A, 1B, 2A; some sections may use 1, 2, 3; tiebreak may have an empty number).
 - Copy question and answer text verbatim, including punctuation, accents, special characters, and parenthetical pronunciations or notes.
+- Underlined words are wrapped in <u> and </u> markers. Preserve these markers exactly in question and answer text. Do not include them in round names or subjects — keep round names and subjects as plain text without <u> markers.
 - Include every section: main rounds, spares, beer round, tiebreak, etc.
 - Output only valid JSON. Do not include markdown, commentary, or extra text.
 
@@ -267,11 +268,14 @@ Quiz text:
 ${text}
 """`
 
+function stripUnderlineMarkers(value: string): string {
+  return value.replace(/<\/?u>/g, '')
+}
+
 function validateQuizPaper(value: unknown): QuizPaper {
   if (typeof value !== 'object' || value === null) {
     throw new Error('Quiz parse response is not a JSON object')
   }
-
   const paper = value as { rounds?: unknown }
   if (!Array.isArray(paper.rounds)) {
     throw new Error('Quiz parse response is missing a rounds array')
@@ -280,8 +284,14 @@ function validateQuizPaper(value: unknown): QuizPaper {
   for (const round of paper.rounds) {
     const r = round as { round?: unknown; subjects?: unknown; questions?: unknown }
     if (typeof r?.round !== 'string') throw new Error('Quiz round is missing a name')
+    r.round = stripUnderlineMarkers(r.round)
     if (r.subjects !== undefined && !Array.isArray(r.subjects)) {
       throw new Error('Quiz round subjects must be an array')
+    }
+    if (Array.isArray(r.subjects)) {
+      r.subjects = r.subjects.map((subject) =>
+        typeof subject === 'string' ? stripUnderlineMarkers(subject) : subject,
+      )
     }
     if (!Array.isArray(r.questions)) throw new Error('Quiz round is missing questions')
 

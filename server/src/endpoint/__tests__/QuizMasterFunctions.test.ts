@@ -85,10 +85,19 @@ describe('resolveQuizPdfUrl', () => {
 describe('decryptQuizText', () => {
   it('decrypts the committed fixture and extracts its text', async () => {
     const text = await decryptQuizText(quizFixturePdfBytes(), quizFixturePassword())
+    const plain = text.replace(/<\/?u>/g, '')
 
-    expect(text).toContain('CHILTERN QUIZ LEAGUE')
-    expect(text).toContain('ROUND ONE')
-    expect(text).toContain('TIEBREAK')
+    expect(plain).toContain('CHILTERN QUIZ LEAGUE')
+    expect(plain).toContain('ROUND ONE')
+    expect(plain).toContain('TIEBREAK')
+  })
+
+  it('preserves underlining in answers', async () => {
+    const text = await decryptQuizText(quizFixturePdfBytes(), quizFixturePassword())
+
+    expect(text).toContain('The <u>Third</u> or <u>Eroica</u>')
+    expect(text).toContain('<u>Santiago</u> de')
+    expect(text).toContain('<u>Compostela</u>')
   })
 
   it('rejects an incorrect password', async () => {
