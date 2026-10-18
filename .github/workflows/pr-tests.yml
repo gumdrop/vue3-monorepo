@@ -30,6 +30,8 @@ jobs:
         run: npm --workspace client run type-check
 
       - name: Run tests and enforce coverage
+        env:
+          QUIZ_PDF_TEST_PASSWORD: ${{ secrets.QUIZ_PDF_TEST_PASSWORD }}
         run: npm run test:coverage
 
   acceptance-tests:
