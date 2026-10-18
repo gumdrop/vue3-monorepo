@@ -31,3 +31,11 @@
 - **Decision:** (1) FR-4.6 — the individual-round category list is collapsed after assignment but has no explicit mid-round "view assignments" toggle yet; assignments remain visible in the round setup step and in question annotations. (2) FR-5.3 — the session state is not explicitly cleared after a successful submit.
 - **Rationale:** Accepted for the experimental first cut; neither affects scoring or submission correctness.
 - **Consequences:** These are follow-up polish items.
+
+## ADR-005: Deterministic structure parsing replaces DeepSeek for quiz extraction
+- **Date:** 2026-10-18
+- **Status:** Accepted
+- **Context:** Feature 2 originally parsed the quiz PDF into JSON with DeepSeek. The question paper is a rigid Word-generated table (number | question | answer columns, `ROUND`/`SPARES`/`BEER`/`TIEBREAK` headers), so structure extraction is a deterministic layout problem, not a generative one. AI parsing risked hallucination, API cost/latency, and prompt drift.
+- **Decision:** Parse the PDF deterministically in `server/src/endpoint/QuizParser.ts` using pdfjs text-item positions and the existing underline detection, emitting the same `QuizPaper` JSON contract. DeepSeek is retained only for the generative match report (`generateMatchReport`).
+- **Rationale:** Verified against the committed fixture — reconstructs all 13 sections (10 rounds, individual rounds 3 & 8 with subjects, spares A/B, beer round, tiebreak) and preserves answer underlining.
+- **Consequences:** `parseQuiz`/`validateQuizPaper`/`buildQuizParsePrompt` and the parsing prompt were removed from `DeepSeekResultsSummary.ts`. `acquireQuiz` now calls `parseQuizPaper` directly. Column x-boundaries (50 / 420) assume the current Word template; a validation pass can flag drift later.

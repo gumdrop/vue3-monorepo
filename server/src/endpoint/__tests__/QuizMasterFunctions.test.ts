@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { decryptQuizText, resolveQuizPdfUrl } from '../QuizMasterFunctions'
-import { quizFixturePassword, quizFixturePdfBytes } from './quizFixture'
+import { resolveQuizPdfUrl } from '../QuizMasterFunctions'
 
 vi.mock('../util', () => ({
   HttpError: class HttpError extends Error {
@@ -78,32 +77,6 @@ describe('resolveQuizPdfUrl', () => {
     await expect(resolveQuizPdfUrl('2026-10-13')).rejects.toMatchObject({
       statusCode: 404,
       message: 'Quiz PDF not found for this date',
-    })
-  })
-})
-
-describe('decryptQuizText', () => {
-  it('decrypts the committed fixture and extracts its text', async () => {
-    const text = await decryptQuizText(quizFixturePdfBytes(), quizFixturePassword())
-    const plain = text.replace(/<\/?u>/g, '')
-
-    expect(plain).toContain('CHILTERN QUIZ LEAGUE')
-    expect(plain).toContain('ROUND ONE')
-    expect(plain).toContain('TIEBREAK')
-  })
-
-  it('preserves underlining in answers', async () => {
-    const text = await decryptQuizText(quizFixturePdfBytes(), quizFixturePassword())
-
-    expect(text).toContain('The <u>Third</u> or <u>Eroica</u>')
-    expect(text).toContain('<u>Santiago</u> de')
-    expect(text).toContain('<u>Compostela</u>')
-  })
-
-  it('rejects an incorrect password', async () => {
-    await expect(decryptQuizText(quizFixturePdfBytes(), 'not-the-password')).rejects.toMatchObject({
-      statusCode: 400,
-      message: 'Incorrect password',
     })
   })
 })

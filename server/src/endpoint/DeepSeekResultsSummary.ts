@@ -1,6 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import Path from 'node:path'
-import type { QuizPaper, QuizReportCommand } from '@quizleague/shared'
+import type { QuizReportCommand } from '@quizleague/shared'
 
 export interface FixtureSetSummaryFixture {
   homeTeam: string
@@ -233,123 +233,6 @@ async function generateDeepSeekSummary(
 
   const text = choice?.message?.content?.trim()
   return text ? { text, model } : undefined
-}
-
-const buildQuizParsePrompt = (text: string) => `Extract all quiz questions and answers from the quiz text below and return them as JSON.
-
-Use this exact nested structure:
-{
-  "rounds": [
-    {
-      "round": "Round Name",
-      "subjects": ["Subject 1", "Subject 2"],
-      "questions": [
-        {
-          "number": "1A",
-          "question": "...",
-          "answer": "..."
-        }
-      ]
-    }
-  ]
-}
-
-Rules:
-- Preserve round names exactly as printed.
-- If a round name contains the word "Individual", add a "subjects" array listing the subject headings in the order they appear in the document. Do not add "subjects" to other rounds.
-- Preserve question numbers exactly (e.g. 1A, 1B, 2A; some sections may use 1, 2, 3; tiebreak may have an empty number).
-- Copy question and answer text verbatim, including punctuation, accents, special characters, and parenthetical pronunciations or notes.
-- Underlined words are wrapped in <u> and </u> markers. Preserve these markers exactly in question and answer text. Do not include them in round names or subjects — keep round names and subjects as plain text without <u> markers.
-- Include every section: main rounds, spares, beer round, tiebreak, etc.
-- Output only valid JSON. Do not include markdown, commentary, or extra text.
-
-Quiz text:
-"""
-${text}
-"""`
-
-function stripUnderlineMarkers(value: string): string {
-  return value.replace(/<\/?u>/g, '')
-}
-
-function validateQuizPaper(value: unknown): QuizPaper {
-  if (typeof value !== 'object' || value === null) {
-    throw new Error('Quiz parse response is not a JSON object')
-  }
-  const paper = value as { rounds?: unknown }
-  if (!Array.isArray(paper.rounds)) {
-    throw new Error('Quiz parse response is missing a rounds array')
-  }
-
-  for (const round of paper.rounds) {
-    const r = round as { round?: unknown; subjects?: unknown; questions?: unknown }
-    if (typeof r?.round !== 'string') throw new Error('Quiz round is missing a name')
-    r.round = stripUnderlineMarkers(r.round)
-    if (r.subjects !== undefined && !Array.isArray(r.subjects)) {
-      throw new Error('Quiz round subjects must be an array')
-    }
-    if (Array.isArray(r.subjects)) {
-      r.subjects = r.subjects.map((subject) =>
-        typeof subject === 'string' ? stripUnderlineMarkers(subject) : subject,
-      )
-    }
-    if (!Array.isArray(r.questions)) throw new Error('Quiz round is missing questions')
-
-    for (const question of r.questions) {
-      const q = question as { number?: unknown; question?: unknown; answer?: unknown }
-      if (typeof q?.number !== 'string') throw new Error('Quiz question is missing a number')
-      if (typeof q?.question !== 'string') throw new Error('Quiz question is missing text')
-      if (typeof q?.answer !== 'string') throw new Error('Quiz question is missing an answer')
-    }
-  }
-
-  return paper as QuizPaper
-}
-
-export async function parseQuiz(text: string): Promise<QuizPaper> {
-  const apiKey = deepseekApiKey()
-  if (!apiKey) throw new Error('DEEPSEEK_API_KEY is not configured')
-
-  const model = deepseekModel()
-  const response = await fetch('https://api.deepseek.com/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: 'user', content: buildQuizParsePrompt(text) }],
-      temperature: 0.1,
-      max_tokens: 8192,
-      stream: false,
-      response_format: { type: 'json_object' },
-    }),
-  })
-
-  if (!response.ok) {
-    const body = await response.text()
-    console.error(`DeepSeek quiz parse failed: ${response.status} ${body}`)
-    throw new Error('Quiz parse failed')
-  }
-
-  const data = (await response.json()) as DeepSeekChatCompletionResponse
-  const choice = data.choices?.[0]
-  if (choice?.finish_reason === 'length') {
-    throw new Error('DeepSeek quiz parse was truncated by max_tokens')
-  }
-
-  const content = choice?.message?.content?.trim()
-  if (!content) throw new Error('Quiz parse returned no content')
-
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(content)
-  } catch {
-    throw new Error('Quiz parse did not return valid JSON')
-  }
-
-  return validateQuizPaper(parsed)
 }
 
 const matchReportQuestionLine = (q: QuizReportCommand['rounds'][number]['questions'][number]) => {

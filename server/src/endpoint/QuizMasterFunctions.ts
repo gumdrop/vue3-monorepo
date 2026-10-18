@@ -1,7 +1,5 @@
 import type { QuizAcquireCommand, QuizPaper } from '@quizleague/shared'
-import { getDocument } from 'pdfjs-dist/legacy/build/pdf.mjs'
-import { parseQuiz } from './DeepSeekResultsSummary'
-import { markUnderlinesInItem, underlineRectsForPage } from './QuizUnderline'
+import { parseQuizPaper } from './QuizParser'
 import { HttpError } from './util'
 
 const WIX_HOME = 'https://pantscat69er.wixsite.com/chiltern'
@@ -9,8 +7,7 @@ const WIX_HOME = 'https://pantscat69er.wixsite.com/chiltern'
 export async function acquireQuiz(command: QuizAcquireCommand): Promise<QuizPaper> {
   const pdfUrl = await resolveQuizPdfUrl(command.fixtureDate)
   const pdfBytes = await downloadPdf(pdfUrl)
-  const text = await decryptQuizText(pdfBytes, command.password)
-  return parseQuiz(text)
+  return parseQuizPaper(pdfBytes, command.password)
 }
 
 export async function resolveQuizPdfUrl(fixtureDate: string): Promise<string> {
@@ -23,39 +20,6 @@ export async function resolveQuizPdfUrl(fixtureDate: string): Promise<string> {
   if (!pdfUrl) throw new HttpError(404, 'Quiz PDF not found for this date', 'Not Found')
 
   return validatePdfUrl(pdfUrl)
-}
-
-export async function decryptQuizText(pdfBytes: Uint8Array, password: string): Promise<string> {
-  let doc
-  try {
-    doc = await getDocument({ data: pdfBytes, password, verbosity: 0 }).promise
-  } catch (error) {
-    const name = (error as { name?: string })?.name
-    if (name === 'PasswordException') {
-      throw new HttpError(400, 'Incorrect password', 'Bad Request')
-    }
-    throw new HttpError(502, 'Quiz decryption failed', 'Bad Gateway')
-  }
-
-  const pages: string[] = []
-  for (let pageNumber = 1; pageNumber <= doc.numPages; pageNumber++) {
-    const page = await doc.getPage(pageNumber)
-    const underlines = await underlineRectsForPage(page)
-    const content = await page.getTextContent()
-    pages.push(
-      content.items
-        .map((item) =>
-          'str' in item && item.str.trim()
-            ? markUnderlinesInItem(item, underlines)
-            : 'str' in item
-              ? item.str
-              : '',
-        )
-        .join('\n'),
-    )
-  }
-
-  return pages.join('\n\n')
 }
 
 async function downloadPdf(pdfUrl: string): Promise<Uint8Array> {
