@@ -180,11 +180,12 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
   }
 
   async function generateReport(): Promise<boolean> {
-    if (!fixture.value) return false
+    const selectedFixture = fixture.value
+    if (!selectedFixture) return false
 
     const command: QuizReportCommand = {
-      homeTeam: fixture.value.homeName,
-      awayTeam: fixture.value.awayName,
+      homeTeam: selectedFixture.homeName,
+      awayTeam: selectedFixture.awayName,
       homeScore: score.value.home,
       awayScore: score.value.away,
       beerRoundHomeScore: beerRoundScore.value.home,
@@ -202,8 +203,8 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
           const contestant = individual
             ? contestantFor(roundIndex, question, owner)
             : owner === 'home'
-              ? fixture.value.homeName
-              : fixture.value.awayName
+              ? selectedFixture.homeName
+              : selectedFixture.awayName
           const homeJoker = category ? jokers.value[roundIndex]?.home === category : false
           const awayJoker = category ? jokers.value[roundIndex]?.away === category : false
 

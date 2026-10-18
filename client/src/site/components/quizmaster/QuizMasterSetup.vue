@@ -41,7 +41,7 @@
         <v-row>
           <v-col cols="12" sm="6">
             <div class="text-subtitle-2 font-weight-medium mb-2">
-              {{ store.fixture.homeName }} players (3–4)
+              {{ store.fixture?.homeName ?? 'Home' }} players (3–4)
             </div>
             <v-combobox
               v-for="index in 4"
@@ -56,7 +56,7 @@
           </v-col>
           <v-col cols="12" sm="6">
             <div class="text-subtitle-2 font-weight-medium mb-2">
-              {{ store.fixture.awayName }} players (3–4)
+              {{ store.fixture?.awayName ?? 'Away' }} players (3–4)
             </div>
             <v-combobox
               v-for="index in 4"
