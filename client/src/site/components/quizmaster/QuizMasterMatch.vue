@@ -31,8 +31,9 @@
           </p>
           <p class="text-subtitle-1">
             For
-            <strong>{{ primaryName }}</strong>
-            <span v-if="subject"> ({{ contestantName }})</span>
+            <strong v-if="subject">{{ contestantName }}</strong>
+            <strong v-else>{{ ownerName }}</strong>
+            <span v-if="subject"> ({{ ownerName }})</span>
           </p>
 
           <v-alert type="info" density="compact" class="mt-2">
@@ -169,10 +170,7 @@ const contestantName = computed(() => {
   return store.contestantFor(roundIndex.value, question.value, owner.value) ?? '—'
 })
 
-const primaryName = computed(() => {
-  if (subject.value && contestantName.value) return contestantName.value
-  return owner.value === 'home' ? homeName.value : awayName.value
-})
+const ownerName = computed(() => (owner.value === 'home' ? homeName.value : awayName.value))
 
 const displayQuestion = computed(() => spare.value?.question ?? question.value?.question ?? '')
 const displayAnswer = computed(() => spare.value?.answer ?? question.value?.answer ?? '')
