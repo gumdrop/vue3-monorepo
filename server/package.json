@@ -7,7 +7,7 @@
   "scripts": {
     "test:unit": "vitest",
     "test:coverage": "vitest run --coverage",
-    "build": "esbuild src/index.ts --bundle --outfile=deploy/main.cjs --platform=node",
+    "build": "esbuild src/index.ts --bundle --outfile=deploy/main.cjs --platform=node && node -e \"require('node:fs').copyFileSync(require.resolve('pdfjs-dist/legacy/build/pdf.worker.mjs'), 'deploy/pdf.worker.mjs')\"",
     "local": "FIRESTORE_EMULATOR_HOST=127.0.0.1:18080 npx tsx ./src/index.ts",
     "start": "node deploy/main.cjs"
   },
@@ -18,7 +18,8 @@
     "@quizleague/shared": "*",
     "@sendgrid/mail": "^8.1.6",
     "express": "^4.21.2",
-    "lodash": "4.17.21"
+    "lodash": "4.17.21",
+    "pdfjs-dist": "^6.4.299"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

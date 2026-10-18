@@ -1,3 +1,4 @@
 deploy/built/
 deploy/main.cjs
 deploy/app.yaml
+deploy/pdf.worker.mjs

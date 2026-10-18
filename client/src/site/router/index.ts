@@ -6,7 +6,7 @@ import useAuth from '@/services/AuthService'
 import { useUserStore } from '@/stores/app'
 import { createRouter, createWebHistory, type RouteLocationRaw } from 'vue-router'
 
-const { authGuard } = useAuth()
+const { authGuard, signedInGuard } = useAuth()
 
 export function redirectLoggedInUserToTeam(): true | RouteLocationRaw {
   const teamId = useUserStore().user?.team?.id
@@ -308,6 +308,15 @@ const router = createRouter({
         default: () => import('../components/auth/ProfileEdit.vue'),
       },
       beforeEnter: authGuard,
+    },
+
+    {
+      path: '/quizmaster',
+      name: 'quizmaster',
+      components: {
+        default: () => import('../components/quizmaster/QuizMasterMain.vue'),
+      },
+      beforeEnter: signedInGuard,
     },
 
     {

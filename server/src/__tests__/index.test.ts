@@ -19,6 +19,7 @@ describe('server index', () => {
     vi.doUnmock('../endpoint/MaintainEndpoints')
     vi.doUnmock('../endpoint/NotificationEndpoints')
     vi.doUnmock('../endpoint/EntityEndpoints')
+    vi.doUnmock('../endpoint/QuizMasterEndpoints')
 
     if (originalPort === undefined) {
       delete process.env['PORT']
@@ -53,6 +54,7 @@ describe('server index', () => {
     const configureMaintain = vi.fn()
     const configureNotifications = vi.fn()
     const configureEntity = vi.fn()
+    const configureQuizMaster = vi.fn()
     const useCalls: unknown[][] = []
     let app: {
       use: ReturnType<typeof vi.fn>
@@ -83,15 +85,16 @@ describe('server index', () => {
     vi.doMock('../endpoint/MaintainEndpoints', () => ({ default: configureMaintain }))
     vi.doMock('../endpoint/NotificationEndpoints', () => ({ default: configureNotifications }))
     vi.doMock('../endpoint/EntityEndpoints', () => ({ default: configureEntity }))
+    vi.doMock('../endpoint/QuizMasterEndpoints', () => ({ default: configureQuizMaster }))
     vi.spyOn(console, 'log').mockImplementation(() => undefined)
 
     const server = await import('../index')
 
-    return { app, configureCalendar, configureMaintain, configureSite, configureNotifications, configureEntity, express, server, useCalls }
+    return { app, configureCalendar, configureMaintain, configureSite, configureNotifications, configureEntity, configureQuizMaster, express, server, useCalls }
   }
 
   it('exports environment helpers and configures the express app without starting real IO', async () => {
-    const { app, configureCalendar, configureMaintain, configureSite, configureNotifications, configureEntity, express, server } =
+    const { app, configureCalendar, configureMaintain, configureSite, configureNotifications, configureEntity, configureQuizMaster, express, server } =
       await importServerWithMocks({
         port: '9000',
         emulatorHost: '127.0.0.1:8080',
@@ -105,6 +108,7 @@ describe('server index', () => {
     expect(configureMaintain).toHaveBeenCalledWith(app)
     expect(configureNotifications).toHaveBeenCalledWith(app)
     expect(configureEntity).toHaveBeenCalledWith(app)
+    expect(configureQuizMaster).toHaveBeenCalledWith(app)
     expect(app.use).toHaveBeenCalledWith('/rest', expect.any(Function))
     expect(app.listen).toHaveBeenCalledWith('9000')
     expect(console.log).toHaveBeenCalledWith('Running against Firestore emulator at 127.0.0.1:8080')

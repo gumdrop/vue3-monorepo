@@ -1,5 +1,6 @@
 import { existsSync, readFileSync } from 'node:fs'
 import Path from 'node:path'
+import type { QuizPaper, QuizReportCommand } from '@quizleague/shared'
 
 export interface FixtureSetSummaryFixture {
   homeTeam: string
@@ -232,4 +233,163 @@ async function generateDeepSeekSummary(
 
   const text = choice?.message?.content?.trim()
   return text ? { text, model } : undefined
+}
+
+const buildQuizParsePrompt = (text: string) => `Extract all quiz questions and answers from the quiz text below and return them as JSON.
+
+Use this exact nested structure:
+{
+  "rounds": [
+    {
+      "round": "Round Name",
+      "subjects": ["Subject 1", "Subject 2"],
+      "questions": [
+        {
+          "number": "1A",
+          "question": "...",
+          "answer": "..."
+        }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Preserve round names exactly as printed.
+- If a round name contains the word "Individual", add a "subjects" array listing the subject headings in the order they appear in the document. Do not add "subjects" to other rounds.
+- Preserve question numbers exactly (e.g. 1A, 1B, 2A; some sections may use 1, 2, 3; tiebreak may have an empty number).
+- Copy question and answer text verbatim, including punctuation, accents, special characters, and parenthetical pronunciations or notes.
+- Include every section: main rounds, spares, beer round, tiebreak, etc.
+- Output only valid JSON. Do not include markdown, commentary, or extra text.
+
+Quiz text:
+"""
+${text}
+"""`
+
+function validateQuizPaper(value: unknown): QuizPaper {
+  if (typeof value !== 'object' || value === null) {
+    throw new Error('Quiz parse response is not a JSON object')
+  }
+
+  const paper = value as { rounds?: unknown }
+  if (!Array.isArray(paper.rounds)) {
+    throw new Error('Quiz parse response is missing a rounds array')
+  }
+
+  for (const round of paper.rounds) {
+    const r = round as { round?: unknown; subjects?: unknown; questions?: unknown }
+    if (typeof r?.round !== 'string') throw new Error('Quiz round is missing a name')
+    if (r.subjects !== undefined && !Array.isArray(r.subjects)) {
+      throw new Error('Quiz round subjects must be an array')
+    }
+    if (!Array.isArray(r.questions)) throw new Error('Quiz round is missing questions')
+
+    for (const question of r.questions) {
+      const q = question as { number?: unknown; question?: unknown; answer?: unknown }
+      if (typeof q?.number !== 'string') throw new Error('Quiz question is missing a number')
+      if (typeof q?.question !== 'string') throw new Error('Quiz question is missing text')
+      if (typeof q?.answer !== 'string') throw new Error('Quiz question is missing an answer')
+    }
+  }
+
+  return paper as QuizPaper
+}
+
+export async function parseQuiz(text: string): Promise<QuizPaper> {
+  const apiKey = deepseekApiKey()
+  if (!apiKey) throw new Error('DEEPSEEK_API_KEY is not configured')
+
+  const model = deepseekModel()
+  const response = await fetch('https://api.deepseek.com/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: buildQuizParsePrompt(text) }],
+      temperature: 0.1,
+      max_tokens: 8192,
+      stream: false,
+      response_format: { type: 'json_object' },
+    }),
+  })
+
+  if (!response.ok) {
+    const body = await response.text()
+    console.error(`DeepSeek quiz parse failed: ${response.status} ${body}`)
+    throw new Error('Quiz parse failed')
+  }
+
+  const data = (await response.json()) as DeepSeekChatCompletionResponse
+  const choice = data.choices?.[0]
+  if (choice?.finish_reason === 'length') {
+    throw new Error('DeepSeek quiz parse was truncated by max_tokens')
+  }
+
+  const content = choice?.message?.content?.trim()
+  if (!content) throw new Error('Quiz parse returned no content')
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(content)
+  } catch {
+    throw new Error('Quiz parse did not return valid JSON')
+  }
+
+  return validateQuizPaper(parsed)
+}
+
+const matchReportQuestionLine = (q: QuizReportCommand['rounds'][number]['questions'][number]) => {
+  const contestant = q.contestant ? ` — asked to ${q.contestant}` : ''
+  const category = q.category ? ` [${q.category}]` : ''
+  const joker = q.joker ? ` (joker for ${q.joker})` : ''
+  return `    ${q.number}: ${q.outcome}${category}${joker}${contestant}`
+}
+
+const buildMatchReportPrompt = (input: QuizReportCommand) => {
+  const rounds = input.rounds
+    .map(
+      (round) =>
+        `- ${round.name}\n${round.questions.map(matchReportQuestionLine).join('\n')}`,
+    )
+    .join('\n')
+
+  return `You write a match report for the Chiltern Quiz League.
+
+Write a concise, engaging Markdown report of this match using only the recorded data below.
+Mention the final score, notable correct answers and bonus conversions, individual-round performances, and joker categories.
+
+Outcome meanings (recorded per question):
+- "correct": the side asked answered correctly (2 points to them).
+- "bonus": the side asked got it wrong and the opposition answered correctly (1 point to the opposition).
+- "unanswered": neither side answered correctly.
+
+A "(joker for home/away/both)" marker on a category only means that category carried doubled points for that side — it is not itself an outcome. Do not describe a joker category as "converted" or "decisive" unless the recorded outcome actually shows a "bonus".
+
+Describe the match strictly from the recorded outcomes. Do not invent drama: if every question in a round was answered "correct" by the side asked, say so plainly rather than calling the round decisive or a clean sweep. Only describe a round or category as decisive when the outcomes actually show bonus conversions or wrong answers.
+
+The beer round is a separate leg and does NOT count towards the main quiz result — do not treat it as part of the match score. Include the beer leg result at the end of the report as a short, separate note.
+
+Keep it under 300 words.
+Return only Markdown body text, with no heading.
+Do not return JSON, HTML, or a fenced code block.
+
+${input.homeTeam} vs ${input.awayTeam}
+Final score (main quiz): ${input.homeTeam} ${input.homeScore}-${input.awayScore} ${input.awayTeam}
+Beer leg (separate, does not count): ${input.homeTeam} ${input.beerRoundHomeScore}-${input.beerRoundAwayScore} ${input.awayTeam}
+
+Rounds:
+${rounds}`
+}
+
+export async function generateMatchReport(
+  input: QuizReportCommand,
+): Promise<FixtureSetSummary | undefined> {
+  return generateDeepSeekSummary(buildMatchReportPrompt(input), {
+    failureLabel: 'match report',
+    skipLabel: 'match report',
+  })
 }
