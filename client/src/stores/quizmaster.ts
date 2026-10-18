@@ -84,14 +84,12 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     owner: TeamSide,
     roundIndex: number,
     question: QuizQuestion,
-    outcome: QuizQuestionOutcome,
   ): boolean => {
     const round = scoredRounds.value[roundIndex]
     if (!isIndividualRound(round)) return false
 
     const category = subjectForQuestion(question.number, round.subjects ?? [])
-    const scoringSide: TeamSide = outcome === 'bonus' ? (owner === 'home' ? 'away' : 'home') : owner
-    return jokerApplies(scoringSide, category, jokers.value[roundIndex] ?? {})
+    return jokerApplies(owner, category, jokers.value[roundIndex] ?? {})
   }
 
   const subjectFor = (roundIndex: number, question: QuizQuestion): string | undefined => {
@@ -147,7 +145,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     if (!question) return
 
     const owner = ownerFor(roundIndex, question)
-    const joker = scoringJoker(owner, roundIndex, question, outcome)
+    const joker = scoringJoker(owner, roundIndex, question)
 
     history.value.push({ score: { ...score.value }, key })
     score.value = applyOutcome(score.value, owner, outcome, joker)

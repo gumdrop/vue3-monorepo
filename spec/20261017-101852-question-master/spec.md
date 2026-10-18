@@ -168,8 +168,8 @@ For individual rounds, each question shall be annotated with the category and th
 **Verify:** An individual question shows "category + primary contestant" matching its A/B suffix; after a wrong answer it shows "category + opposing contestant in that category".
 
 #### FR-4.5: Joker doubling
-In an individual round, when a team's joker category is the category of the question being scored, any correct-answer value for that team is doubled: primary correct **2 → 4**, bonus correct **1 → 2**. The opposing team's answers on that category are not doubled.
-**Verify:** A primary correct on a team's joker category adds 4 to that team; a bonus correct adds 2; the other team's values are unaffected.
+In an individual round, a team's joker doubles the value of every question in its nominated category when that team is the primary (owning) side: a correct answer is worth **4 points** (instead of 2), and a bonus that the opposition converts is worth **2 points** (instead of 1). Questions in categories where the primary team has not played its joker score normally.
+**Verify:** On a question in a team's joker category, a primary correct answer adds 4 to that team and a converted bonus adds 2 to the opposition; questions outside that category score normally.
 
 #### FR-4.6: Categories collapsed but viewable
 During an individual round, the category list shall be collapsed once assignments are complete, but the QM shall be able to expand it at any time to review assignments and jokers.

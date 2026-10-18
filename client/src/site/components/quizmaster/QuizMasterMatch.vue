@@ -179,9 +179,8 @@ const answerHtml = computed(() => underlineHtml(displayAnswer.value))
 
 function jokerPoints(base: number): number {
   if (!subject.value || !question.value) return base
-  const scoringSide = base === 1 ? (owner.value === 'home' ? 'away' : 'home') : owner.value
   const jokerCategory =
-    scoringSide === 'home' ? store.jokers[roundIndex.value]?.home : store.jokers[roundIndex.value]?.away
+    owner.value === 'home' ? store.jokers[roundIndex.value]?.home : store.jokers[roundIndex.value]?.away
   return jokerCategory === subject.value ? base * 2 : base
 }
 

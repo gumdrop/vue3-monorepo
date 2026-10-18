@@ -54,11 +54,14 @@ export const applyOutcome = (
 }
 
 // Whether a team's joker doubles a given category.
+// Whether a team's joker doubles a given category. The caller passes the
+// PRIMARY (owner) side for the question — the joker doubles the whole question
+// on that side's nominated category (correct 2->4, bonus 1->2).
 export const jokerApplies = (
-  scoringSide: TeamSide,
+  side: TeamSide,
   category: string | undefined,
   jokers: Jokers,
-): boolean => category !== undefined && jokers[scoringSide] === category
+): boolean => category !== undefined && jokers[side] === category
 
 // Numeric prefix of a question number (e.g. "2A" -> 2, "1" -> 1; "" -> 0).
 export const questionNumberPrefix = (number: string): number => {

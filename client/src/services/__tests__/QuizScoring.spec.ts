@@ -105,7 +105,7 @@ describe('QuizScoring', () => {
   })
 
   describe('joker applicability', () => {
-    it('applies only when the scoring side nominated that category', () => {
+    it('applies only when that side nominated that category', () => {
       expect(jokerApplies('home', 'FILMS', { home: 'FILMS', away: 'GEOGRAPHY' })).toBe(true)
       expect(jokerApplies('home', 'FILMS', { home: 'GEOGRAPHY' })).toBe(false)
       expect(jokerApplies('away', 'FILMS', { home: 'FILMS', away: 'FILMS' })).toBe(true)
@@ -113,6 +113,13 @@ describe('QuizScoring', () => {
 
     it('never applies when there is no category', () => {
       expect(jokerApplies('home', undefined, { home: 'FILMS' })).toBe(false)
+    })
+
+    it('doubles a bonus based on the primary side\'s joker, not the converting side\'s', () => {
+      // Home owns the question and nominated FILMS. Away converts the bonus.
+      const joker = jokerApplies('home', 'FILMS', { home: 'FILMS', away: 'GEOGRAPHY' })
+      expect(joker).toBe(true)
+      expect(applyOutcome(initialScore, 'home', 'bonus', joker)).toEqual({ home: 0, away: 2 })
     })
   })
 })
