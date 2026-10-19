@@ -33,8 +33,8 @@
           <p class="text-subtitle-1">
             For
             <strong v-if="subject">{{ contestantName }}</strong>
-            <strong v-else>{{ ownerName }}</strong>
-            <span v-if="subject"> ({{ ownerName }})</span>
+            <strong v-else>{{ targetName }}</strong>
+            <span v-if="subject"> ({{ targetName }})</span>
           </p>
 
           <v-alert v-if="showAnswer" type="info" density="compact" class="mt-2">
@@ -194,12 +194,16 @@ const subject = computed(() =>
   question.value ? store.subjectFor(roundIndex.value, question.value) : undefined,
 )
 
+const targetSide = computed(() =>
+  passedOver.value ? (owner.value === 'home' ? 'away' : 'home') : owner.value,
+)
+
 const contestantName = computed(() => {
   if (!subject.value || !question.value) return ''
-  return store.contestantFor(roundIndex.value, question.value, owner.value) ?? '—'
+  return store.contestantFor(roundIndex.value, question.value, targetSide.value) ?? '—'
 })
 
-const ownerName = computed(() => (owner.value === 'home' ? homeName.value : awayName.value))
+const targetName = computed(() => (targetSide.value === 'home' ? homeName.value : awayName.value))
 
 const displayQuestion = computed(() => spare.value?.question ?? question.value?.question ?? '')
 const displayAnswer = computed(() => spare.value?.answer ?? question.value?.answer ?? '')
