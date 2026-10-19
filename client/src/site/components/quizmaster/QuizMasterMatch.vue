@@ -1,6 +1,7 @@
 <template>
-  <v-card class="mt-4">
-    <v-card-title class="d-flex justify-space-between align-center">
+  <div class="quiz-match-wrap mt-4">
+  <v-card>
+    <v-card-title class="d-flex justify-space-between align-center" style="padding-right: 100px;">
       <span>Match</span>
       <span class="text-h5">
         {{ homeName }} {{ store.score.home }} — {{ store.score.away }} {{ awayName }}
@@ -36,27 +37,6 @@
             <span v-if="subject"> ({{ ownerName }})</span>
           </p>
 
-          <div class="d-flex ga-2 mt-2">
-            <v-btn
-              size="small"
-              :color="!bonusMode ? 'primary' : undefined"
-              :variant="!bonusMode ? 'tonal' : 'text'"
-              :disabled="timerState !== 'idle'"
-              @click="bonusMode = false"
-            >
-              Question · 30s
-            </v-btn>
-            <v-btn
-              size="small"
-              :color="bonusMode ? 'warning' : undefined"
-              :variant="bonusMode ? 'tonal' : 'text'"
-              :disabled="timerState !== 'idle'"
-              @click="bonusMode = true"
-            >
-              Bonus · 15s
-            </v-btn>
-          </div>
-
           <v-alert v-if="showAnswer" type="info" density="compact" class="mt-2">
             <strong>Answer:</strong> <span v-html="answerHtml" />
           </v-alert>
@@ -65,27 +45,38 @@
           </v-alert>
 
           <div class="d-flex flex-wrap ga-2 mt-4">
-            <v-btn
-              color="success"
-              :disabled="Boolean(outcome)"
-              @click="record('correct')"
-            >
-              Correct (+{{ jokerPoints(2) }})
-            </v-btn>
-            <v-btn
-              color="warning"
-              :disabled="Boolean(outcome)"
-              @click="record('bonus')"
-            >
-              Bonus to opposition (+{{ jokerPoints(1) }})
-            </v-btn>
-            <v-btn
-              color="grey"
-              :disabled="Boolean(outcome)"
-              @click="record('unanswered')"
-            >
-              Unanswered
-            </v-btn>
+            <template v-if="!passedOver">
+              <v-btn
+                color="success"
+                :disabled="outcomeButtonsDisabled"
+                @click="record('correct')"
+              >
+                Correct (+{{ jokerPoints(2) }})
+              </v-btn>
+              <v-btn
+                color="warning"
+                :disabled="outcomeButtonsDisabled"
+                @click="passOver"
+              >
+                Pass Over
+              </v-btn>
+            </template>
+            <template v-else>
+              <v-btn
+                color="success"
+                :disabled="outcomeButtonsDisabled"
+                @click="record('bonus')"
+              >
+                Correct (+{{ jokerPoints(1) }})
+              </v-btn>
+              <v-btn
+                color="error"
+                :disabled="outcomeButtonsDisabled"
+                @click="record('unanswered')"
+              >
+                Incorrect
+              </v-btn>
+            </template>
           </div>
 
           <div class="d-flex flex-wrap ga-2 mt-4">
@@ -166,6 +157,7 @@
       <span class="timer-fab-caption">{{ timerCaption }}</span>
     </span>
   </v-btn>
+  </div>
 </template>
 <script setup lang="ts">
 import { computed, onUnmounted, ref } from 'vue'
@@ -217,12 +209,13 @@ const answerHtml = computed(() => underlineHtml(displayAnswer.value))
 type TimerState = 'idle' | 'running' | 'paused' | 'done'
 
 const timerState = ref<TimerState>('idle')
-const bonusMode = ref(false)
+const passedOver = ref(false)
+const answerRevealed = ref(false)
 const remaining = ref(30)
 let timerHandle: ReturnType<typeof setInterval> | undefined
 
-const timerDuration = computed(() => (bonusMode.value ? 15 : 30))
-const showAnswer = computed(() => timerState.value !== 'idle')
+const timerDuration = computed(() => (passedOver.value ? 15 : 30))
+const showAnswer = computed(() => answerRevealed.value)
 const timerLabel = computed(() =>
   timerState.value === 'idle' ? timerDuration.value : remaining.value,
 )
@@ -235,11 +228,14 @@ const timerCaption = computed(() => {
 const timerColor = computed(() => {
   if (timerState.value === 'done') return 'error'
   if (timerState.value === 'paused') return 'warning'
-  return 'primary'
+  return 'green-darken-4'
 })
 const showTimer = computed(
   () => phase.value === 'rounds' && !settingUpIndividual.value && Boolean(round.value && question.value),
 )
+
+const timerStarted = computed(() => timerState.value !== 'idle')
+const outcomeButtonsDisabled = computed(() => Boolean(outcome.value) || !timerStarted.value)
 
 function clearTimer() {
   if (timerHandle !== undefined) {
@@ -260,6 +256,7 @@ function tick() {
 
 function startTimer() {
   clearTimer()
+  answerRevealed.value = true
   remaining.value = timerDuration.value
   timerState.value = 'running'
   timerHandle = setInterval(tick, 1000)
@@ -299,11 +296,30 @@ function jokerPoints(base: number): number {
 
 function record(outcome: QuizQuestionOutcome) {
   store.recordOutcome(roundIndex.value, questionIndex.value, outcome)
+  haltTimer()
+}
+
+function passOver() {
+  passedOver.value = true
+  resetTimer()
+}
+
+function haltTimer() {
+  if (timerState.value === 'running') {
+    clearTimer()
+    timerState.value = 'paused'
+  }
+}
+
+function resetQuestionState() {
+  answerRevealed.value = false
+  passedOver.value = false
+  resetTimer()
 }
 
 function undo() {
   store.undo()
-  resetTimer()
+  resetQuestionState()
 }
 
 function invokeSpare() {
@@ -311,7 +327,7 @@ function invokeSpare() {
 }
 
 function next() {
-  resetTimer()
+  resetQuestionState()
 
   const currentRound = round.value
   if (currentRound && questionIndex.value < currentRound.questions.length - 1) {
@@ -332,14 +348,18 @@ function finishBeer() {
 </script>
 <style scoped>
 .timer-fab {
-  position: fixed;
-  bottom: 28px;
-  right: 28px;
-  width: 84px;
-  height: 84px;
+  position: absolute;
+  top: 0;
+  right: 16px;
+  width: 76px;
+  height: 76px;
   min-width: 0;
   border-radius: 50%;
   z-index: 20;
+}
+
+.quiz-match-wrap {
+  position: relative;
 }
 
 .timer-fab-content {

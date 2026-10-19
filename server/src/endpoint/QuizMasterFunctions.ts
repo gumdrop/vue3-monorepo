@@ -5,6 +5,11 @@ import { HttpError } from './util'
 const WIX_HOME = 'https://pantscat69er.wixsite.com/chiltern'
 
 export async function acquireQuiz(command: QuizAcquireCommand): Promise<QuizPaper> {
+  if (command.pdfBase64) {
+    const pdfBytes = new Uint8Array(Buffer.from(command.pdfBase64, 'base64'))
+    return parseQuizPaper(pdfBytes, command.password)
+  }
+
   const pdfUrl = await resolveQuizPdfUrl(command.fixtureDate)
   const pdfBytes = await downloadPdf(pdfUrl)
   return parseQuizPaper(pdfBytes, command.password)

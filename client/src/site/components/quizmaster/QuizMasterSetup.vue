@@ -16,6 +16,18 @@
         :disabled="store.acquiring || !store.fixture"
       />
 
+      <div v-if="isLocalhost" class="mb-2">
+        <label class="text-caption text-medium-emphasis d-block mb-1">
+          Override with local PDF (localhost only)
+        </label>
+        <input
+          type="file"
+          accept=".pdf,application/pdf"
+          :disabled="store.acquiring"
+          @change="onFileSelected"
+        />
+      </div>
+
       <div class="d-flex ga-2 mb-4">
         <v-btn
           color="primary"
@@ -104,6 +116,7 @@ const emit = defineEmits<{ done: [] }>()
 
 const store = useQuizmasterStore()
 const password = ref('')
+const localFile = ref<File | null>(null)
 const homeIsAFirstHalf = ref(true)
 const homePlayers = ref<string[]>(['', '', '', ''])
 const awayPlayers = ref<string[]>(['', '', '', ''])
@@ -113,6 +126,11 @@ const awayMemberNames = ref<string[]>([])
 const { fixturesForResultSubmission } = useFixture()
 const { user } = storeToRefs(useUserStore())
 const { date } = useDateTime()
+
+const isLocalhost = computed(() => {
+  const host = window.location.hostname
+  return host === 'localhost' || host === '127.0.0.1' || host === '::1'
+})
 
 const fixtureLabel = computed(() =>
   store.fixture?.date ? date(store.fixture.date, 'd MMMM yyyy') ?? store.fixture.date : '',
@@ -178,7 +196,26 @@ async function teamMemberNames(teamId: string): Promise<string[]> {
 
 async function acquire() {
   if (!store.fixture?.date || !password.value) return
-  await store.acquire(store.fixture.date, password.value)
+
+  const pdfBase64 = localFile.value ? await readFileAsBase64(localFile.value) : undefined
+  await store.acquire(store.fixture.date, password.value, pdfBase64)
+}
+
+function onFileSelected(event: Event) {
+  const input = event.target as HTMLInputElement
+  localFile.value = input.files?.[0] ?? null
+}
+
+function readFileAsBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const dataUrl = reader.result as string
+      resolve(dataUrl.split(',')[1] ?? '')
+    }
+    reader.onerror = () => reject(reader.error ?? new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
 }
 
 function continueToReview() {

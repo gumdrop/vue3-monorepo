@@ -108,13 +108,18 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     return categoryAssignments.value[roundIndex]?.[side]?.[subject]
   }
 
-  async function acquire(date: string, password: string): Promise<boolean> {
+  async function acquire(
+    date: string,
+    password: string,
+    pdfBase64?: string,
+  ): Promise<boolean> {
     acquiring.value = true
     acquireError.value = undefined
     try {
       const response = await axios.post<QuizPaper>(`${REST_ROOT}/quiz/acquire`, {
         fixtureDate: date,
         password,
+        pdfBase64,
       })
       quiz.value = response.data
       fixtureDate.value = date

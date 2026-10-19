@@ -111,4 +111,23 @@ describe('acquireQuiz', () => {
     ).resolves.toEqual(paper)
     expect(parseQuizPaper).toHaveBeenCalledWith(expect.any(Uint8Array), 'pw')
   })
+
+  it('parses a supplied local PDF instead of scraping', async () => {
+    const paper = { rounds: [] }
+    vi.mocked(parseQuizPaper).mockResolvedValue(paper)
+
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const base64 = Buffer.from([1, 2, 3]).toString('base64')
+    await expect(
+      acquireQuiz({ fixtureDate: '2026-10-13', password: 'pw', pdfBase64: base64 }),
+    ).resolves.toEqual(paper)
+
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(parseQuizPaper).toHaveBeenCalledWith(expect.any(Uint8Array), 'pw')
+
+    const bytes = vi.mocked(parseQuizPaper).mock.calls[0][0] as Uint8Array
+    expect(Array.from(bytes)).toEqual([1, 2, 3])
+  })
 })
