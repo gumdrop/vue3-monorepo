@@ -36,8 +36,32 @@
             <span v-if="subject"> ({{ ownerName }})</span>
           </p>
 
-          <v-alert type="info" density="compact" class="mt-2">
+          <div class="d-flex ga-2 mt-2">
+            <v-btn
+              size="small"
+              :color="!bonusMode ? 'primary' : undefined"
+              :variant="!bonusMode ? 'tonal' : 'text'"
+              :disabled="timerState !== 'idle'"
+              @click="bonusMode = false"
+            >
+              Question · 30s
+            </v-btn>
+            <v-btn
+              size="small"
+              :color="bonusMode ? 'warning' : undefined"
+              :variant="bonusMode ? 'tonal' : 'text'"
+              :disabled="timerState !== 'idle'"
+              @click="bonusMode = true"
+            >
+              Bonus · 15s
+            </v-btn>
+          </div>
+
+          <v-alert v-if="showAnswer" type="info" density="compact" class="mt-2">
             <strong>Answer:</strong> <span v-html="answerHtml" />
+          </v-alert>
+          <v-alert v-else type="info" density="compact" class="mt-2" variant="tonal">
+            <em>Answer hidden — press the timer to reveal.</em>
           </v-alert>
 
           <div class="d-flex flex-wrap ga-2 mt-4">
@@ -129,9 +153,22 @@
       </template>
     </v-card-text>
   </v-card>
+
+  <v-btn
+    v-if="showTimer"
+    class="timer-fab"
+    :class="{ 'timer-done': timerState === 'done' }"
+    :color="timerColor"
+    @click="toggleTimer"
+  >
+    <span class="timer-fab-content">
+      <span class="timer-fab-number">{{ timerLabel }}</span>
+      <span class="timer-fab-caption">{{ timerCaption }}</span>
+    </span>
+  </v-btn>
 </template>
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onUnmounted, ref } from 'vue'
 import type { QuizQuestionOutcome } from '@quizleague/shared'
 import { isIndividualRound } from '@/services/QuizScoring'
 import { useQuizmasterStore } from '@/stores/quizmaster'
@@ -177,6 +214,82 @@ const displayAnswer = computed(() => spare.value?.answer ?? question.value?.answ
 const questionHtml = computed(() => underlineHtml(displayQuestion.value))
 const answerHtml = computed(() => underlineHtml(displayAnswer.value))
 
+type TimerState = 'idle' | 'running' | 'paused' | 'done'
+
+const timerState = ref<TimerState>('idle')
+const bonusMode = ref(false)
+const remaining = ref(30)
+let timerHandle: ReturnType<typeof setInterval> | undefined
+
+const timerDuration = computed(() => (bonusMode.value ? 15 : 30))
+const showAnswer = computed(() => timerState.value !== 'idle')
+const timerLabel = computed(() =>
+  timerState.value === 'idle' ? timerDuration.value : remaining.value,
+)
+const timerCaption = computed(() => {
+  if (timerState.value === 'idle') return 'Start'
+  if (timerState.value === 'paused') return 'Paused'
+  if (timerState.value === 'done') return 'Time'
+  return 'sec'
+})
+const timerColor = computed(() => {
+  if (timerState.value === 'done') return 'error'
+  if (timerState.value === 'paused') return 'warning'
+  return 'primary'
+})
+const showTimer = computed(
+  () => phase.value === 'rounds' && !settingUpIndividual.value && Boolean(round.value && question.value),
+)
+
+function clearTimer() {
+  if (timerHandle !== undefined) {
+    clearInterval(timerHandle)
+    timerHandle = undefined
+  }
+}
+
+function tick() {
+  if (remaining.value <= 1) {
+    remaining.value = 0
+    clearTimer()
+    timerState.value = 'done'
+  } else {
+    remaining.value -= 1
+  }
+}
+
+function startTimer() {
+  clearTimer()
+  remaining.value = timerDuration.value
+  timerState.value = 'running'
+  timerHandle = setInterval(tick, 1000)
+}
+
+function pauseTimer() {
+  clearTimer()
+  timerState.value = 'paused'
+}
+
+function resumeTimer() {
+  timerState.value = 'running'
+  timerHandle = setInterval(tick, 1000)
+}
+
+function resetTimer() {
+  clearTimer()
+  timerState.value = 'idle'
+  remaining.value = timerDuration.value
+}
+
+function toggleTimer() {
+  if (timerState.value === 'idle') startTimer()
+  else if (timerState.value === 'running') pauseTimer()
+  else if (timerState.value === 'paused') resumeTimer()
+  else resetTimer()
+}
+
+onUnmounted(clearTimer)
+
 function jokerPoints(base: number): number {
   if (!subject.value || !question.value) return base
   const jokerCategory =
@@ -190,6 +303,7 @@ function record(outcome: QuizQuestionOutcome) {
 
 function undo() {
   store.undo()
+  resetTimer()
 }
 
 function invokeSpare() {
@@ -197,6 +311,8 @@ function invokeSpare() {
 }
 
 function next() {
+  resetTimer()
+
   const currentRound = round.value
   if (currentRound && questionIndex.value < currentRound.questions.length - 1) {
     questionIndex.value += 1
@@ -206,7 +322,6 @@ function next() {
     settingUpIndividual.value = isIndividualRound(store.scoredRounds[roundIndex.value])
   } else {
     phase.value = 'beer'
-    return
   }
 }
 
@@ -215,3 +330,48 @@ function finishBeer() {
   emit('done')
 }
 </script>
+<style scoped>
+.timer-fab {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 84px;
+  height: 84px;
+  min-width: 0;
+  border-radius: 50%;
+  z-index: 20;
+}
+
+.timer-fab-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.timer-fab-number {
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.timer-fab-caption {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.85;
+}
+
+@keyframes timer-flash {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.timer-done {
+  animation: timer-flash 0.6s ease-in-out infinite;
+}
+</style>
