@@ -336,7 +336,7 @@ Competitions exist within a season. There is more than one competition type.
 | `duration`           | `number`          | Yes      | Competition duration in minutes.                                                                                            |
 | `roundup`            | `Reference<Text>` | No       | Reference to the normal Markdown text document containing the public AI-generated roundup for a completed team competition. |
 | `roundupGeneratedAt` | `string`          | No       | UTC timestamp string for when the public roundup was generated.                                                             |
-| `roundupModel`       | `string`          | No       | Gemini model name used for the public roundup. Raw prompts and provider responses are not stored.                           |
+| `roundupModel`       | `string`          | No       | DeepSeek model name used for the public roundup. Raw prompts and provider responses are not stored.                         |
 | `icon`               | `string`          | No       | Icon identifier or asset reference.                                                                                         |
 | `_name`              | `string`          | Yes      | Read-only name of the competition type, such as `league`, `cup`, or `singleton`.                                            |
 | `_type`              | `string`          | Yes      | Internal competition type identifier.                                                                                       |
@@ -520,7 +520,7 @@ Fixtures exist within a competition.
 | `questionsUrl`              | `string` | No       | Optional link to fixture questions.                                                               |
 | `resultsSummary`            | `text` reference | No       | Reference to the normal Markdown text document containing the public AI-generated summary of a completed fixture set's results and match reports. |
 | `resultsSummaryGeneratedAt` | `string` | No       | UTC timestamp string for when the public summary was generated.                                   |
-| `resultsSummaryModel`       | `string` | No       | Gemini model name used for the public summary. Raw prompts and provider responses are not stored. |
+| `resultsSummaryModel`       | `string` | No       | DeepSeek model name used for the public summary. Raw prompts and provider responses are not stored. |
 
 ## Fixture
 

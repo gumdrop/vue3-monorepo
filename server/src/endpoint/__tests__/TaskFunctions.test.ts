@@ -26,7 +26,7 @@ vi.mock('../../storage/Storage', () => ({
   saveAll: mocks.saveAll,
 }))
 
-vi.mock('../GeminiResultsSummary', () => ({
+vi.mock('../DeepSeekResultsSummary', () => ({
   generateCompetitionRoundup: mocks.generateCompetitionRoundup,
   generateFixtureSetResultsSummary: mocks.generateFixtureSetResultsSummary,
 }))
@@ -60,7 +60,7 @@ describe('TaskFunctions', () => {
     mocks.save.mockImplementation(async (entity) => mocks.docRef(entity))
   })
 
-  it('generates a Gemini summary when the submitted result completes the fixture set', async () => {
+  it('generates a DeepSeek summary when the submitted result completes the fixture set', async () => {
     const queueMicrotaskSpy = vi
       .spyOn(globalThis, 'queueMicrotask')
       .mockImplementation((callback: () => void) => callback())
@@ -161,7 +161,7 @@ describe('TaskFunctions', () => {
     })
     mocks.generateFixtureSetResultsSummary.mockResolvedValue({
       text: 'Alpha and Charlie opened with wins.',
-      model: 'gemini-test',
+      model: 'deepseek-test',
     })
 
     await resultSubmission({
@@ -201,7 +201,7 @@ describe('TaskFunctions', () => {
         resultsSummary: expect.objectContaining({
           path: expect.stringMatching(/^text\//),
         }),
-        resultsSummaryModel: 'gemini-test',
+        resultsSummaryModel: 'deepseek-test',
       }),
     )
     expect(mocks.save).toHaveBeenCalledWith(
@@ -484,11 +484,11 @@ describe('TaskFunctions', () => {
     })
     mocks.generateFixtureSetResultsSummary.mockResolvedValue({
       text: 'Week 1 swung on Alpha.',
-      model: 'gemini-week',
+      model: 'deepseek-week',
     })
     mocks.generateCompetitionRoundup.mockResolvedValue({
       text: 'League season roundup.',
-      model: 'gemini-roundup',
+      model: 'deepseek-roundup',
     })
 
     await resultSubmission({
@@ -577,7 +577,7 @@ describe('TaskFunctions', () => {
           path: expect.stringMatching(/^text\//),
         }),
         roundupGeneratedAt: expect.any(String),
-        roundupModel: 'gemini-roundup',
+        roundupModel: 'deepseek-roundup',
       }),
     )
   })
@@ -695,7 +695,7 @@ describe('TaskFunctions', () => {
     queueMicrotaskSpy.mockRestore()
   })
 
-  it('leaves completed fixture set summaries unchanged when Gemini returns empty text', async () => {
+  it('leaves completed fixture set summaries unchanged when DeepSeek returns empty text', async () => {
     const user = { id: 'user-1', path: 'user/user-1' }
     const teamA = {
       id: 'team-a',
@@ -808,7 +808,7 @@ describe('TaskFunctions', () => {
     })
     mocks.generateFixtureSetResultsSummary.mockResolvedValue({
       text: 'Alpha edged Bravo.',
-      model: 'gemini-test',
+      model: 'deepseek-test',
     })
 
     await expect(regenerateFixtureSetResultsSummary(fixtureSetPath)).resolves.toBe(fixtureSet)
@@ -825,7 +825,7 @@ describe('TaskFunctions', () => {
     expect(mocks.save).toHaveBeenCalledWith(
       expect.objectContaining({
         resultsSummary: { id: 'summary-existing', path: 'text/summary-existing' },
-        resultsSummaryModel: 'gemini-test',
+        resultsSummaryModel: 'deepseek-test',
         resultsSummaryGeneratedAt: expect.any(String),
       }),
     )
@@ -872,7 +872,7 @@ describe('TaskFunctions', () => {
     })
     mocks.generateFixtureSetResultsSummary.mockResolvedValue({
       text: 'Updated summary.',
-      model: 'gemini-test',
+      model: 'deepseek-test',
     })
 
     await expect(regenerateFixtureSetResultsSummary(fixtureSetPath)).resolves.toBe(fixtureSet)
@@ -895,7 +895,7 @@ describe('TaskFunctions', () => {
     })
   })
 
-  it('rejects summary regeneration when Gemini returns empty text for a completed fixture set', async () => {
+  it('rejects summary regeneration when DeepSeek returns empty text for a completed fixture set', async () => {
     const fixtureSet = {
       id: 'week-1',
       path: fixtureSetPath,
@@ -929,7 +929,7 @@ describe('TaskFunctions', () => {
     mocks.generateFixtureSetResultsSummary.mockResolvedValue(undefined)
 
     await expect(regenerateFixtureSetResultsSummary(fixtureSetPath)).rejects.toThrow(
-      'Gemini did not return a fixture set results summary',
+      'DeepSeek did not return a fixture set results summary',
     )
     expect(mocks.save).not.toHaveBeenCalledWith(fixtureSet)
   })

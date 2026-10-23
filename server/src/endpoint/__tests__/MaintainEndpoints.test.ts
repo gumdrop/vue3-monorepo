@@ -12,13 +12,13 @@ vi.mock('../TaskFunctions', () => ({
     path: 'season/season-1/competition/league',
     roundup: { id: 'summary-text', path: 'text/summary-text' },
     roundupGeneratedAt: '2026-06-11T09:00:00.000Z',
-    roundupModel: 'gemini-test',
+    roundupModel: 'deepseek-test',
   }),
   regenerateFixtureSetResultsSummary: vi.fn().mockResolvedValue({
     path: 'season/season-1/competition/league/fixtures/week-1',
     resultsSummary: { id: 'summary-text', path: 'text/summary-text' },
     resultsSummaryGeneratedAt: '2026-05-31T09:00:00.000Z',
-    resultsSummaryModel: 'gemini-test',
+    resultsSummaryModel: 'deepseek-test',
   }),
 }))
 
@@ -200,7 +200,7 @@ describe('MaintainEndpoints', () => {
       resultsSummary: { id: 'summary-text', path: 'text/summary-text' },
       resultsSummaryText: 'Fresh AI summary',
       resultsSummaryGeneratedAt: '2026-05-31T09:00:00.000Z',
-      resultsSummaryModel: 'gemini-test',
+      resultsSummaryModel: 'deepseek-test',
     })
   })
 
@@ -230,7 +230,7 @@ describe('MaintainEndpoints', () => {
       roundup: { id: 'summary-text', path: 'text/summary-text' },
       roundupText: 'Fresh AI summary',
       roundupGeneratedAt: '2026-06-11T09:00:00.000Z',
-      roundupModel: 'gemini-test',
+      roundupModel: 'deepseek-test',
     })
   })
 
@@ -265,7 +265,7 @@ describe('MaintainEndpoints', () => {
     )
     expect(response.status).toHaveBeenCalledWith(500)
     expect(response.json).toHaveBeenCalledWith({
-      error: 'Gemini did not return a fixture set results summary',
+      error: 'DeepSeek did not return a fixture set results summary',
     })
   })
 })

@@ -126,11 +126,16 @@ export default function useAuth() {
     return user !== undefined
   }
 
+  async function signedInGuard() {
+    const fbUser = await getCurrentUser()
+    return fbUser !== null ? true : { name: 'login' }
+  }
+
   async function unauthGuard() {
     await getCurrentUser()
     const { user } = useUserStore()
     return user === undefined
   }
 
-  return { logout, logonWithGoogle, verifyEmail, authGuard, unauthGuard, checkEmailSignInLink }
+  return { logout, logonWithGoogle, verifyEmail, authGuard, signedInGuard, unauthGuard, checkEmailSignInLink }
 }
