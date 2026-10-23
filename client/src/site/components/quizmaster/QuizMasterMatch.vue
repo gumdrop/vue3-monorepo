@@ -27,7 +27,7 @@
             Original question replaced with spare (printed answer disputed).
           </v-alert>
 
-          <p class="text-h6 mb-1">
+          <p class="question-text mb-1">
             <strong>{{ question.number }}.</strong> <span v-html="questionHtml" />
           </p>
           <p class="text-subtitle-1">
@@ -38,7 +38,7 @@
           </p>
 
           <v-alert v-if="showAnswer" type="info" density="compact" class="mt-2">
-            <strong>Answer:</strong> <span v-html="answerHtml" />
+            <strong>Answer:</strong> <span class="answer-text" v-html="answerHtml" />
           </v-alert>
           <v-alert v-else type="info" density="compact" class="mt-2" variant="tonal">
             <em>Answer hidden — press the timer to reveal.</em>
@@ -98,6 +98,25 @@
       </template>
 
       <template v-else>
+        <div v-if="store.sparesRound" class="mb-4">
+          <div class="text-subtitle-1 mb-2">{{ store.sparesRound.round }}</div>
+          <v-expansion-panels>
+            <v-expansion-panel>
+              <v-expansion-panel-title>View spare questions</v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <v-list density="compact">
+                  <v-list-item v-for="(q, i) in store.sparesRound.questions" :key="i">
+                    <v-list-item-title>{{ q.number }}. {{ q.question }}</v-list-item-title>
+                    <v-list-item-subtitle>
+                      Answer: <span v-html="underlineHtml(q.answer)" />
+                    </v-list-item-subtitle>
+                  </v-list-item>
+                </v-list>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
+        </div>
+
         <div class="text-subtitle-1 mb-2">
           {{ store.beerRound?.round ?? 'Beer round' }} — {{ store.beerRound?.questions.length ?? 0 }} questions
         </div>
@@ -136,6 +155,25 @@
             />
           </v-col>
         </v-row>
+
+        <div v-if="store.tiebreakRound" class="mt-4">
+          <div class="text-subtitle-1 mb-2">{{ store.tiebreakRound.round }}</div>
+          <v-expansion-panels>
+            <v-expansion-panel>
+              <v-expansion-panel-title>View tie-breaker</v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <v-list density="compact">
+                  <v-list-item v-for="(q, i) in store.tiebreakRound.questions" :key="i">
+                    <v-list-item-title>{{ q.question }}</v-list-item-title>
+                    <v-list-item-subtitle>
+                      Answer: <span v-html="underlineHtml(q.answer)" />
+                    </v-list-item-subtitle>
+                  </v-list-item>
+                </v-list>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
+        </div>
 
         <div class="d-flex justify-space-between mt-2">
           <v-btn variant="text" @click="phase = 'rounds'">Back to match</v-btn>
@@ -355,15 +393,26 @@ function finishBeer() {
   position: absolute;
   top: 0;
   right: 16px;
-  width: 76px;
-  height: 76px;
-  min-width: 0;
-  border-radius: 50%;
+  width: 76px !important;
+  height: 76px !important;
+  min-width: 76px !important;
+  min-height: 76px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
   z-index: 20;
 }
 
 .quiz-match-wrap {
   position: relative;
+}
+
+.question-text {
+  font-size: 1.6rem;
+  line-height: 1.35;
+}
+
+.answer-text {
+  font-size: 1.4rem;
 }
 
 .timer-fab-content {
