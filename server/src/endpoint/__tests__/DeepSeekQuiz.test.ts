@@ -63,4 +63,28 @@ describe('DeepSeekResultsSummary match reports', () => {
     )
     expect(body.messages[0].content).toContain('ROUND ONE')
   })
+
+  it('mentions the cup tie-break when one decides the match', async () => {
+    const fetchMock = fetchJson('Decided on a coin toss.')
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateMatchReport({
+      homeTeam: 'Alpha',
+      awayTeam: 'Bravo',
+      homeScore: 51,
+      awayScore: 50,
+      beerRoundHomeScore: 0,
+      beerRoundAwayScore: 0,
+      rounds: [],
+      tieBreak: { winner: 'home', method: 'the coin toss' },
+    })
+
+    const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
+    expect(body.messages[0].content).toContain('Final score: Alpha 51-50 Bravo')
+    expect(body.messages[0].content).toContain(
+      'Cup tie-break: the match was level after 10 rounds.',
+    )
+    expect(body.messages[0].content).toContain('Alpha won on the coin toss.')
+    expect(body.messages[0].content).toContain('Beer leg: used for the cup tie-break sections.')
+  })
 })

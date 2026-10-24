@@ -25,8 +25,11 @@ export interface QuizSession {
   score: { home: number; away: number }
   history: { score: { home: number; away: number }; key: string }[]
   step: 2 | 3 | 4
-  matchPosition: { roundIndex: number; questionIndex: number; phase: 'rounds' | 'beer' }
+  matchPosition: { roundIndex: number; questionIndex: number; phase: 'rounds' | 'tiebreak' | 'beer' }
   report?: { text: string; model: string }
+  tieBreakMarks?: Record<string, { home?: boolean; away?: boolean }>
+  tieBreakSectionIndex?: number
+  tieBreakCoinToss?: { awayCall?: string; toss?: string }
   updatedAt: string
 }
 

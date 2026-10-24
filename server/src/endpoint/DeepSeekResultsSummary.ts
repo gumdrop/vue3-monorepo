@@ -263,6 +263,24 @@ const buildMatchReportPrompt = (input: QuizReportCommand) => {
     )
     .join('\n')
 
+  const finalScoreLine = input.tieBreak
+    ? `Final score: ${input.homeTeam} ${input.homeScore}-${input.awayScore} ${input.awayTeam}`
+    : `Final score (main quiz): ${input.homeTeam} ${input.homeScore}-${input.awayScore} ${input.awayTeam}`
+
+  const tieBreakNote = input.tieBreak
+    ? `Cup tie-break: the match was level after 10 rounds. ${
+        input.tieBreak.winner === 'home' ? input.homeTeam : input.awayTeam
+      } won on ${input.tieBreak.method}.`
+    : undefined
+
+  const beerLegLine = input.tieBreak
+    ? 'Beer leg: used for the cup tie-break sections.'
+    : `Beer leg (separate, does not count): ${input.homeTeam} ${input.beerRoundHomeScore}-${input.beerRoundAwayScore} ${input.awayTeam}`
+
+  const beerLegInstruction = input.tieBreak
+    ? 'The beer-leg questions were used for the cup tie-break; there is no separate beer-leg score.'
+    : 'The beer round is a separate leg and does NOT count towards the main quiz result — do not treat it as part of the match score. Include the beer leg result at the end of the report as a short, separate note.'
+
   return `You write a match report for the Chiltern Quiz League.
 
 Write a concise, engaging Markdown report of this match using only the recorded data below.
@@ -277,15 +295,15 @@ A "(joker for home/away/both)" marker on a category only means that category car
 
 Describe the match strictly from the recorded outcomes. Do not invent drama: if every question in a round was answered "correct" by the side asked, say so plainly rather than calling the round decisive or a clean sweep. Only describe a round or category as decisive when the outcomes actually show bonus conversions or wrong answers.
 
-The beer round is a separate leg and does NOT count towards the main quiz result — do not treat it as part of the match score. Include the beer leg result at the end of the report as a short, separate note.
+${beerLegInstruction}
 
 Keep it under 300 words.
 Return only Markdown body text, with no heading.
 Do not return JSON, HTML, or a fenced code block.
 
 ${input.homeTeam} vs ${input.awayTeam}
-Final score (main quiz): ${input.homeTeam} ${input.homeScore}-${input.awayScore} ${input.awayTeam}
-Beer leg (separate, does not count): ${input.homeTeam} ${input.beerRoundHomeScore}-${input.beerRoundAwayScore} ${input.awayTeam}
+${finalScoreLine}
+${tieBreakNote ? `${tieBreakNote}\n` : ''}${beerLegLine}
 
 Rounds:
 ${rounds}`

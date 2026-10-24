@@ -78,3 +78,77 @@ export const subjectForQuestion = (number: string, subjects: string[]): string |
 // A round is individual when it has subjects (only Individual rounds do).
 export const isIndividualRound = (round: { subjects?: string[] }): boolean =>
   Boolean(round.subjects && round.subjects.length > 0)
+
+// Cup tie-break rules: played after a cup match finishes level after 10 rounds.
+// Each section is answered by both teams simultaneously and marked per team.
+
+export interface TieBreakQuestion {
+  number: string
+  question: string
+  answer: string
+}
+
+export interface TieBreakSection {
+  name: string
+  kind: 'spares' | 'beer'
+  questions: TieBreakQuestion[]
+}
+
+export interface TieBreakMarks {
+  home?: boolean
+  away?: boolean
+}
+
+export interface TieBreakOutcomeEntry {
+  outcome: QuestionOutcome
+  owner: TeamSide
+}
+
+export const BEER_LEG_SECTION_SIZE = 4
+
+export const buildTieBreakSections = (
+  spares: TieBreakQuestion[],
+  beerLeg: TieBreakQuestion[],
+): TieBreakSection[] => {
+  const sections: TieBreakSection[] = []
+
+  if (spares.length > 0) {
+    sections.push({ name: 'Spare questions', kind: 'spares', questions: [...spares] })
+  }
+
+  for (let index = 0; index < beerLeg.length; index += BEER_LEG_SECTION_SIZE) {
+    const chunk = beerLeg.slice(index, index + BEER_LEG_SECTION_SIZE)
+    sections.push({
+      name: `Beer leg ${index / BEER_LEG_SECTION_SIZE + 1} (questions ${index + 1}–${index + chunk.length})`,
+      kind: 'beer',
+      questions: chunk,
+    })
+  }
+
+  return sections
+}
+
+export const tieBreakSectionWinner = (marks: TieBreakMarks[]): TeamSide | undefined => {
+  const home = marks.filter((mark) => mark.home === true).length
+  const away = marks.filter((mark) => mark.away === true).length
+  if (home === away) return undefined
+  return home > away ? 'home' : 'away'
+}
+
+export const ownCorrectCounts = (entries: TieBreakOutcomeEntry[]) => ({
+  home: entries.filter((entry) => entry.outcome === 'correct' && entry.owner === 'home').length,
+  away: entries.filter((entry) => entry.outcome === 'correct' && entry.owner === 'away').length,
+})
+
+export const bonusCorrectCounts = (entries: TieBreakOutcomeEntry[]) => ({
+  home: entries.filter((entry) => entry.outcome === 'bonus' && entry.owner === 'away').length,
+  away: entries.filter((entry) => entry.outcome === 'bonus' && entry.owner === 'home').length,
+})
+
+export const coinTossWinner = (
+  awayCall: 'heads' | 'tails' | undefined,
+  toss: 'heads' | 'tails' | undefined,
+): TeamSide | undefined => {
+  if (!awayCall || !toss) return undefined
+  return awayCall === toss ? 'away' : 'home'
+}

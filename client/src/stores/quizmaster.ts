@@ -2,7 +2,23 @@ import axios from 'axios'
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { QuizPaper, QuizQuestion, QuizQuestionOutcome, QuizReportCommand, QuizRound } from '@quizleague/shared'
-import { applyOutcome, initialScore, isIndividualRound, jokerApplies, owningSide, subjectForQuestion, type Score, type TeamSide } from '@/services/QuizScoring'
+import {
+  applyOutcome,
+  bonusCorrectCounts,
+  buildTieBreakSections,
+  coinTossWinner,
+  initialScore,
+  isIndividualRound,
+  jokerApplies,
+  ownCorrectCounts,
+  owningSide,
+  subjectForQuestion,
+  tieBreakSectionWinner,
+  type Score,
+  type TeamSide,
+  type TieBreakMarks,
+  type TieBreakSection,
+} from '@/services/QuizScoring'
 import { REST_ROOT } from '@/services/constants'
 import { clearQuizSession, loadQuizSession, saveQuizSession, type QuizSession } from '@/services/QuizMasterSession'
 import { useUserStore } from './app'
@@ -14,6 +30,7 @@ export interface SelectedFixture {
   awayName: string
   homeId: string
   awayId: string
+  isCup?: boolean
 }
 
 export interface InvokedSpare {
@@ -27,7 +44,7 @@ interface HistoryEntry {
   key: string
 }
 
-export type MatchPhase = 'rounds' | 'beer'
+export type MatchPhase = 'rounds' | 'tiebreak' | 'beer'
 export interface MatchPosition {
   roundIndex: number
   questionIndex: number
@@ -62,6 +79,10 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
   const beerRoundScore = ref<{ home: number; away: number }>({ home: 0, away: 0 })
   const score = ref<Score>({ ...initialScore })
   const history = ref<HistoryEntry[]>([])
+
+  const tieBreakMarks = ref<Record<string, TieBreakMarks>>({})
+  const tieBreakSectionIndex = ref(0)
+  const tieBreakCoinToss = ref<{ awayCall?: 'heads' | 'tails'; toss?: 'heads' | 'tails' }>({})
 
   const report = ref<{ text: string; model: string }>()
   const submitting = ref(false)
@@ -117,6 +138,100 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     return categoryAssignments.value[roundIndex]?.[side]?.[subject]
   }
 
+  const isCup = computed(() => fixture.value?.isCup === true)
+  const isTied = computed(() => score.value.home === score.value.away)
+  const shouldPlayTieBreak = computed(() => isCup.value && isTied.value)
+
+  const tieBreakKey = (sectionIndex: number, questionIndex: number) => `${sectionIndex}:${questionIndex}`
+
+  // Only the spares not already used as mid-match replacements are available
+  // for the tie-break, in their printed order.
+  const tieBreakSections = computed<TieBreakSection[]>(() => {
+    if (!shouldPlayTieBreak.value) return []
+    const remainingSpares = (sparesRound.value?.questions ?? []).slice(spareCursor.value)
+    return buildTieBreakSections(remainingSpares, beerRound.value?.questions ?? [])
+  })
+
+  const tieBreakMarkFor = (sectionIndex: number, questionIndex: number): TieBreakMarks =>
+    tieBreakMarks.value[tieBreakKey(sectionIndex, questionIndex)] ?? {}
+
+  const tieBreakSectionComplete = (sectionIndex: number): boolean => {
+    const section = tieBreakSections.value[sectionIndex]
+    if (!section) return false
+    return section.questions.every((_, questionIndex) => {
+      const mark = tieBreakMarks.value[tieBreakKey(sectionIndex, questionIndex)]
+      return mark?.home !== undefined && mark?.away !== undefined
+    })
+  }
+
+  const tieBreakSectionWinners = computed<(TeamSide | undefined)[]>(() =>
+    tieBreakSections.value.map((section, sectionIndex) => {
+      if (!tieBreakSectionComplete(sectionIndex)) return undefined
+      return tieBreakSectionWinner(
+        section.questions.map((_, questionIndex) =>
+          tieBreakMarkFor(sectionIndex, questionIndex),
+        ),
+      )
+    }),
+  )
+
+  const outcomeEntries = computed(() =>
+    scoredRounds.value.flatMap((round, roundIndex) =>
+      round.questions.map((question, questionIndex) => ({
+        outcome: outcomes.value[questionKey(roundIndex, questionIndex)] ?? 'unanswered',
+        owner: ownerFor(roundIndex, question),
+      })),
+    ),
+  )
+
+  const ownQuestionCorrect = computed(() => ownCorrectCounts(outcomeEntries.value))
+  const bonusQuestionCorrect = computed(() => bonusCorrectCounts(outcomeEntries.value))
+
+  const tieBreakWinner = computed<TeamSide | undefined>(() => {
+    if (!shouldPlayTieBreak.value) return undefined
+
+    for (const winner of tieBreakSectionWinners.value) {
+      if (winner) return winner
+    }
+
+    if (ownQuestionCorrect.value.home !== ownQuestionCorrect.value.away) {
+      return ownQuestionCorrect.value.home > ownQuestionCorrect.value.away ? 'home' : 'away'
+    }
+
+    if (bonusQuestionCorrect.value.home !== bonusQuestionCorrect.value.away) {
+      return bonusQuestionCorrect.value.home > bonusQuestionCorrect.value.away ? 'home' : 'away'
+    }
+
+    return coinTossWinner(tieBreakCoinToss.value.awayCall, tieBreakCoinToss.value.toss)
+  })
+
+  const tieBreakMethod = computed(() => {
+    if (!tieBreakWinner.value) return undefined
+
+    const decidingSectionIndex = tieBreakSectionWinners.value.findIndex((winner) => winner !== undefined)
+    if (decidingSectionIndex >= 0) {
+      const section = tieBreakSections.value[decidingSectionIndex]
+      return `the ${section.name.toLowerCase()} tie-break`
+    }
+
+    if (ownQuestionCorrect.value.home !== ownQuestionCorrect.value.away) {
+      return 'most own questions answered correctly'
+    }
+
+    if (bonusQuestionCorrect.value.home !== bonusQuestionCorrect.value.away) {
+      return 'most bonus questions answered correctly'
+    }
+
+    return 'the coin toss'
+  })
+
+  const submissionScore = computed<Score>(() => {
+    if (!tieBreakWinner.value || !shouldPlayTieBreak.value) return { ...score.value }
+    return tieBreakWinner.value === 'home'
+      ? { home: score.value.home + 1, away: score.value.away }
+      : { home: score.value.home, away: score.value.away + 1 }
+  })
+
   function buildSession(): Omit<QuizSession, 'fixturePath' | 'updatedAt'> {
     const session: Omit<QuizSession, 'fixturePath' | 'updatedAt'> = {
       homeIsAFirstHalf: homeIsAFirstHalf.value,
@@ -132,6 +247,12 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
       history: history.value.map((entry) => ({ score: { ...entry.score }, key: entry.key })),
       step: resumeStep.value,
       matchPosition: { ...matchPosition.value },
+      tieBreakMarks: { ...tieBreakMarks.value },
+      tieBreakSectionIndex: tieBreakSectionIndex.value,
+      tieBreakCoinToss: {
+        awayCall: tieBreakCoinToss.value.awayCall ?? '',
+        toss: tieBreakCoinToss.value.toss ?? '',
+      },
     }
     // Firestore rejects `undefined` field values, so only attach the report
     // once one has actually been generated.
@@ -177,6 +298,13 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     report.value = session.report ? { ...session.report } : undefined
     resumeStep.value = session.step
     matchPosition.value = { ...session.matchPosition }
+    tieBreakMarks.value = { ...(session.tieBreakMarks ?? {}) }
+    tieBreakSectionIndex.value = session.tieBreakSectionIndex ?? 0
+    const coinToss = session.tieBreakCoinToss
+    tieBreakCoinToss.value = {
+      awayCall: coinToss?.awayCall ? (coinToss.awayCall as 'heads' | 'tails') : undefined,
+      toss: coinToss?.toss ? (coinToss.toss as 'heads' | 'tails') : undefined,
+    }
     resuming.value = true
     return true
   }
@@ -220,6 +348,9 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
         beerRoundScore.value = { home: 0, away: 0 }
         score.value = { ...initialScore }
         history.value = []
+        tieBreakMarks.value = {}
+        tieBreakSectionIndex.value = 0
+        tieBreakCoinToss.value = {}
       }
       void persistSession()
       return true
@@ -279,6 +410,39 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     void persistSession()
   }
 
+  function recordTieBreakAnswer(
+    sectionIndex: number,
+    questionIndex: number,
+    side: TeamSide,
+    correct: boolean,
+  ) {
+    const section = tieBreakSections.value[sectionIndex]
+    if (!section?.questions[questionIndex]) return
+
+    const key = tieBreakKey(sectionIndex, questionIndex)
+    tieBreakMarks.value[key] = { ...tieBreakMarks.value[key], [side]: correct }
+    void persistSession()
+  }
+
+  function setTieBreakSectionIndex(next: number) {
+    tieBreakSectionIndex.value = Math.max(0, Math.min(next, tieBreakSections.value.length))
+    void persistSession()
+  }
+
+  function advanceTieBreakSection() {
+    setTieBreakSectionIndex(tieBreakSectionIndex.value + 1)
+  }
+
+  function setTieBreakCoinTossAwayCall(awayCall: 'heads' | 'tails') {
+    tieBreakCoinToss.value = { ...tieBreakCoinToss.value, awayCall }
+    void persistSession()
+  }
+
+  function setTieBreakCoinTossResult(toss: 'heads' | 'tails') {
+    tieBreakCoinToss.value = { ...tieBreakCoinToss.value, toss }
+    void persistSession()
+  }
+
   async function generateReport(): Promise<boolean> {
     const selectedFixture = fixture.value
     if (!selectedFixture) return false
@@ -286,8 +450,8 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     const command: QuizReportCommand = {
       homeTeam: selectedFixture.homeName,
       awayTeam: selectedFixture.awayName,
-      homeScore: score.value.home,
-      awayScore: score.value.away,
+      homeScore: submissionScore.value.home,
+      awayScore: submissionScore.value.away,
       beerRoundHomeScore: beerRoundScore.value.home,
       beerRoundAwayScore: beerRoundScore.value.away,
       rounds: scoredRounds.value.map((round, roundIndex) => ({
@@ -323,6 +487,23 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
           }
         }),
       })),
+      ...(tieBreakWinner.value && tieBreakMethod.value
+        ? {
+            tieBreak: {
+              winner: tieBreakWinner.value,
+              method: tieBreakMethod.value,
+              sections: tieBreakSections.value.map((section, sectionIndex) => ({
+                name: section.name,
+                homeCorrect: section.questions.filter(
+                  (_, questionIndex) => tieBreakMarkFor(sectionIndex, questionIndex).home === true,
+                ).length,
+                awayCorrect: section.questions.filter(
+                  (_, questionIndex) => tieBreakMarkFor(sectionIndex, questionIndex).away === true,
+                ).length,
+              })),
+            },
+          }
+        : {}),
     }
 
     try {
@@ -346,6 +527,11 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
       return false
     }
 
+    if (shouldPlayTieBreak.value && !tieBreakWinner.value) {
+      submitError.value = 'The cup tie-break must produce a winner before submitting'
+      return false
+    }
+
     submitting.value = true
     submitError.value = undefined
     try {
@@ -355,8 +541,8 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
           fixtures: [
             {
               fixturePath: fixture.value.path,
-              homeScore: score.value.home,
-              awayScore: score.value.away,
+              homeScore: submissionScore.value.home,
+              awayScore: submissionScore.value.away,
             },
           ],
           reportText: report.value?.text,
@@ -365,7 +551,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
         { headers: { 'Content-type': 'application/json' } },
       )
       submitted.value = true
-      submittedScore.value = { ...score.value }
+      submittedScore.value = { ...submissionScore.value }
       submittedBeerRoundScore.value = { ...beerRoundScore.value }
       try {
         await clearQuizSession(fixture.value.path)
@@ -400,6 +586,9 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     beerRoundScore.value = { home: 0, away: 0 }
     score.value = { ...initialScore }
     history.value = []
+    tieBreakMarks.value = {}
+    tieBreakSectionIndex.value = 0
+    tieBreakCoinToss.value = {}
     resuming.value = false
     resumeStep.value = 2
     matchPosition.value = { roundIndex: 0, questionIndex: 0, phase: 'rounds' }
@@ -449,6 +638,21 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     sparesRound,
     beerRound,
     tiebreakRound,
+    isCup,
+    isTied,
+    shouldPlayTieBreak,
+    tieBreakMarks,
+    tieBreakSectionIndex,
+    tieBreakCoinToss,
+    tieBreakSections,
+    tieBreakSectionWinners,
+    tieBreakWinner,
+    tieBreakMethod,
+    ownQuestionCorrect,
+    bonusQuestionCorrect,
+    submissionScore,
+    tieBreakKey,
+    tieBreakMarkFor,
     ownerFor,
     subjectFor,
     contestantFor,
@@ -458,6 +662,11 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     undo,
     invokeSpare,
     recordBeerRound,
+    recordTieBreakAnswer,
+    setTieBreakSectionIndex,
+    advanceTieBreakSection,
+    setTieBreakCoinTossAwayCall,
+    setTieBreakCoinTossResult,
     generateReport,
     submit,
     reset,

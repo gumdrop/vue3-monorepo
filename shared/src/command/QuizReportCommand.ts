@@ -15,6 +15,12 @@ export interface QuizReportRound {
   questions: QuizReportQuestion[]
 }
 
+export interface QuizReportTieBreak {
+  winner: 'home' | 'away'
+  method: string
+  sections?: { name: string; homeCorrect: number; awayCorrect: number }[]
+}
+
 export interface QuizReportCommand {
   homeTeam: string
   awayTeam: string
@@ -23,4 +29,5 @@ export interface QuizReportCommand {
   beerRoundHomeScore: number
   beerRoundAwayScore: number
   rounds: QuizReportRound[]
+  tieBreak?: QuizReportTieBreak
 }
