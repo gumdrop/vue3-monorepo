@@ -174,7 +174,7 @@ describe('QuizMasterSetup', () => {
   })
 
   it('notifies and restores an in-progress quiz for re-acquire', async () => {
-    mocks.user = { team: { id: 'team-1' }, siteUser: { user: { id: 'user-1' } } }
+    mocks.user = { team: { id: 'team-1' } }
     mocks.fixtureDAO.getDataByPath.mockResolvedValue(fixture(false))
     mocks.loadQuizSession.mockResolvedValue(session())
 
@@ -190,7 +190,7 @@ describe('QuizMasterSetup', () => {
   })
 
   it('re-acquires and emits resume to jump back to the saved step', async () => {
-    mocks.user = { team: { id: 'team-1' }, siteUser: { user: { id: 'user-1' } } }
+    mocks.user = { team: { id: 'team-1' } }
     mocks.fixtureDAO.getDataByPath.mockResolvedValue(fixture(false))
     mocks.loadQuizSession.mockResolvedValue(session())
 

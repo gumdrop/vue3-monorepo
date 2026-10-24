@@ -49,9 +49,9 @@ const payload = (): Omit<QuizSession, 'fixturePath' | 'updatedAt'> => ({
 
 describe('quizSessionDocId', () => {
   it('produces a deterministic, slash-free id', () => {
-    const id = quizSessionDocId('season/1/competition/cup/fixtures/s1/fixture/f-1', 'user-1')
+    const id = quizSessionDocId('season/1/competition/cup/fixtures/s1/fixture/f-1')
 
-    expect(id).toBe(quizSessionDocId('season/1/competition/cup/fixtures/s1/fixture/f-1', 'user-1'))
+    expect(id).toBe(quizSessionDocId('season/1/competition/cup/fixtures/s1/fixture/f-1'))
     expect(id).not.toContain('/')
   })
 })
@@ -64,11 +64,11 @@ describe('QuizMasterSession persistence', () => {
   })
 
   it('saves a session with fixturePath and a timestamp', async () => {
-    await saveQuizSession('fixture/path', 'user-1', payload())
+    await saveQuizSession('fixture/path', payload())
 
     expect(mocks.doc).toHaveBeenCalledWith(
       mocks.useFirestore(),
-      `quizmaster-sessions/${quizSessionDocId('fixture/path', 'user-1')}`,
+      `quizmaster-sessions/${quizSessionDocId('fixture/path')}`,
     )
     expect(mocks.setDoc).toHaveBeenCalledWith(mocks.docRef, {
       ...payload(),
@@ -83,7 +83,7 @@ describe('QuizMasterSession persistence', () => {
       data: () => ({ fixturePath: 'fixture/path' }),
     })
 
-    await expect(loadQuizSession('fixture/path', 'user-1')).resolves.toEqual({
+    await expect(loadQuizSession('fixture/path')).resolves.toEqual({
       fixturePath: 'fixture/path',
     })
   })
@@ -91,11 +91,11 @@ describe('QuizMasterSession persistence', () => {
   it('returns undefined when no session exists', async () => {
     mocks.getDoc.mockResolvedValue({ exists: () => false, data: () => undefined })
 
-    await expect(loadQuizSession('fixture/path', 'user-1')).resolves.toBeUndefined()
+    await expect(loadQuizSession('fixture/path')).resolves.toBeUndefined()
   })
 
   it('clears a session', async () => {
-    await clearQuizSession('fixture/path', 'user-1')
+    await clearQuizSession('fixture/path')
 
     expect(mocks.deleteDoc).toHaveBeenCalledWith(mocks.docRef)
   })

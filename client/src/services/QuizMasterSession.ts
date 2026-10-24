@@ -26,18 +26,16 @@ export interface QuizSession {
   updatedAt: string
 }
 
-export const quizSessionDocId = (fixturePath: string, userId: string) =>
-  `${encodeURIComponent(userId)}_${encodeURIComponent(fixturePath)}`
+export const quizSessionDocId = (fixturePath: string) => encodeURIComponent(fixturePath)
 
-export const quizSessionDocRef = (fixturePath: string, userId: string) =>
-  doc(useFirestore(), `${COLLECTION}/${quizSessionDocId(fixturePath, userId)}`)
+export const quizSessionDocRef = (fixturePath: string) =>
+  doc(useFirestore(), `${COLLECTION}/${quizSessionDocId(fixturePath)}`)
 
 export async function saveQuizSession(
   fixturePath: string,
-  userId: string,
   session: Omit<QuizSession, 'fixturePath' | 'updatedAt'>,
 ): Promise<void> {
-  await setDoc(quizSessionDocRef(fixturePath, userId), {
+  await setDoc(quizSessionDocRef(fixturePath), {
     ...session,
     fixturePath,
     updatedAt: new Date().toISOString(),
@@ -46,12 +44,11 @@ export async function saveQuizSession(
 
 export async function loadQuizSession(
   fixturePath: string,
-  userId: string,
 ): Promise<QuizSession | undefined> {
-  const snapshot = await getDoc(quizSessionDocRef(fixturePath, userId))
+  const snapshot = await getDoc(quizSessionDocRef(fixturePath))
   return snapshot.exists() ? (snapshot.data() as QuizSession) : undefined
 }
 
-export async function clearQuizSession(fixturePath: string, userId: string): Promise<void> {
-  await deleteDoc(quizSessionDocRef(fixturePath, userId))
+export async function clearQuizSession(fixturePath: string): Promise<void> {
+  await deleteDoc(quizSessionDocRef(fixturePath))
 }

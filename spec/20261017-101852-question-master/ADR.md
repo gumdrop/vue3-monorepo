@@ -54,6 +54,6 @@
 - **Date:** 2026-10-24
 - **Status:** Accepted
 - **Context:** The v1 session was in-memory only, so an equipment failure or browser restart lost the match. A question master needs to resume where they left off.
-- **Decision:** Persist a per-fixture, per-user session document (collection `quizmaster-sessions`) holding fixture-agnostic progress: players, outcomes, spares, jokers, category assignments, beer score, running score, undo history, wizard step, and match position. The parsed quiz paper and the password are **not** persisted — on resume the question master re-enters the password and the quiz is re-parsed.
+- **Decision:** Persist a per-fixture session document (collection `quizmaster-sessions`, shared by any team member who opens the same fixture) holding fixture-agnostic progress: players, outcomes, spares, jokers, category assignments, beer score, running score, undo history, wizard step, and match position. The parsed quiz paper and the password are **not** persisted — on resume the question master re-enters the password and the quiz is re-parsed.
 - **Rationale:** Keeps the embargoed question paper out of Firestore and honours FR-1.2 (password never persisted), while still allowing crash recovery to the exact round/question.
 - **Consequences:** `client/src/services/QuizMasterSession.ts` provides save/load/clear; the store persists on every mutation and clears on submit/reset; setup detects a saved session, notifies the user, and resumes to the saved step after re-acquire.

@@ -122,8 +122,6 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     return categoryAssignments.value[roundIndex]?.[side]?.[subject]
   }
 
-  const currentUserId = (): string | undefined => useUserStore().user?.siteUser?.user?.id
-
   function buildSession(): Omit<QuizSession, 'fixturePath' | 'updatedAt'> {
     return {
       homeIsAFirstHalf: homeIsAFirstHalf.value,
@@ -146,11 +144,10 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
   // Persistence is best-effort: a failed save must not interrupt the match.
   async function persistSession() {
     const selectedFixture = fixture.value
-    const userId = currentUserId()
-    if (!selectedFixture || !userId) return
+    if (!selectedFixture) return
 
     try {
-      await saveQuizSession(selectedFixture.path, userId, buildSession())
+      await saveQuizSession(selectedFixture.path, buildSession())
     } catch {
       // Ignore persistence failures.
     }
@@ -160,10 +157,9 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
   // paper itself is not restored — it is re-parsed on re-acquire.
   async function restoreSession(): Promise<boolean> {
     const selectedFixture = fixture.value
-    const userId = currentUserId()
-    if (!selectedFixture || !userId) return false
+    if (!selectedFixture) return false
 
-    const session = await loadQuizSession(selectedFixture.path, userId)
+    const session = await loadQuizSession(selectedFixture.path)
     if (!session) return false
 
     homeIsAFirstHalf.value = session.homeIsAFirstHalf
@@ -368,7 +364,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
       submittedScore.value = { ...score.value }
       submittedBeerRoundScore.value = { ...beerRoundScore.value }
       try {
-        await clearQuizSession(fixture.value.path, user.siteUser.user?.id ?? '')
+        await clearQuizSession(fixture.value.path)
       } catch {
         // Best-effort cleanup; a failed delete only leaves a stale session.
       }
@@ -407,7 +403,6 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
 
   function reset() {
     const selectedFixture = fixture.value
-    const userId = currentUserId()
     clearMatchSession()
     fixture.value = undefined
     report.value = undefined
@@ -417,8 +412,8 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     submitError.value = undefined
     submitting.value = false
     acquiring.value = false
-    if (selectedFixture && userId) {
-      void clearQuizSession(selectedFixture.path, userId).catch(() => {})
+    if (selectedFixture) {
+      void clearQuizSession(selectedFixture.path).catch(() => {})
     }
   }
 
