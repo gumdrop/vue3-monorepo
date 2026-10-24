@@ -145,4 +145,35 @@ describe('QuizMasterMatch', () => {
     expect(findButton(wrapper, 'Correct (+1)').attributes('disabled')).toBeUndefined()
     expect(findButton(wrapper, 'Incorrect').attributes('disabled')).toBeUndefined()
   })
+
+  it('allocates spares in printed order rather than by A/B', () => {
+    const store = useQuizmasterStore()
+    store.quiz = {
+      rounds: [
+        {
+          round: 'ROUND ONE',
+          questions: [
+            { number: '1A', question: 'Q1A?', answer: 'A1A' },
+            { number: '1B', question: 'Q1B?', answer: 'A1B' },
+          ],
+        },
+        {
+          round: 'SPARES A & B',
+          questions: [
+            { number: '1A', question: 'Spare 1A?', answer: 'Spare A1A' },
+            { number: '1B', question: 'Spare 1B?', answer: 'Spare A1B' },
+            { number: '2A', question: 'Spare 2A?', answer: 'Spare A2A' },
+            { number: '2B', question: 'Spare 2B?', answer: 'Spare A2B' },
+          ],
+        },
+      ],
+    }
+
+    // Triggering a B-question spare still takes the first printed spare (1A).
+    expect(store.invokeSpare(0, 1)?.number).toBe('1A')
+    // Subsequent spares continue in printed order regardless of A/B.
+    expect(store.invokeSpare(0, 0)?.number).toBe('1B')
+    expect(store.invokeSpare(0, 0)?.number).toBe('2A')
+    expect(store.invokeSpare(0, 1)?.number).toBe('2B')
+  })
 })

@@ -53,7 +53,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
 
   const outcomes = ref<Record<string, QuizQuestionOutcome>>({})
   const spares = ref<Record<string, InvokedSpare>>({})
-  const spareCursor = ref<{ A: number; B: number }>({ A: 0, B: 0 })
+  const spareCursor = ref(0)
   const jokers = ref<Record<number, { home?: string; away?: string }>>({})
   const categoryAssignments = ref<
     Record<number, { home: Record<string, string>; away: Record<string, string> }>
@@ -78,11 +78,6 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
   const sparesRound = computed(() => (quiz.value?.rounds ?? []).find(isSparesRound))
   const beerRound = computed(() => (quiz.value?.rounds ?? []).find(isBeerRound))
   const tiebreakRound = computed(() => (quiz.value?.rounds ?? []).find(isTiebreakRound))
-
-  const spareSet = (suffix: 'A' | 'B'): QuizQuestion[] =>
-    (sparesRound.value?.questions ?? []).filter((q) =>
-      q.number.trim().toUpperCase().endsWith(suffix),
-    )
 
   const questionKey = (roundIndex: number, questionIndex: number) => `${roundIndex}:${questionIndex}`
 
@@ -129,7 +124,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
       awayPlayers: [...awayPlayers.value],
       outcomes: { ...outcomes.value },
       spares: { ...spares.value },
-      spareCursor: { ...spareCursor.value },
+      spareCursor: spareCursor.value,
       jokers: jokers.value as QuizSession['jokers'],
       categoryAssignments: categoryAssignments.value as QuizSession['categoryAssignments'],
       beerRoundScore: { ...beerRoundScore.value },
@@ -167,7 +162,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     awayPlayers.value = [...session.awayPlayers]
     outcomes.value = { ...session.outcomes }
     spares.value = { ...session.spares }
-    spareCursor.value = { ...session.spareCursor }
+    spareCursor.value = session.spareCursor
     jokers.value = session.jokers as typeof jokers.value
     categoryAssignments.value = session.categoryAssignments as typeof categoryAssignments.value
     beerRoundScore.value = { ...session.beerRoundScore }
@@ -213,7 +208,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
       if (!resuming.value) {
         outcomes.value = {}
         spares.value = {}
-        spareCursor.value = { A: 0, B: 0 }
+        spareCursor.value = 0
         jokers.value = {}
         categoryAssignments.value = {}
         beerRoundScore.value = { home: 0, away: 0 }
@@ -260,15 +255,15 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     const question = scoredRounds.value[roundIndex]?.questions[questionIndex]
     if (!question) return undefined
 
-    const suffix = suffixFor(question)
-    const pool = spareSet(suffix)
-    const cursor = spareCursor.value[suffix]
-    const spare = pool[cursor]
+    // Spares are allocated strictly in printed order (1A, 1B, 2A, 2B, ...),
+    // independent of which A/B question triggered the spare.
+    const pool = sparesRound.value?.questions ?? []
+    const spare = pool[spareCursor.value]
     if (!spare) return undefined
 
     const key = questionKey(roundIndex, questionIndex)
     spares.value[key] = { number: spare.number, question: spare.question, answer: spare.answer }
-    spareCursor.value[suffix] = cursor + 1
+    spareCursor.value += 1
     void persistSession()
     return spares.value[key]
   }
@@ -393,7 +388,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     acquireError.value = undefined
     outcomes.value = {}
     spares.value = {}
-    spareCursor.value = { A: 0, B: 0 }
+    spareCursor.value = 0
     jokers.value = {}
     categoryAssignments.value = {}
     beerRoundScore.value = { home: 0, away: 0 }
@@ -451,7 +446,6 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     ownerFor,
     subjectFor,
     contestantFor,
-    spareSet,
     questionKey,
     acquire,
     recordOutcome,

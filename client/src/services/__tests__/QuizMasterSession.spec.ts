@@ -37,7 +37,7 @@ const payload = (): Omit<QuizSession, 'fixturePath' | 'updatedAt'> => ({
   awayPlayers: [],
   outcomes: {},
   spares: {},
-  spareCursor: { A: 0, B: 0 },
+  spareCursor: 0,
   jokers: {},
   categoryAssignments: {},
   beerRoundScore: { home: 0, away: 0 },

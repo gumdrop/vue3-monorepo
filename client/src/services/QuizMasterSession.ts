@@ -14,7 +14,7 @@ export interface QuizSession {
   awayPlayers: string[]
   outcomes: Record<string, QuizQuestionOutcome>
   spares: Record<string, { number: string; question: string; answer: string }>
-  spareCursor: { A: number; B: number }
+  spareCursor: number
   jokers: Record<string, { home?: string; away?: string }>
   categoryAssignments: Record<string, { home: Record<string, string>; away: Record<string, string> }>
   beerRoundScore: { home: number; away: number }
