@@ -80,7 +80,11 @@ const awaySelection = computed(() =>
 
 const assignmentsComplete = computed(() => {
   const subjects = props.round.subjects ?? []
-  return subjects.every((s) => homeAssign[s] && awayAssign[s])
+  return (
+    subjects.every((s) => homeAssign[s] && awayAssign[s]) &&
+    homeJoker.value !== 'None' &&
+    awayJoker.value !== 'None'
+  )
 })
 
 function save() {

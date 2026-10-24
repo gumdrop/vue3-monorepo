@@ -43,4 +43,37 @@ describe('IndividualRoundSetup', () => {
     expect(optionTexts(awaySelects[1])).toEqual(expect.arrayContaining(['Eve', 'Frank']))
     expect(optionTexts(awaySelects[2])).not.toContain('Dave')
   })
+
+  it('enables Start round only once both jokers are allocated', async () => {
+    const wrapper = mountSetup()
+    const selects = wrapper.findAll('select')
+
+    const homeSelects = [selects[0], selects[2], selects[4]]
+    const awaySelects = [selects[1], selects[3], selects[5]]
+    const homeJokerSelect = selects[6]
+    const awayJokerSelect = selects[7]
+
+    const startButton = () => {
+      const button = wrapper
+        .findAll('button')
+        .find((candidate) => candidate.text().includes('Start round'))
+      expect(button, 'button with text "Start round"').toBeDefined()
+      return button!
+    }
+
+    await homeSelects[0].setValue('Alice')
+    await homeSelects[1].setValue('Bob')
+    await homeSelects[2].setValue('Carol')
+    await awaySelects[0].setValue('Dave')
+    await awaySelects[1].setValue('Eve')
+    await awaySelects[2].setValue('Frank')
+
+    // All contestants assigned but jokers still on the default "None".
+    expect(startButton().attributes('disabled')).toBeDefined()
+
+    await homeJokerSelect.setValue('History')
+    await awayJokerSelect.setValue('Geography')
+
+    expect(startButton().attributes('disabled')).toBeUndefined()
+  })
 })
