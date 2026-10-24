@@ -49,10 +49,13 @@ const payload = (): Omit<QuizSession, 'fixturePath' | 'updatedAt'> => ({
 
 describe('quizSessionDocId', () => {
   it('produces a deterministic, slash-free id', () => {
-    const id = quizSessionDocId('season/1/competition/cup/fixtures/s1/fixture/f-1')
+    const path = 'season/1/competition/cup/fixtures/s1/fixture/f-1'
+    const id = quizSessionDocId(path)
 
-    expect(id).toBe(quizSessionDocId('season/1/competition/cup/fixtures/s1/fixture/f-1'))
+    expect(id).toBe(quizSessionDocId(path))
+    expect(id).toBe('season~1~competition~cup~fixtures~s1~fixture~f-1')
     expect(id).not.toContain('/')
+    expect(id).not.toContain('%')
   })
 })
 

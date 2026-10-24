@@ -26,7 +26,11 @@ export interface QuizSession {
   updatedAt: string
 }
 
-export const quizSessionDocId = (fixturePath: string) => encodeURIComponent(fixturePath)
+// Fixture paths are used as Firestore document ids. Firestore ids cannot
+// contain `/`, and `%2F` (from encodeURIComponent) is decoded back to `/` by
+// the emulator UI, which then treats the id as a nested path. `~` is a safe,
+// reversible separator that is not URL-decoded.
+export const quizSessionDocId = (fixturePath: string) => fixturePath.replace(/\//g, '~')
 
 export const quizSessionDocRef = (fixturePath: string) =>
   doc(useFirestore(), `${COLLECTION}/${quizSessionDocId(fixturePath)}`)
