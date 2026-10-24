@@ -59,7 +59,7 @@
               v-for="index in 4"
               :key="`home-${index}`"
               v-model="homePlayers[index - 1]"
-              :items="homeMemberNames"
+              :items="availablePlayers(homePlayers, index - 1, homeMemberNames)"
               :label="`Player ${index}`"
               class="mb-2"
               clearable
@@ -74,7 +74,7 @@
               v-for="index in 4"
               :key="`away-${index}`"
               v-model="awayPlayers[index - 1]"
-              :items="awayMemberNames"
+              :items="availablePlayers(awayPlayers, index - 1, awayMemberNames)"
               :label="`Player ${index}`"
               class="mb-2"
               clearable
@@ -109,6 +109,7 @@ import TeamMemberDAO from '@/dao/TeamMemberDAO'
 import UserDAO from '@/dao/UserDAO'
 import { useDateTime } from '@/services/DateService'
 import { useFixture } from '@/services/FixtureService'
+import { availablePlayers } from '@/services/QuizPlayers'
 import { useUserStore } from '@/stores/app'
 import { useQuizmasterStore } from '@/stores/quizmaster'
 
@@ -136,8 +137,8 @@ const fixtureLabel = computed(() =>
   store.fixture?.date ? date(store.fixture.date, 'd MMMM yyyy') ?? store.fixture.date : '',
 )
 
-const homePlayerCount = computed(() => homePlayers.value.filter((p) => p.trim()).length)
-const awayPlayerCount = computed(() => awayPlayers.value.filter((p) => p.trim()).length)
+const homePlayerCount = computed(() => homePlayers.value.filter((p) => (p ?? '').trim()).length)
+const awayPlayerCount = computed(() => awayPlayers.value.filter((p) => (p ?? '').trim()).length)
 
 const canContinue = computed(
   () => Boolean(store.fixture) && homePlayerCount.value >= 3 && awayPlayerCount.value >= 3,
@@ -220,8 +221,8 @@ function readFileAsBase64(file: File): Promise<string> {
 
 function continueToReview() {
   store.homeIsAFirstHalf = homeIsAFirstHalf.value
-  store.homePlayers = homePlayers.value.map((p) => p.trim()).filter(Boolean)
-  store.awayPlayers = awayPlayers.value.map((p) => p.trim()).filter(Boolean)
+  store.homePlayers = homePlayers.value.map((p) => (p ?? '').trim()).filter(Boolean)
+  store.awayPlayers = awayPlayers.value.map((p) => (p ?? '').trim()).filter(Boolean)
   emit('done')
 }
 </script>
