@@ -118,7 +118,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
   }
 
   function buildSession(): Omit<QuizSession, 'fixturePath' | 'updatedAt'> {
-    return {
+    const session: Omit<QuizSession, 'fixturePath' | 'updatedAt'> = {
       homeIsAFirstHalf: homeIsAFirstHalf.value,
       homePlayers: [...homePlayers.value],
       awayPlayers: [...awayPlayers.value],
@@ -132,8 +132,13 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
       history: history.value.map((entry) => ({ score: { ...entry.score }, key: entry.key })),
       step: resumeStep.value,
       matchPosition: { ...matchPosition.value },
-      report: report.value ? { ...report.value } : undefined,
     }
+    // Firestore rejects `undefined` field values, so only attach the report
+    // once one has actually been generated.
+    if (report.value) {
+      session.report = { ...report.value }
+    }
+    return session
   }
 
   // Persistence is best-effort: a failed save must not interrupt the match.
@@ -143,8 +148,9 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
 
     try {
       await saveQuizSession(selectedFixture.path, buildSession())
-    } catch {
-      // Ignore persistence failures.
+    } catch (error) {
+      // Surface persistence failures for diagnostics without interrupting.
+      console.error('Failed to persist quiz session', error)
     }
   }
 

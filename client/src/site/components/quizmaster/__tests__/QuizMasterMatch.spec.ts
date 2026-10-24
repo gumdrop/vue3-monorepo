@@ -1,7 +1,8 @@
-import { mount, type VueWrapper } from '@vue/test-utils'
+import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { QuizPaper } from '@quizleague/shared'
+import { saveQuizSession } from '@/services/QuizMasterSession'
 import { useQuizmasterStore } from '@/stores/quizmaster'
 import { siteComponentStubs } from '../../__tests__/componentStubs'
 import QuizMasterMatch from '../QuizMasterMatch.vue'
@@ -175,5 +176,24 @@ describe('QuizMasterMatch', () => {
     expect(store.invokeSpare(0, 0)?.number).toBe('1B')
     expect(store.invokeSpare(0, 0)?.number).toBe('2A')
     expect(store.invokeSpare(0, 1)?.number).toBe('2B')
+  })
+
+  it('persists sessions without an undefined report field', async () => {
+    const store = useQuizmasterStore()
+    store.fixture = {
+      path: 'season/season-1/competition/league/fixtures/set-1/fixture/f-1',
+      date: '2026-10-13',
+      homeName: 'Home Team',
+      awayName: 'Away Team',
+      homeId: 'home',
+      awayId: 'away',
+    }
+
+    store.setResumeStep(3)
+    await flushPromises()
+
+    const session = vi.mocked(saveQuizSession).mock.calls[0]?.[1] as Record<string, unknown>
+    expect(session).toBeDefined()
+    expect('report' in session).toBe(false)
   })
 })
