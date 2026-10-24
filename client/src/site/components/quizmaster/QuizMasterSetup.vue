@@ -9,11 +9,14 @@
       <v-alert v-else type="warning" density="compact" class="mb-4">
         No fixture found for your team.
       </v-alert>
+      <v-alert v-if="fixtureHasResult" type="error" density="compact" class="mb-4">
+        This fixture already has a result — the quiz cannot be run.
+      </v-alert>
 
       <v-text-field
         v-model="password"
         label="Quiz PDF password"
-        :disabled="store.acquiring || !store.fixture"
+        :disabled="store.acquiring || !store.fixture || fixtureHasResult"
       />
 
       <div v-if="isLocalhost" class="mb-2">
@@ -23,7 +26,7 @@
         <input
           type="file"
           accept=".pdf,application/pdf"
-          :disabled="store.acquiring"
+          :disabled="store.acquiring || fixtureHasResult"
           @change="onFileSelected"
         />
       </div>
@@ -32,7 +35,7 @@
         <v-btn
           color="primary"
           :loading="store.acquiring"
-          :disabled="!store.fixture || !password"
+          :disabled="!store.fixture || !password || fixtureHasResult"
           @click="acquire"
         >
           Acquire quiz
@@ -123,6 +126,7 @@ const homePlayers = ref<string[]>(['', '', '', ''])
 const awayPlayers = ref<string[]>(['', '', '', ''])
 const homeMemberNames = ref<string[]>([])
 const awayMemberNames = ref<string[]>([])
+const fixtureHasResult = ref(false)
 
 const { fixturesForResultSubmission } = useFixture()
 const { user } = storeToRefs(useUserStore())
@@ -168,6 +172,10 @@ onMounted(async () => {
 
   const fixture = await fixtureDAO.getDataByPath(fixtureRef.path)
   if (!fixture) return
+
+  if (fixture.result) {
+    fixtureHasResult.value = true
+  }
 
   const parent = await FixturesDAO.getDataByPath(parseParent(fixture.path))
   const homeTeam = await TeamDAO.getDataById(fixture.home.id)
