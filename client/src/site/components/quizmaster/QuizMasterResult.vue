@@ -55,7 +55,7 @@ const teamNames = computed(() => ({
   home: store.fixture?.homeName ?? 'Home',
   away: store.fixture?.awayName ?? 'Away',
 }))
-const displayScore = computed(() => store.submittedScore ?? store.score)
+const displayScore = computed(() => store.submittedScore ?? store.submissionScore)
 const displayBeer = computed(() => store.submittedBeerRoundScore ?? store.beerRoundScore)
 
 async function generate() {

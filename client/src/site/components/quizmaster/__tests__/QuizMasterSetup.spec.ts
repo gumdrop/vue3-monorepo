@@ -13,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   fixturesForResultSubmission: vi.fn(),
   fixtureDAO: { getDataByPath: vi.fn() },
   fixturesDAO: { getDataByPath: vi.fn() },
+  competitionDAO: { getDataByPath: vi.fn() },
   teamDAO: { getDataById: vi.fn() },
   teamMemberDAO: { getDataForTeam: vi.fn() },
   userDAO: { getDataById: vi.fn() },
@@ -43,6 +44,8 @@ vi.mock('@/dao/FixturesDAO', () => ({
   default: mocks.fixturesDAO,
   fixtureDAO: mocks.fixtureDAO,
 }))
+
+vi.mock('@/dao/CompetitionDAO', () => ({ default: mocks.competitionDAO }))
 
 vi.mock('@/dao/TeamDAO', () => ({ default: mocks.teamDAO }))
 
@@ -146,6 +149,7 @@ describe('QuizMasterSetup', () => {
     mocks.user = { team: { id: 'team-1' } }
     mocks.fixturesForResultSubmission.mockResolvedValue([{ path: FIXTURE_PATH }])
     mocks.fixturesDAO.getDataByPath.mockResolvedValue({ date: '2026-10-13' })
+    mocks.competitionDAO.getDataByPath.mockResolvedValue({ _name: 'cup' })
     mocks.teamDAO.getDataById.mockImplementation(async (id: string) => ({
       name: id === 'home-team' ? 'Home Team' : 'Away Team',
     }))

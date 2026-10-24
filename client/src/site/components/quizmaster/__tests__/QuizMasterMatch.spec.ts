@@ -235,4 +235,102 @@ describe('QuizMasterMatch', () => {
       wrapper.findAll('button').some((button) => button.text().includes('Pass Over')),
     ).toBe(false)
   })
+
+  describe('cup tie-break store decisions', () => {
+    const cupFixture = () => ({
+      path: 'season/season-1/competition/cup/fixtures/set-1/fixture/f-1',
+      date: '2026-10-13',
+      homeName: 'Home Team',
+      awayName: 'Away Team',
+      homeId: 'home',
+      awayId: 'away',
+      isCup: true,
+    })
+
+    const cupTieQuiz = (): QuizPaper => ({
+      rounds: [
+        {
+          round: 'ROUND ONE',
+          questions: [
+            { number: '1A', question: 'Home own?', answer: 'A' },
+            { number: '1B', question: 'Away own?', answer: 'B' },
+          ],
+        },
+        {
+          round: 'SPARES A & B',
+          questions: [{ number: '1A', question: 'Spare?', answer: 'S' }],
+        },
+      ],
+    })
+
+    it('detects a cup match tied after 10 rounds', () => {
+      const store = useQuizmasterStore()
+      store.fixture = cupFixture()
+      store.score = { home: 4, away: 4 }
+      store.quiz = cupTieQuiz()
+
+      expect(store.shouldPlayTieBreak).toBe(true)
+      expect(store.tieBreakSections).toHaveLength(1)
+      expect(store.tieBreakSections[0]).toMatchObject({ kind: 'spares' })
+    })
+
+    it('decides a cup tie-break when a spare section has a winner', () => {
+      const store = useQuizmasterStore()
+      store.fixture = cupFixture()
+      store.score = { home: 10, away: 10 }
+      store.quiz = {
+        rounds: [
+          {
+            round: 'ROUND ONE',
+            questions: [{ number: '1A', question: 'Q?', answer: 'A' }],
+          },
+          {
+            round: 'SPARES A & B',
+            questions: [
+              { number: '1A', question: 'S1?', answer: 'A1' },
+              { number: '1B', question: 'S2?', answer: 'A2' },
+            ],
+          },
+        ],
+      }
+
+      store.recordTieBreakAnswer(0, 0, 'home', true)
+      store.recordTieBreakAnswer(0, 0, 'away', false)
+      store.recordTieBreakAnswer(0, 1, 'home', true)
+      store.recordTieBreakAnswer(0, 1, 'away', true)
+
+      expect(store.tieBreakWinner).toBe('home')
+      expect(store.submissionScore).toEqual({ home: 11, away: 10 })
+    })
+
+    it('falls back to most own questions answered correctly when sections are level', () => {
+      const store = useQuizmasterStore()
+      store.fixture = cupFixture()
+      store.score = { home: 2, away: 2 }
+      store.quiz = cupTieQuiz()
+      store.tieBreakMarks['0:0'] = { home: true, away: true }
+      store.outcomes['0:0'] = 'correct'
+      store.outcomes['0:1'] = 'bonus'
+
+      expect(store.tieBreakSectionWinners[0]).toBeUndefined()
+      expect(store.tieBreakWinner).toBe('home')
+      expect(store.tieBreakMethod).toBe('most own questions answered correctly')
+    })
+
+    it('uses a coin toss when sections and stats are all level', () => {
+      const store = useQuizmasterStore()
+      store.fixture = cupFixture()
+      store.score = { home: 0, away: 0 }
+      store.quiz = cupTieQuiz()
+      store.tieBreakMarks['0:0'] = { home: true, away: true }
+
+      expect(store.tieBreakWinner).toBeUndefined()
+
+      store.setTieBreakCoinTossAwayCall('tails')
+      store.setTieBreakCoinTossResult('heads')
+
+      expect(store.tieBreakWinner).toBe('home')
+      expect(store.tieBreakMethod).toBe('the coin toss')
+    })
+  })
 })

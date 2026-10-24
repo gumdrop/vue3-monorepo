@@ -17,6 +17,7 @@ A match in progress is resumable: progress is persisted per fixture (shared by a
 - Individual rounds: contestants are assigned to categories; the same correct/bonus/unanswered scoring applies; a team's joker on a category doubles its correct-answer values (2→4 primary, 1→2 bonus).
 - Spares (A and B sets) replace disputed questions.
 - Beer round (20 questions) is recorded separately and does not affect the main result.
+- Cup matches must produce a winner. If the main score is tied after 10 rounds, the match enters a cup tie-break: uninvoked spare questions, then beer-leg questions in chunks of four. If every section is level, the winner is the team with more of their own questions answered correctly, then the team with more bonus questions answered correctly, then a coin toss (away team calls heads/tails). The submitted score gives the tie-break winner one extra point.
 
 ## Key files
 

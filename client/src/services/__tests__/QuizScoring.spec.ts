@@ -2,14 +2,19 @@ import { describe, expect, it } from 'vitest'
 import {
   aSideForRound,
   applyOutcome,
+  bonusCorrectCounts,
+  buildTieBreakSections,
+  coinTossWinner,
   initialScore,
   isIndividualRound,
   isSecondHalf,
   jokerApplies,
   outcomePoints,
+  ownCorrectCounts,
   owningSide,
   questionNumberPrefix,
   subjectForQuestion,
+  tieBreakSectionWinner,
 } from '../QuizScoring'
 
 describe('QuizScoring', () => {
@@ -120,6 +125,62 @@ describe('QuizScoring', () => {
       const joker = jokerApplies('home', 'FILMS', { home: 'FILMS', away: 'GEOGRAPHY' })
       expect(joker).toBe(true)
       expect(applyOutcome(initialScore, 'home', 'bonus', joker)).toEqual({ home: 0, away: 2 })
+    })
+  })
+
+  describe('cup tie-break', () => {
+    const question = (number: string): { number: string; question: string; answer: string } => ({
+      number,
+      question: `Question ${number}`,
+      answer: `Answer ${number}`,
+    })
+
+    it('builds the spare section followed by beer-leg chunks of four', () => {
+      const spares = [question('1A'), question('1B'), question('2A')]
+      const beerLeg = Array.from({ length: 20 }, (_, index) => question(String(index + 1)))
+
+      const sections = buildTieBreakSections(spares, beerLeg)
+
+      expect(sections).toHaveLength(6)
+      expect(sections[0]).toMatchObject({ kind: 'spares', name: 'Spare questions' })
+      expect(sections[0].questions).toHaveLength(3)
+      expect(sections[1]).toMatchObject({ kind: 'beer', name: 'Beer leg 1 (questions 1–4)' })
+      expect(sections[5]).toMatchObject({ kind: 'beer', name: 'Beer leg 5 (questions 17–20)' })
+    })
+
+    it('omits the spare section when no uninvoked spares remain', () => {
+      const sections = buildTieBreakSections([], [question('1'), question('2'), question('3'), question('4')])
+
+      expect(sections).toHaveLength(1)
+      expect(sections[0]).toMatchObject({ kind: 'beer', name: 'Beer leg 1 (questions 1–4)' })
+    })
+
+    it('finds a section winner only when one team scored more correct answers', () => {
+      expect(tieBreakSectionWinner([{ home: true, away: true }, { home: true, away: false }])).toBe('home')
+      expect(tieBreakSectionWinner([{ home: true, away: true }, { home: false, away: true }])).toBe('away')
+      expect(tieBreakSectionWinner([{ home: true, away: true }])).toBeUndefined()
+      expect(tieBreakSectionWinner([{ home: false, away: false }])).toBeUndefined()
+    })
+
+    it('counts own-correct and bonus-correct answers for each team', () => {
+      const entries = [
+        { outcome: 'correct' as const, owner: 'home' as const },
+        { outcome: 'correct' as const, owner: 'away' as const },
+        { outcome: 'correct' as const, owner: 'away' as const },
+        { outcome: 'bonus' as const, owner: 'home' as const },
+        { outcome: 'bonus' as const, owner: 'away' as const },
+        { outcome: 'unanswered' as const, owner: 'home' as const },
+      ]
+
+      expect(ownCorrectCounts(entries)).toEqual({ home: 1, away: 2 })
+      expect(bonusCorrectCounts(entries)).toEqual({ home: 1, away: 1 })
+    })
+
+    it('resolves a coin toss using the away team\'s call', () => {
+      expect(coinTossWinner('heads', 'heads')).toBe('away')
+      expect(coinTossWinner('heads', 'tails')).toBe('home')
+      expect(coinTossWinner(undefined, 'heads')).toBeUndefined()
+      expect(coinTossWinner('heads', undefined)).toBeUndefined()
     })
   })
 })

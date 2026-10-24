@@ -110,6 +110,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { parseParent } from '@quizleague/shared'
+import CompetitionDAO from '@/dao/CompetitionDAO'
 import FixturesDAO, { fixtureDAO } from '@/dao/FixturesDAO'
 import TeamDAO from '@/dao/TeamDAO'
 import TeamMemberDAO from '@/dao/TeamMemberDAO'
@@ -184,6 +185,7 @@ onMounted(async () => {
   const parent = await FixturesDAO.getDataByPath(parseParent(fixture.path))
   const homeTeam = await TeamDAO.getDataById(fixture.home.id)
   const awayTeam = await TeamDAO.getDataById(fixture.away.id)
+  const competition = await CompetitionDAO.getDataByPath(parseParent(parseParent(fixture.path)))
 
   store.fixture = {
     path: fixture.path,
@@ -192,6 +194,7 @@ onMounted(async () => {
     awayName: awayTeam?.name ?? '',
     homeId: fixture.home.id,
     awayId: fixture.away.id,
+    isCup: competition?._name === 'cup',
   }
 
   if (!fixtureHasResult.value) {

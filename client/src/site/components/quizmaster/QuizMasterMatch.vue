@@ -139,11 +139,171 @@
         </template>
 
         <v-alert v-else type="success" class="mt-4">
-          All scored rounds complete. Continue to the beer round.
+          <template v-if="store.shouldPlayTieBreak">
+            The match is tied after 10 rounds — play the cup tie-break.
+          </template>
+          <template v-else>
+            All scored rounds complete. Continue to the beer round.
+          </template>
           <template #append>
-            <v-btn color="primary" @click="goToBeer">Beer round</v-btn>
+            <v-btn v-if="store.shouldPlayTieBreak" color="primary" @click="goToTieBreak">
+              Cup tie-break
+            </v-btn>
+            <v-btn v-else color="primary" @click="goToBeer">Beer round</v-btn>
           </template>
         </v-alert>
+      </template>
+
+      <template v-else-if="phase === 'tiebreak'">
+        <v-alert type="warning" density="compact" class="mb-4">
+          Cup match tied after 10 rounds — play to a win.
+        </v-alert>
+
+        <template v-if="currentTieBreakSection">
+          <v-alert v-if="store.tieBreakWinner" type="success" class="mb-4">
+            <strong>{{ tieBreakWinnerName }}</strong> win via {{ store.tieBreakMethod }}.
+          </v-alert>
+          <div class="text-subtitle-1 mb-2">
+            Section {{ store.tieBreakSectionIndex + 1 }} of {{ store.tieBreakSections.length }}:
+            {{ currentTieBreakSection.name }}
+          </div>
+
+          <v-table density="compact">
+            <thead>
+              <tr>
+                <th>Question</th>
+                <th>{{ homeName }} correct</th>
+                <th>{{ awayName }} correct</th>
+                <th>Answer</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(tieQuestion, tieQuestionIndex) in currentTieBreakSection.questions" :key="tieQuestionIndex">
+                <td>
+                  <strong>{{ tieQuestion.number }}.</strong> {{ tieQuestion.question }}
+                </td>
+                <td>
+                  <v-checkbox
+                    :model-value="tieBreakMark(tieQuestionIndex)?.home === true"
+                    hide-details
+                    density="compact"
+                    @update:model-value="setTieBreakMark(tieQuestionIndex, 'home', $event)"
+                  />
+                </td>
+                <td>
+                  <v-checkbox
+                    :model-value="tieBreakMark(tieQuestionIndex)?.away === true"
+                    hide-details
+                    density="compact"
+                    @update:model-value="setTieBreakMark(tieQuestionIndex, 'away', $event)"
+                  />
+                </td>
+                <td><span v-html="underlineHtml(tieQuestion.answer)" /></td>
+              </tr>
+            </tbody>
+          </v-table>
+
+          <div class="d-flex align-center justify-space-between mt-4">
+            <div class="text-subtitle-1">
+              Section score: {{ homeName }} {{ currentTieBreakTotals.home }} —
+              {{ currentTieBreakTotals.away }} {{ awayName }}
+            </div>
+            <v-btn
+              v-if="currentTieBreakComplete && !store.tieBreakWinner"
+              color="primary"
+              @click="store.advanceTieBreakSection"
+            >
+              Section tied — continue
+            </v-btn>
+          </div>
+
+          <div v-if="store.tieBreakWinner" class="d-flex justify-space-between mt-4">
+            <div class="text-subtitle-1">
+              Submitted score: {{ homeName }} {{ store.submissionScore.home }} —
+              {{ store.submissionScore.away }} {{ awayName }}
+            </div>
+            <v-btn color="primary" @click="finishTieBreak">Finish match</v-btn>
+          </div>
+          <div v-else class="d-flex justify-space-between mt-2">
+            <v-btn variant="text" @click="goToRounds">Back to match</v-btn>
+          </div>
+        </template>
+
+        <template v-else>
+          <v-alert v-if="store.tieBreakWinner" type="success" class="mb-4">
+            <strong>{{ tieBreakWinnerName }}</strong> win via {{ store.tieBreakMethod }}.
+          </v-alert>
+          <v-alert type="info" density="compact" class="mb-4">
+            All tie-break sections are level. Use the remaining tie-break criteria.
+          </v-alert>
+
+          <div class="mb-4">
+            <div class="text-subtitle-2">
+              Own original questions answered correctly:
+              {{ homeName }} {{ store.ownQuestionCorrect.home }} —
+              {{ store.ownQuestionCorrect.away }} {{ awayName }}
+            </div>
+            <div class="text-subtitle-2">
+              Bonus questions answered correctly:
+              {{ homeName }} {{ store.bonusQuestionCorrect.home }} —
+              {{ store.bonusQuestionCorrect.away }} {{ awayName }}
+            </div>
+          </div>
+
+          <v-card variant="tonal" class="mb-4">
+            <v-card-title>Coin toss</v-card-title>
+            <v-card-text>
+              <div class="text-subtitle-2 mb-2">
+                Away team calls:
+                <v-chip
+                  class="ml-2"
+                  :color="store.tieBreakCoinToss.awayCall === 'heads' ? 'primary' : undefined"
+                  @click="store.setTieBreakCoinTossAwayCall('heads')"
+                >
+                  Heads
+                </v-chip>
+                <v-chip
+                  class="ml-2"
+                  :color="store.tieBreakCoinToss.awayCall === 'tails' ? 'primary' : undefined"
+                  @click="store.setTieBreakCoinTossAwayCall('tails')"
+                >
+                  Tails
+                </v-chip>
+              </div>
+              <div class="text-subtitle-2">
+                Question master tosses:
+                <v-chip
+                  class="ml-2"
+                  :color="store.tieBreakCoinToss.toss === 'heads' ? 'primary' : undefined"
+                  @click="store.setTieBreakCoinTossResult('heads')"
+                >
+                  Heads
+                </v-chip>
+                <v-chip
+                  class="ml-2"
+                  :color="store.tieBreakCoinToss.toss === 'tails' ? 'primary' : undefined"
+                  @click="store.setTieBreakCoinTossResult('tails')"
+                >
+                  Tails
+                </v-chip>
+              </div>
+            </v-card-text>
+          </v-card>
+
+          <div class="d-flex justify-space-between mt-2">
+            <v-btn variant="text" @click="goToRounds">Back to match</v-btn>
+            <v-btn
+              v-if="store.tieBreakWinner"
+              color="primary"
+              @click="finishTieBreak"
+            >
+              Finish match
+            </v-btn>
+            <v-btn v-else variant="text" @click="store.setTieBreakSectionIndex(0)">
+              Review tie-break sections
+            </v-btn>
+          </div>
+        </template>
       </template>
 
       <template v-else>
@@ -265,7 +425,7 @@ const clampQuestionIndex = (roundIdx: number, index: number) =>
 
 const initialRoundIndex = clampRoundIndex(store.matchPosition.roundIndex)
 const initialRound = store.scoredRounds[initialRoundIndex]
-const phase = ref<'rounds' | 'beer'>(store.matchPosition.phase)
+const phase = ref<'rounds' | 'tiebreak' | 'beer'>(store.matchPosition.phase)
 const roundIndex = ref(initialRoundIndex)
 const questionIndex = ref(clampQuestionIndex(initialRoundIndex, store.matchPosition.questionIndex))
 const settingUpIndividual = ref(
@@ -280,6 +440,39 @@ const beerAway = ref(0)
 
 const homeName = computed(() => store.fixture?.homeName ?? 'Home')
 const awayName = computed(() => store.fixture?.awayName ?? 'Away')
+
+const currentTieBreakSection = computed(
+  () => store.tieBreakSections[store.tieBreakSectionIndex],
+)
+const tieBreakWinnerName = computed(() =>
+  store.tieBreakWinner === 'home' ? homeName.value : awayName.value,
+)
+const currentTieBreakTotals = computed(() => {
+  const section = currentTieBreakSection.value
+  if (!section) return { home: 0, away: 0 }
+  const marks = section.questions.map((_, questionIndex) =>
+    tieBreakMark(questionIndex),
+  )
+  return {
+    home: marks.filter((mark) => mark.home === true).length,
+    away: marks.filter((mark) => mark.away === true).length,
+  }
+})
+const currentTieBreakComplete = computed(() => {
+  const section = currentTieBreakSection.value
+  if (!section) return false
+  return section.questions.every((_, questionIndex) => {
+    const mark = tieBreakMark(questionIndex)
+    return mark.home !== undefined && mark.away !== undefined
+  })
+})
+
+const tieBreakMark = (questionIndex: number) =>
+  store.tieBreakMarks[store.tieBreakKey(store.tieBreakSectionIndex, questionIndex)] ?? {}
+
+const setTieBreakMark = (questionIndex: number, side: 'home' | 'away', value: unknown) => {
+  store.recordTieBreakAnswer(store.tieBreakSectionIndex, questionIndex, side, Boolean(value))
+}
 
 const round = computed(() => store.scoredRounds[roundIndex.value])
 const question = computed(() => round.value?.questions[questionIndex.value])
@@ -459,6 +652,8 @@ function next() {
     roundIndex.value += 1
     questionIndex.value = 0
     settingUpIndividual.value = isIndividualRound(store.scoredRounds[roundIndex.value])
+  } else if (store.shouldPlayTieBreak) {
+    phase.value = 'tiebreak'
   } else {
     phase.value = 'beer'
   }
@@ -476,6 +671,16 @@ function persistPosition() {
 function goToBeer() {
   phase.value = 'beer'
   persistPosition()
+}
+
+function goToTieBreak() {
+  phase.value = 'tiebreak'
+  persistPosition()
+}
+
+function finishTieBreak() {
+  persistPosition()
+  emit('done')
 }
 
 function goToRounds() {
