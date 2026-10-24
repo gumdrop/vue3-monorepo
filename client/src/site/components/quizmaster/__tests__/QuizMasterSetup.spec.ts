@@ -1,22 +1,20 @@
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { computed, defineComponent, h } from 'vue'
+import { computed, defineComponent, h, nextTick } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useQuizmasterStore } from '@/stores/quizmaster'
 import { siteComponentStubs } from '../../__tests__/componentStubs'
 import QuizMasterSetup from '../QuizMasterSetup.vue'
 
 const mocks = vi.hoisted(() => ({
-  user: undefined as
-    | { team?: { id: string }; siteUser?: { user?: { id?: string } } }
-    | undefined,
+  user: undefined as { team?: { id: string }; siteUser?: { user?: { id?: string } } } | undefined,
   fixturesForResultSubmission: vi.fn(),
   fixtureDAO: { getDataByPath: vi.fn() },
   fixturesDAO: { getDataByPath: vi.fn() },
   competitionDAO: { getDataByPath: vi.fn() },
   teamDAO: { getDataById: vi.fn() },
-  teamMemberDAO: { getDataForTeam: vi.fn() },
-  userDAO: { getDataById: vi.fn() },
+  teamMemberDAO: { getDataForTeam: vi.fn(), saveForTeam: vi.fn() },
+  userDAO: { getDataById: vi.fn(), newInstance: vi.fn(), save: vi.fn() },
   date: vi.fn((value: string) => value),
   loadQuizSession: vi.fn(),
   axiosPost: vi.fn(),
@@ -93,8 +91,15 @@ const VRadioStub = defineComponent({
 
 const VComboboxStub = defineComponent({
   props: { label: String, modelValue: [String, Array, Number] },
-  setup(props) {
-    return () => h('div', { 'data-combobox': props.label }, props.label)
+  emits: ['update:modelValue'],
+  setup(props, { emit }) {
+    return () =>
+      h('input', {
+        'aria-label': String(props.label),
+        value: props.modelValue ?? '',
+        onInput: (event: Event) =>
+          emit('update:modelValue', (event.target as HTMLInputElement).value),
+      })
   },
 })
 
@@ -154,7 +159,9 @@ describe('QuizMasterSetup', () => {
       name: id === 'home-team' ? 'Home Team' : 'Away Team',
     }))
     mocks.teamMemberDAO.getDataForTeam.mockResolvedValue({ users: [] })
+    mocks.teamMemberDAO.saveForTeam.mockResolvedValue(undefined)
     mocks.userDAO.getDataById.mockResolvedValue(undefined)
+    mocks.userDAO.save.mockResolvedValue(undefined)
     mocks.loadQuizSession.mockResolvedValue(undefined)
     mocks.axiosPost.mockResolvedValue({ data: quizPaper() })
   })
@@ -205,5 +212,84 @@ describe('QuizMasterSetup', () => {
 
     expect(mocks.axiosPost).toHaveBeenCalled()
     expect(wrapper.emitted('resume')).toBeTruthy()
+  })
+
+  it('saves adhoc players as new users and adds them to their team member collections', async () => {
+    let nextUserId = 0
+    mocks.userDAO.newInstance.mockImplementation(() => {
+      nextUserId += 1
+      return {
+        id: `adhoc-${nextUserId}`,
+        path: `user/adhoc-${nextUserId}`,
+        name: '',
+        email: '',
+        retired: false,
+      }
+    })
+    mocks.teamMemberDAO.getDataForTeam.mockImplementation(async (teamPath: string) =>
+      teamPath === 'team/home-team'
+        ? { users: [{ id: 'existing-home', path: 'user/existing-home' }] }
+        : { users: [] },
+    )
+    mocks.userDAO.getDataById.mockImplementation(async (id: string) =>
+      id === 'existing-home'
+        ? {
+            id,
+            path: `user/${id}`,
+            name: 'Existing Home',
+            email: 'existing@example.com',
+            retired: false,
+          }
+        : undefined,
+    )
+
+    mocks.fixtureDAO.getDataByPath.mockResolvedValue(fixture(false))
+    const wrapper = await mountSetup()
+    useQuizmasterStore().quiz = quizPaper()
+    await nextTick()
+
+    const playerInputs = wrapper.findAll('input[aria-label^="Player"]')
+    await playerInputs[0].setValue('Existing Home')
+    await playerInputs[1].setValue('New Home Player')
+    await playerInputs[2].setValue('Another New Home')
+    await playerInputs[4].setValue('New Away Player')
+    await playerInputs[5].setValue('Second Away Player')
+    await playerInputs[6].setValue('Third Away Player')
+
+    const reviewButton = wrapper
+      .findAll('button')
+      .find((candidate) => candidate.text().includes('Review questions'))
+    expect(reviewButton, 'Review questions button').toBeDefined()
+    await reviewButton!.trigger('click')
+    await flushPromises()
+
+    expect(mocks.userDAO.save).toHaveBeenCalledTimes(5)
+    expect(mocks.userDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'New Home Player', email: 'placeholder@dummy.com' }),
+    )
+    expect(mocks.userDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Another New Home', email: 'placeholder@dummy.com' }),
+    )
+    expect(mocks.userDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'New Away Player', email: 'placeholder@dummy.com' }),
+    )
+    expect(mocks.userDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Second Away Player', email: 'placeholder@dummy.com' }),
+    )
+    expect(mocks.userDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Third Away Player', email: 'placeholder@dummy.com' }),
+    )
+
+    expect(mocks.teamMemberDAO.saveForTeam).toHaveBeenCalledTimes(2)
+    expect(mocks.teamMemberDAO.saveForTeam).toHaveBeenCalledWith('team/home-team', [
+      { id: 'existing-home', path: 'user/existing-home' },
+      { id: 'adhoc-1', path: 'user/adhoc-1' },
+      { id: 'adhoc-2', path: 'user/adhoc-2' },
+    ])
+    expect(mocks.teamMemberDAO.saveForTeam).toHaveBeenCalledWith('team/away-team', [
+      { id: 'adhoc-3', path: 'user/adhoc-3' },
+      { id: 'adhoc-4', path: 'user/adhoc-4' },
+      { id: 'adhoc-5', path: 'user/adhoc-5' },
+    ])
   })
 })

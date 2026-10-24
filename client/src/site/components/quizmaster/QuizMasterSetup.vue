@@ -3,8 +3,8 @@
     <v-card-title>Match setup</v-card-title>
     <v-card-text>
       <v-alert v-if="store.fixture" type="info" density="compact" class="mb-4">
-        <strong>Fixture:</strong> {{ fixtureLabel }} —
-        {{ store.fixture.homeName }} (home) vs {{ store.fixture.awayName }} (away)
+        <strong>Fixture:</strong> {{ fixtureLabel }} — {{ store.fixture.homeName }} (home) vs
+        {{ store.fixture.awayName }} (away)
       </v-alert>
       <v-alert v-else type="warning" density="compact" class="mb-4">
         No fixture found for your team.
@@ -52,7 +52,10 @@
       <template v-if="store.quiz">
         <v-divider class="my-4" />
 
-        <v-radio-group v-model="homeIsAFirstHalf" label="Which team is the A team for the first half?">
+        <v-radio-group
+          v-model="homeIsAFirstHalf"
+          label="Which team is the A team for the first half?"
+        >
           <v-radio :value="true" label="Home" />
           <v-radio :value="false" label="Away" />
         </v-radio-group>
@@ -99,7 +102,16 @@
           Each team must have at least 3 players.
         </v-alert>
 
-        <v-btn color="primary" :disabled="!canContinue" @click="continueToReview">
+        <v-alert v-if="saveError" type="error" density="compact" class="mb-4">
+          {{ saveError }}
+        </v-alert>
+
+        <v-btn
+          color="primary"
+          :disabled="!canContinue || saving"
+          :loading="saving"
+          @click="continueToReview"
+        >
           Review questions
         </v-btn>
       </template>
@@ -109,12 +121,13 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
-import { parseParent } from '@quizleague/shared'
+import { parseParent, type PathAndId } from '@quizleague/shared'
 import CompetitionDAO from '@/dao/CompetitionDAO'
 import FixturesDAO, { fixtureDAO } from '@/dao/FixturesDAO'
 import TeamDAO from '@/dao/TeamDAO'
 import TeamMemberDAO from '@/dao/TeamMemberDAO'
 import UserDAO from '@/dao/UserDAO'
+import type User from '@/entity/User'
 import { useDateTime } from '@/services/DateService'
 import { useFixture } from '@/services/FixtureService'
 import { availablePlayers } from '@/services/QuizPlayers'
@@ -132,6 +145,8 @@ const awayPlayers = ref<string[]>(['', '', '', ''])
 const homeMemberNames = ref<string[]>([])
 const awayMemberNames = ref<string[]>([])
 const fixtureHasResult = ref(false)
+const saving = ref(false)
+const saveError = ref<string>()
 
 const { fixturesForResultSubmission } = useFixture()
 const { user } = storeToRefs(useUserStore())
@@ -143,7 +158,7 @@ const isLocalhost = computed(() => {
 })
 
 const fixtureLabel = computed(() =>
-  store.fixture?.date ? date(store.fixture.date, 'd MMMM yyyy') ?? store.fixture.date : '',
+  store.fixture?.date ? (date(store.fixture.date, 'd MMMM yyyy') ?? store.fixture.date) : '',
 )
 
 const homePlayerCount = computed(() => homePlayers.value.filter((p) => (p ?? '').trim()).length)
@@ -162,8 +177,10 @@ watch(
       return
     }
 
-    homeMemberNames.value = await teamMemberNames(fixture.homeId)
-    awayMemberNames.value = await teamMemberNames(fixture.awayId)
+    const home = await teamMembers(fixture.homeId)
+    const away = await teamMembers(fixture.awayId)
+    homeMemberNames.value = home.names
+    awayMemberNames.value = away.names
   },
 )
 
@@ -207,16 +224,16 @@ onMounted(async () => {
   }
 })
 
-async function teamMemberNames(teamId: string): Promise<string[]> {
+async function teamMembers(teamId: string): Promise<{ names: string[]; users: PathAndId<User>[] }> {
   const member = await TeamMemberDAO.getDataForTeam(`team/${teamId}`)
-  const refs = member?.users ?? []
+  const users = member?.users ?? []
 
   const names: string[] = []
-  for (const ref of refs) {
+  for (const ref of users) {
     const teamUser = await UserDAO.getDataById(ref.id)
     if (teamUser?.name?.trim()) names.push(teamUser.name)
   }
-  return names
+  return { names, users }
 }
 
 async function acquire() {
@@ -246,10 +263,58 @@ function readFileAsBase64(file: File): Promise<string> {
   })
 }
 
-function continueToReview() {
+async function continueToReview() {
+  const fixture = store.fixture
+  if (!fixture) return
+
   store.homeIsAFirstHalf = homeIsAFirstHalf.value
-  store.homePlayers = homePlayers.value.map((p) => (p ?? '').trim()).filter(Boolean)
-  store.awayPlayers = awayPlayers.value.map((p) => (p ?? '').trim()).filter(Boolean)
+  const home = homePlayers.value.map((p) => (p ?? '').trim()).filter(Boolean)
+  const away = awayPlayers.value.map((p) => (p ?? '').trim()).filter(Boolean)
+
+  saving.value = true
+  saveError.value = undefined
+  try {
+    await saveAdhocPlayers(fixture.homeId, home)
+    await saveAdhocPlayers(fixture.awayId, away)
+  } catch (error) {
+    saveError.value = `Could not save players: ${errorMessage(error)}`
+    return
+  } finally {
+    saving.value = false
+  }
+
+  store.homePlayers = home
+  store.awayPlayers = away
   emit('done')
+}
+
+async function saveAdhocPlayers(teamId: string, players: string[]) {
+  const { names, users } = await teamMembers(teamId)
+  const existingNames = new Set(names.map((name) => name.trim().toLowerCase()))
+  const newUsers: User[] = []
+  const seen = new Set<string>()
+
+  for (const player of players) {
+    const key = player.trim().toLowerCase()
+    if (!key || existingNames.has(key) || seen.has(key)) continue
+    seen.add(key)
+
+    const user = UserDAO.newInstance()
+    user.name = player.trim()
+    user.email = 'placeholder@dummy.com'
+    newUsers.push(user)
+  }
+
+  if (newUsers.length === 0) return
+
+  await Promise.all(newUsers.map((user) => UserDAO.save(user)))
+  await TeamMemberDAO.saveForTeam(`team/${teamId}`, [
+    ...users,
+    ...newUsers.map((user) => ({ id: user.id, path: user.path })),
+  ])
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }
 </script>
