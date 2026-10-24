@@ -104,6 +104,14 @@
               >
                 Pass Over
               </v-btn>
+              <v-btn
+                v-if="!spare"
+                variant="tonal"
+                :disabled="outcomeButtonsDisabled"
+                @click="invokeSpare"
+              >
+                Invoke spare question
+              </v-btn>
             </template>
             <template v-else>
               <v-btn
@@ -124,9 +132,6 @@
           </div>
 
           <div class="d-flex flex-wrap ga-2 mt-4">
-            <v-btn v-if="outcome && !spare" variant="tonal" @click="invokeSpare">
-              Invoke spare
-            </v-btn>
             <v-btn v-if="outcome" variant="text" @click="undo">Undo</v-btn>
             <v-spacer />
             <v-btn v-if="outcome" color="primary" @click="next">Next</v-btn>
@@ -409,7 +414,10 @@ function undo() {
 }
 
 function invokeSpare() {
-  store.invokeSpare(roundIndex.value, questionIndex.value)
+  if (!store.invokeSpare(roundIndex.value, questionIndex.value)) return
+  // A spare is a fresh question: hide the previous answer and restart the timer.
+  answerRevealed.value = false
+  resetTimer()
 }
 
 function next() {
