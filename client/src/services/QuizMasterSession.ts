@@ -2,7 +2,11 @@ import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore'
 import { useFirestore } from 'vuefire'
 import type { QuizQuestionOutcome } from '@quizleague/shared'
 
-const COLLECTION = 'quizmaster-sessions'
+// A resumable quiz-master session is stored as a single document in a
+// subcollection of the fixture document, so it is naturally scoped to and
+// cleaned up with its fixture: {fixturePath}/quizmasterSession/session
+const SESSION_COLLECTION = 'quizmasterSession'
+const SESSION_DOC_ID = 'session'
 
 // A resumable quiz-master session. The parsed quiz paper is intentionally NOT
 // persisted: on resume the question master re-enters the password and the quiz
@@ -26,14 +30,8 @@ export interface QuizSession {
   updatedAt: string
 }
 
-// Fixture paths are used as Firestore document ids. Firestore ids cannot
-// contain `/`, and `%2F` (from encodeURIComponent) is decoded back to `/` by
-// the emulator UI, which then treats the id as a nested path. `~` is a safe,
-// reversible separator that is not URL-decoded.
-export const quizSessionDocId = (fixturePath: string) => fixturePath.replace(/\//g, '~')
-
 export const quizSessionDocRef = (fixturePath: string) =>
-  doc(useFirestore(), `${COLLECTION}/${quizSessionDocId(fixturePath)}`)
+  doc(useFirestore(), `${fixturePath}/${SESSION_COLLECTION}/${SESSION_DOC_ID}`)
 
 export async function saveQuizSession(
   fixturePath: string,
