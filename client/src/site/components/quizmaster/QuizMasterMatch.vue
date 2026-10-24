@@ -405,7 +405,8 @@ function record(outcome: QuizQuestionOutcome) {
 
 function passOver() {
   passedOver.value = true
-  resetTimer()
+  // The other team now has the shorter countdown: start it right away.
+  startTimer()
 }
 
 function haltTimer() {

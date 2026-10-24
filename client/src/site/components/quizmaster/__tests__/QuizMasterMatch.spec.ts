@@ -128,4 +128,21 @@ describe('QuizMasterMatch', () => {
     // The timer is reset back to its idle state.
     expect(wrapper.find('button.timer-fab').text()).toContain('Start')
   })
+
+  it('starts the countdown immediately when the question is passed over', async () => {
+    wrapper = mountMatch()
+
+    // Start the timer so the Pass Over button becomes enabled.
+    await wrapper.find('button.timer-fab').trigger('click')
+    await findButton(wrapper, 'Pass Over').trigger('click')
+
+    // The shorter passed-over countdown (15s) is already running.
+    const timerFab = wrapper.find('button.timer-fab')
+    expect(timerFab.text()).toContain('15')
+    expect(timerFab.text()).not.toContain('Start')
+
+    // Bonus/incorrect buttons are enabled without a further timer press.
+    expect(findButton(wrapper, 'Correct (+1)').attributes('disabled')).toBeUndefined()
+    expect(findButton(wrapper, 'Incorrect').attributes('disabled')).toBeUndefined()
+  })
 })
