@@ -53,7 +53,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
 
   const outcomes = ref<Record<string, QuizQuestionOutcome>>({})
   const spares = ref<Record<string, InvokedSpare>>({})
-  const spareCursor = ref<{ A: number; B: number }>({ A: 0, B: 0 })
+  const spareCursor = ref(0)
   const jokers = ref<Record<number, { home?: string; away?: string }>>({})
   const categoryAssignments = ref<
     Record<number, { home: Record<string, string>; away: Record<string, string> }>
@@ -78,11 +78,6 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
   const sparesRound = computed(() => (quiz.value?.rounds ?? []).find(isSparesRound))
   const beerRound = computed(() => (quiz.value?.rounds ?? []).find(isBeerRound))
   const tiebreakRound = computed(() => (quiz.value?.rounds ?? []).find(isTiebreakRound))
-
-  const spareSet = (suffix: 'A' | 'B'): QuizQuestion[] =>
-    (sparesRound.value?.questions ?? []).filter((q) =>
-      q.number.trim().toUpperCase().endsWith(suffix),
-    )
 
   const questionKey = (roundIndex: number, questionIndex: number) => `${roundIndex}:${questionIndex}`
 
@@ -123,13 +118,13 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
   }
 
   function buildSession(): Omit<QuizSession, 'fixturePath' | 'updatedAt'> {
-    return {
+    const session: Omit<QuizSession, 'fixturePath' | 'updatedAt'> = {
       homeIsAFirstHalf: homeIsAFirstHalf.value,
       homePlayers: [...homePlayers.value],
       awayPlayers: [...awayPlayers.value],
       outcomes: { ...outcomes.value },
       spares: { ...spares.value },
-      spareCursor: { ...spareCursor.value },
+      spareCursor: spareCursor.value,
       jokers: jokers.value as QuizSession['jokers'],
       categoryAssignments: categoryAssignments.value as QuizSession['categoryAssignments'],
       beerRoundScore: { ...beerRoundScore.value },
@@ -137,8 +132,13 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
       history: history.value.map((entry) => ({ score: { ...entry.score }, key: entry.key })),
       step: resumeStep.value,
       matchPosition: { ...matchPosition.value },
-      report: report.value ? { ...report.value } : undefined,
     }
+    // Firestore rejects `undefined` field values, so only attach the report
+    // once one has actually been generated.
+    if (report.value) {
+      session.report = { ...report.value }
+    }
+    return session
   }
 
   // Persistence is best-effort: a failed save must not interrupt the match.
@@ -148,8 +148,9 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
 
     try {
       await saveQuizSession(selectedFixture.path, buildSession())
-    } catch {
-      // Ignore persistence failures.
+    } catch (error) {
+      // Surface persistence failures for diagnostics without interrupting.
+      console.error('Failed to persist quiz session', error)
     }
   }
 
@@ -167,7 +168,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     awayPlayers.value = [...session.awayPlayers]
     outcomes.value = { ...session.outcomes }
     spares.value = { ...session.spares }
-    spareCursor.value = { ...session.spareCursor }
+    spareCursor.value = session.spareCursor
     jokers.value = session.jokers as typeof jokers.value
     categoryAssignments.value = session.categoryAssignments as typeof categoryAssignments.value
     beerRoundScore.value = { ...session.beerRoundScore }
@@ -213,7 +214,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
       if (!resuming.value) {
         outcomes.value = {}
         spares.value = {}
-        spareCursor.value = { A: 0, B: 0 }
+        spareCursor.value = 0
         jokers.value = {}
         categoryAssignments.value = {}
         beerRoundScore.value = { home: 0, away: 0 }
@@ -260,15 +261,15 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     const question = scoredRounds.value[roundIndex]?.questions[questionIndex]
     if (!question) return undefined
 
-    const suffix = suffixFor(question)
-    const pool = spareSet(suffix)
-    const cursor = spareCursor.value[suffix]
-    const spare = pool[cursor]
+    // Spares are allocated strictly in printed order (1A, 1B, 2A, 2B, ...),
+    // independent of which A/B question triggered the spare.
+    const pool = sparesRound.value?.questions ?? []
+    const spare = pool[spareCursor.value]
     if (!spare) return undefined
 
     const key = questionKey(roundIndex, questionIndex)
     spares.value[key] = { number: spare.number, question: spare.question, answer: spare.answer }
-    spareCursor.value[suffix] = cursor + 1
+    spareCursor.value += 1
     void persistSession()
     return spares.value[key]
   }
@@ -299,8 +300,11 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
             ? subjectForQuestion(question.number, round.subjects ?? [])
             : undefined
           const owner = ownerFor(roundIndex, question)
+          const outcome = outcomes.value[key] ?? 'unanswered'
           const contestant = individual
-            ? contestantFor(roundIndex, question, owner)
+            ? outcome === 'correct'
+              ? givenName(contestantFor(roundIndex, question, owner))
+              : undefined
             : owner === 'home'
               ? selectedFixture.homeName
               : selectedFixture.awayName
@@ -311,7 +315,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
             number: question.number,
             question: stripUnderlineMarkers(spare?.question ?? question.question),
             answer: stripUnderlineMarkers(spare?.answer ?? question.answer),
-            outcome: outcomes.value[key] ?? 'unanswered',
+            outcome,
             category,
             contestant,
             joker:
@@ -390,7 +394,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     acquireError.value = undefined
     outcomes.value = {}
     spares.value = {}
-    spareCursor.value = { A: 0, B: 0 }
+    spareCursor.value = 0
     jokers.value = {}
     categoryAssignments.value = {}
     beerRoundScore.value = { home: 0, away: 0 }
@@ -448,7 +452,6 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     ownerFor,
     subjectFor,
     contestantFor,
-    spareSet,
     questionKey,
     acquire,
     recordOutcome,
@@ -475,4 +478,9 @@ function errorMessage(error: unknown, fallback: string): string {
 
 function stripUnderlineMarkers(text: string): string {
   return text.replace(/<\/?u>/g, '')
+}
+
+function givenName(name?: string): string | undefined {
+  const trimmed = name?.trim()
+  return trimmed ? trimmed.split(/\s+/)[0] : undefined
 }

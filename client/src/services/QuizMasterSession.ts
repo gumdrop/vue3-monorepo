@@ -2,7 +2,11 @@ import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore'
 import { useFirestore } from 'vuefire'
 import type { QuizQuestionOutcome } from '@quizleague/shared'
 
-const COLLECTION = 'quizmaster-sessions'
+// A resumable quiz-master session is stored as a single document in a
+// subcollection of the fixture document, so it is naturally scoped to and
+// cleaned up with its fixture: {fixturePath}/quizmasterSession/session
+const SESSION_COLLECTION = 'quizmasterSession'
+const SESSION_DOC_ID = 'session'
 
 // A resumable quiz-master session. The parsed quiz paper is intentionally NOT
 // persisted: on resume the question master re-enters the password and the quiz
@@ -14,7 +18,7 @@ export interface QuizSession {
   awayPlayers: string[]
   outcomes: Record<string, QuizQuestionOutcome>
   spares: Record<string, { number: string; question: string; answer: string }>
-  spareCursor: { A: number; B: number }
+  spareCursor: number
   jokers: Record<string, { home?: string; away?: string }>
   categoryAssignments: Record<string, { home: Record<string, string>; away: Record<string, string> }>
   beerRoundScore: { home: number; away: number }
@@ -26,10 +30,8 @@ export interface QuizSession {
   updatedAt: string
 }
 
-export const quizSessionDocId = (fixturePath: string) => encodeURIComponent(fixturePath)
-
 export const quizSessionDocRef = (fixturePath: string) =>
-  doc(useFirestore(), `${COLLECTION}/${quizSessionDocId(fixturePath)}`)
+  doc(useFirestore(), `${fixturePath}/${SESSION_COLLECTION}/${SESSION_DOC_ID}`)
 
 export async function saveQuizSession(
   fixturePath: string,

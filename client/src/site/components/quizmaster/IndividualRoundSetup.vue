@@ -11,12 +11,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="subject in round.subjects" :key="subject">
+          <tr v-for="(subject, subjectIndex) in round.subjects" :key="subject">
             <td>{{ subject }}</td>
             <td>
               <v-select
                 v-model="homeAssign[subject]"
-                :items="store.homePlayers"
+                :items="availablePlayers(homeSelection, subjectIndex, store.homePlayers)"
                 density="compact"
                 hide-details
               />
@@ -24,7 +24,7 @@
             <td>
               <v-select
                 v-model="awayAssign[subject]"
-                :items="store.awayPlayers"
+                :items="availablePlayers(awaySelection, subjectIndex, store.awayPlayers)"
                 density="compact"
                 hide-details
               />
@@ -51,6 +51,7 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
 import type { QuizRound } from '@quizleague/shared'
+import { availablePlayers } from '@/services/QuizPlayers'
 import { useQuizmasterStore } from '@/stores/quizmaster'
 
 const props = defineProps<{ roundIndex: number; round: QuizRound }>()
@@ -68,9 +69,22 @@ const awayJoker = ref<string>('None')
 
 const jokerOptions = computed(() => ['None', ...(props.round.subjects ?? [])])
 
+// Each player may be assigned to only one category, so exclude players already
+// chosen for another category (matching the quiz-setup selection behaviour).
+const homeSelection = computed(() =>
+  (props.round.subjects ?? []).map((s) => homeAssign[s] ?? ''),
+)
+const awaySelection = computed(() =>
+  (props.round.subjects ?? []).map((s) => awayAssign[s] ?? ''),
+)
+
 const assignmentsComplete = computed(() => {
   const subjects = props.round.subjects ?? []
-  return subjects.every((s) => homeAssign[s] && awayAssign[s])
+  return (
+    subjects.every((s) => homeAssign[s] && awayAssign[s]) &&
+    homeJoker.value !== 'None' &&
+    awayJoker.value !== 'None'
+  )
 })
 
 function save() {

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
-  const docRef = { path: 'quizmaster-sessions/doc' }
+  const docRef = { path: 'fixture/path/quizmasterSession/session' }
   return {
     docRef,
     doc: vi.fn(() => docRef),
@@ -27,7 +27,6 @@ import type { QuizSession } from '../QuizMasterSession'
 import {
   clearQuizSession,
   loadQuizSession,
-  quizSessionDocId,
   saveQuizSession,
 } from '../QuizMasterSession'
 
@@ -37,7 +36,7 @@ const payload = (): Omit<QuizSession, 'fixturePath' | 'updatedAt'> => ({
   awayPlayers: [],
   outcomes: {},
   spares: {},
-  spareCursor: { A: 0, B: 0 },
+  spareCursor: 0,
   jokers: {},
   categoryAssignments: {},
   beerRoundScore: { home: 0, away: 0 },
@@ -45,15 +44,6 @@ const payload = (): Omit<QuizSession, 'fixturePath' | 'updatedAt'> => ({
   history: [],
   step: 3,
   matchPosition: { roundIndex: 0, questionIndex: 1, phase: 'rounds' },
-})
-
-describe('quizSessionDocId', () => {
-  it('produces a deterministic, slash-free id', () => {
-    const id = quizSessionDocId('season/1/competition/cup/fixtures/s1/fixture/f-1')
-
-    expect(id).toBe(quizSessionDocId('season/1/competition/cup/fixtures/s1/fixture/f-1'))
-    expect(id).not.toContain('/')
-  })
 })
 
 describe('QuizMasterSession persistence', () => {
@@ -68,7 +58,7 @@ describe('QuizMasterSession persistence', () => {
 
     expect(mocks.doc).toHaveBeenCalledWith(
       mocks.useFirestore(),
-      `quizmaster-sessions/${quizSessionDocId('fixture/path')}`,
+      'fixture/path/quizmasterSession/session',
     )
     expect(mocks.setDoc).toHaveBeenCalledWith(mocks.docRef, {
       ...payload(),
