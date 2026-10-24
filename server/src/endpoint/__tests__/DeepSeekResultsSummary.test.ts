@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   generateCompetitionRoundup,
   generateFixtureSetResultsSummary,
+  generateMatchReport,
 } from '../DeepSeekResultsSummary'
 
 const input = {
@@ -287,5 +288,50 @@ describe('DeepSeekResultsSummary', () => {
     )
 
     await expect(generateFixtureSetResultsSummary(input)).resolves.toBeUndefined()
+  })
+
+  it('omits contestants who missed their individual question and uses given names only', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [{ finish_reason: 'stop', message: { content: 'Report text.' } }],
+      }),
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateMatchReport({
+      homeTeam: 'Alpha',
+      awayTeam: 'Bravo',
+      homeScore: 3,
+      awayScore: 2,
+      beerRoundHomeScore: 1,
+      beerRoundAwayScore: 0,
+      rounds: [
+        {
+          name: 'Round 1 (Individual)',
+          questions: [
+            { number: '1', question: 'Q one', answer: 'A one', outcome: 'correct', category: 'History', contestant: 'John Smith' },
+            { number: '2', question: 'Q two', answer: 'A two', outcome: 'bonus', category: 'Geography', contestant: 'Jane Doe' },
+            { number: '3', question: 'Q three', answer: 'A three', outcome: 'unanswered', category: 'Science', contestant: 'Bob Marley' },
+          ],
+        },
+        {
+          name: 'Round 2 (Team)',
+          questions: [
+            { number: '1', question: 'Q four', answer: 'A four', outcome: 'correct', contestant: 'The Red Lion' },
+          ],
+        },
+      ],
+    })
+
+    const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
+    const prompt = body.messages[0].content
+
+    expect(prompt).toContain('asked to John')
+    expect(prompt).not.toContain('John Smith')
+    expect(prompt).not.toContain('Jane')
+    expect(prompt).not.toContain('Doe')
+    expect(prompt).not.toContain('Bob')
+    expect(prompt).toContain('asked to The Red Lion')
   })
 })

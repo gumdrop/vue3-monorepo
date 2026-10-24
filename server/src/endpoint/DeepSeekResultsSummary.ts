@@ -236,8 +236,20 @@ async function generateDeepSeekSummary(
   return text ? { text, model } : undefined
 }
 
+const givenName = (name: string): string => name.trim().split(/\s+/)[0] ?? ''
+
 const matchReportQuestionLine = (q: QuizReportCommand['rounds'][number]['questions'][number]) => {
-  const contestant = q.contestant ? ` — asked to ${q.contestant}` : ''
+  // Individual-round contestants are only named when they answered their own
+  // question correctly, and then by given name (first name) only. Team-round
+  // contestants are team names, so they are kept intact.
+  const individual = q.category !== undefined
+  const displayName =
+    individual && q.outcome !== 'correct'
+      ? undefined
+      : q.contestant && individual
+        ? givenName(q.contestant)
+        : q.contestant
+  const contestant = displayName ? ` — asked to ${displayName}` : ''
   const category = q.category ? ` [${q.category}]` : ''
   const joker = q.joker ? ` (joker for ${q.joker})` : ''
   return `    ${q.number}: ${q.outcome}${category}${joker}${contestant}`

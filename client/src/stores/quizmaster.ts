@@ -299,8 +299,11 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
             ? subjectForQuestion(question.number, round.subjects ?? [])
             : undefined
           const owner = ownerFor(roundIndex, question)
+          const outcome = outcomes.value[key] ?? 'unanswered'
           const contestant = individual
-            ? contestantFor(roundIndex, question, owner)
+            ? outcome === 'correct'
+              ? givenName(contestantFor(roundIndex, question, owner))
+              : undefined
             : owner === 'home'
               ? selectedFixture.homeName
               : selectedFixture.awayName
@@ -311,7 +314,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
             number: question.number,
             question: stripUnderlineMarkers(spare?.question ?? question.question),
             answer: stripUnderlineMarkers(spare?.answer ?? question.answer),
-            outcome: outcomes.value[key] ?? 'unanswered',
+            outcome,
             category,
             contestant,
             joker:
@@ -475,4 +478,9 @@ function errorMessage(error: unknown, fallback: string): string {
 
 function stripUnderlineMarkers(text: string): string {
   return text.replace(/<\/?u>/g, '')
+}
+
+function givenName(name?: string): string | undefined {
+  const trimmed = name?.trim()
+  return trimmed ? trimmed.split(/\s+/)[0] : undefined
 }
