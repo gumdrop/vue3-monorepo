@@ -89,7 +89,7 @@
           </v-alert>
 
           <div class="d-flex flex-wrap ga-2 mt-4">
-            <template v-if="!passedOver">
+            <template v-if="!effectivePassedOver">
               <v-btn
                 color="success"
                 :disabled="outcomeButtonsDisabled"
@@ -294,8 +294,24 @@ const subject = computed(() =>
   question.value ? store.subjectFor(roundIndex.value, question.value) : undefined,
 )
 
+const passedOver = ref(false)
+
+// When the owning team has no contestant assigned to this category, the
+// question is taken over by the opposing team's contestant: it is treated as
+// already passed over, so a correct answer scores as a bonus (1 point to the
+// opposition) rather than 2 to the owner.
+const autoPassed = computed(
+  () =>
+    Boolean(
+      subject.value &&
+        question.value &&
+        !store.contestantFor(roundIndex.value, question.value, owner.value),
+    ),
+)
+const effectivePassedOver = computed(() => passedOver.value || autoPassed.value)
+
 const targetSide = computed(() =>
-  passedOver.value ? (owner.value === 'home' ? 'away' : 'home') : owner.value,
+  effectivePassedOver.value ? (owner.value === 'home' ? 'away' : 'home') : owner.value,
 )
 
 const contestantName = computed(() => {
@@ -313,12 +329,11 @@ const answerHtml = computed(() => underlineHtml(displayAnswer.value))
 type TimerState = 'idle' | 'running' | 'paused' | 'done'
 
 const timerState = ref<TimerState>('idle')
-const passedOver = ref(false)
 const answerRevealed = ref(false)
 const remaining = ref(30)
 let timerHandle: ReturnType<typeof setInterval> | undefined
 
-const timerDuration = computed(() => (passedOver.value ? 15 : 30))
+const timerDuration = computed(() => (effectivePassedOver.value ? 15 : 30))
 const showAnswer = computed(() => answerRevealed.value)
 const timerLabel = computed(() =>
   timerState.value === 'idle' ? timerDuration.value : remaining.value,

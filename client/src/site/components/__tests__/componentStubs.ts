@@ -201,6 +201,10 @@ export const siteComponentStubs = {
   VExpandTransition: passthrough(),
   'v-expand-transition': passthrough(),
   ExpandTransition: passthrough(),
+  VExpansionPanel: passthrough(),
+  VExpansionPanels: passthrough(),
+  VExpansionPanelText: passthrough(),
+  VExpansionPanelTitle: passthrough('button'),
   VFileInput: defineComponent({
     props: {
       label: String,

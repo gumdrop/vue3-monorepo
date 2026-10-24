@@ -196,4 +196,43 @@ describe('QuizMasterMatch', () => {
     expect(session).toBeDefined()
     expect('report' in session).toBe(false)
   })
+
+  it('auto-passes an individual question to the opposition when the owner has no contestant', () => {
+    const store = useQuizmasterStore()
+    store.fixture = {
+      path: 'season/season-1/competition/league/fixtures/set-1/fixture/f-1',
+      date: '2026-10-13',
+      homeName: 'Home Team',
+      awayName: 'Away Team',
+      homeId: 'home',
+      awayId: 'away',
+    }
+    store.quiz = {
+      rounds: [
+        {
+          round: 'ROUND THREE - INDIVIDUAL',
+          subjects: ['History', 'Geography'],
+          questions: [{ number: '1A', question: 'History question?', answer: 'Answer' }],
+        },
+      ],
+    }
+    // Home owns '1A' in the first half but has no contestant in History, so the
+    // question is taken over by Away's contestant (Dave) and scores as a bonus.
+    store.categoryAssignments[0] = {
+      home: { Geography: 'Alice' },
+      away: { History: 'Dave' },
+    }
+
+    wrapper = mount(QuizMasterMatch, { global: { stubs: siteComponentStubs } })
+
+    // The opposing contestant is shown as the target.
+    expect(wrapper.text()).toContain('Dave')
+
+    // The question is already passed over: bonus buttons, no Pass Over button.
+    expect(findButton(wrapper, 'Correct (+1)').exists()).toBe(true)
+    expect(findButton(wrapper, 'Incorrect').exists()).toBe(true)
+    expect(
+      wrapper.findAll('button').some((button) => button.text().includes('Pass Over')),
+    ).toBe(false)
+  })
 })
