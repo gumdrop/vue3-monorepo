@@ -24,7 +24,7 @@
 </template>
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { useUserStore } from '@/stores/app'
+import { useSideMenuStore, useUserStore } from '@/stores/app'
 import { useQuizmasterStore } from '@/stores/quizmaster'
 import QuizMasterSetup from './QuizMasterSetup.vue'
 import QuizMasterReview from './QuizMasterReview.vue'
@@ -34,6 +34,10 @@ import QuizMasterResult from './QuizMasterResult.vue'
 const step = ref(1)
 const store = useQuizmasterStore()
 const user = computed(() => useUserStore().user)
+
+// The quiz-master is a focused full-width tool, so hide the left-hand section
+// menu the same way the home page does.
+useSideMenuStore().setSidemenu(false)
 
 function goTo(next: 1 | 2 | 3 | 4) {
   step.value = next
