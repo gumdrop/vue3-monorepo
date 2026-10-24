@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { availablePlayers } from '../QuizPlayers'
+import { availableCategoryPlayers, availablePlayers } from '../QuizPlayers'
 
 const all = ['Alice', 'Bob', 'Carol', 'Dave']
 
@@ -23,5 +23,21 @@ describe('availablePlayers', () => {
 
   it('treats cleared (null) values as empty', () => {
     expect(availablePlayers([null, 'Alice', '', ''], 0, all)).toEqual(['Bob', 'Carol', 'Dave'])
+  })
+})
+
+describe('availableCategoryPlayers', () => {
+  it('deduplicates when the team has as many players as categories', () => {
+    expect(availableCategoryPlayers(['', '', '', ''], 1, all)).toEqual(all)
+    expect(availableCategoryPlayers(['Alice', '', '', ''], 1, all)).toEqual(['Bob', 'Carol', 'Dave'])
+  })
+
+  it('allows a player to cover more than one category when short-handed', () => {
+    const players = ['Alice', 'Bob', 'Carol']
+    // 4 categories but only 3 players: every player stays available in the
+    // remaining slots so a player can be assigned to a second category.
+    expect(availableCategoryPlayers(['Alice', '', '', ''], 1, players)).toEqual(players)
+    expect(availableCategoryPlayers(['Alice', '', '', ''], 2, players)).toEqual(players)
+    expect(availableCategoryPlayers(['Alice', '', '', ''], 3, players)).toEqual(players)
   })
 })

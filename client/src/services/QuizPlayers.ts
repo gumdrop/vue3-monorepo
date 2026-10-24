@@ -17,3 +17,18 @@ export const availablePlayers = (
       ),
   )
 }
+
+// Category assignment in an individual round. When a team has at least as many
+// players as categories the one-player-per-category rule applies; when it is
+// short-handed (e.g. 3 players, 4 categories) a player may cover more than one
+// category so every category can still be filled (FR-3.3).
+export const availableCategoryPlayers = (
+  selected: (string | null | undefined)[],
+  index: number,
+  all: string[],
+): string[] => {
+  if (all.length >= selected.length) {
+    return availablePlayers(selected, index, all)
+  }
+  return all
+}
