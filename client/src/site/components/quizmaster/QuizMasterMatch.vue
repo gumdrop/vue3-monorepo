@@ -14,10 +14,54 @@
           v-if="settingUpIndividual && round"
           :round-index="roundIndex"
           :round="round"
-          @saved="settingUpIndividual = false"
+          @saved="onRoundSetupSaved"
         />
 
         <template v-else-if="round && question">
+          <v-expansion-panels v-if="isIndividualRound(round)" class="mb-3">
+            <v-expansion-panel>
+              <v-expansion-panel-title>View assignments &amp; jokers</v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <v-table v-if="round.subjects" density="compact">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>{{ homeName }} contestant</th>
+                      <th>{{ awayName }} contestant</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="subjectName in round.subjects" :key="subjectName">
+                      <td>{{ subjectName }}</td>
+                      <td>
+                        {{ store.categoryAssignments[roundIndex]?.home[subjectName] ?? '—' }}
+                        <v-chip
+                          v-if="store.jokers[roundIndex]?.home === subjectName"
+                          size="x-small"
+                          color="warning"
+                          class="ml-1"
+                        >
+                          Joker
+                        </v-chip>
+                      </td>
+                      <td>
+                        {{ store.categoryAssignments[roundIndex]?.away[subjectName] ?? '—' }}
+                        <v-chip
+                          v-if="store.jokers[roundIndex]?.away === subjectName"
+                          size="x-small"
+                          color="warning"
+                          class="ml-1"
+                        >
+                          Joker
+                        </v-chip>
+                      </td>
+                    </tr>
+                  </tbody>
+                </v-table>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
+
           <div class="text-subtitle-1 text-medium-emphasis mb-2">
             {{ round.round }}
             <span v-if="subject"> · {{ subject }}</span>
@@ -60,6 +104,14 @@
               >
                 Pass Over
               </v-btn>
+              <v-btn
+                v-if="!spare"
+                variant="tonal"
+                :disabled="outcomeButtonsDisabled"
+                @click="invokeSpare"
+              >
+                Invoke spare question
+              </v-btn>
             </template>
             <template v-else>
               <v-btn
@@ -80,9 +132,6 @@
           </div>
 
           <div class="d-flex flex-wrap ga-2 mt-4">
-            <v-btn v-if="outcome && !spare" variant="tonal" @click="invokeSpare">
-              Invoke spare
-            </v-btn>
             <v-btn v-if="outcome" variant="text" @click="undo">Undo</v-btn>
             <v-spacer />
             <v-btn v-if="outcome" color="primary" @click="next">Next</v-btn>
@@ -92,7 +141,7 @@
         <v-alert v-else type="success" class="mt-4">
           All scored rounds complete. Continue to the beer round.
           <template #append>
-            <v-btn color="primary" @click="phase = 'beer'">Beer round</v-btn>
+            <v-btn color="primary" @click="goToBeer">Beer round</v-btn>
           </template>
         </v-alert>
       </template>
@@ -176,7 +225,7 @@
         </div>
 
         <div class="d-flex justify-space-between mt-2">
-          <v-btn variant="text" @click="phase = 'rounds'">Back to match</v-btn>
+          <v-btn variant="text" @click="goToRounds">Back to match</v-btn>
           <v-btn color="primary" @click="finishBeer">Finish match</v-btn>
         </div>
       </template>
@@ -209,10 +258,23 @@ const emit = defineEmits<{ back: []; done: [] }>()
 
 const store = useQuizmasterStore()
 
-const phase = ref<'rounds' | 'beer'>('rounds')
-const roundIndex = ref(0)
-const questionIndex = ref(0)
-const settingUpIndividual = ref(false)
+const clampRoundIndex = (index: number) =>
+  Math.max(0, Math.min(index, Math.max(0, store.scoredRounds.length - 1)))
+const clampQuestionIndex = (roundIdx: number, index: number) =>
+  Math.max(0, Math.min(index, Math.max(0, (store.scoredRounds[roundIdx]?.questions.length ?? 1) - 1)))
+
+const initialRoundIndex = clampRoundIndex(store.matchPosition.roundIndex)
+const initialRound = store.scoredRounds[initialRoundIndex]
+const phase = ref<'rounds' | 'beer'>(store.matchPosition.phase)
+const roundIndex = ref(initialRoundIndex)
+const questionIndex = ref(clampQuestionIndex(initialRoundIndex, store.matchPosition.questionIndex))
+const settingUpIndividual = ref(
+  Boolean(
+    initialRound &&
+      isIndividualRound(initialRound) &&
+      !store.categoryAssignments[initialRoundIndex],
+  ),
+)
 const beerHome = ref(0)
 const beerAway = ref(0)
 
@@ -365,7 +427,10 @@ function undo() {
 }
 
 function invokeSpare() {
-  store.invokeSpare(roundIndex.value, questionIndex.value)
+  if (!store.invokeSpare(roundIndex.value, questionIndex.value)) return
+  // A spare is a fresh question: hide the previous answer and restart the timer.
+  answerRevealed.value = false
+  resetTimer()
 }
 
 function next() {
@@ -381,10 +446,35 @@ function next() {
   } else {
     phase.value = 'beer'
   }
+  persistPosition()
+}
+
+function persistPosition() {
+  store.updateMatchPosition({
+    roundIndex: roundIndex.value,
+    questionIndex: questionIndex.value,
+    phase: phase.value,
+  })
+}
+
+function goToBeer() {
+  phase.value = 'beer'
+  persistPosition()
+}
+
+function goToRounds() {
+  phase.value = 'rounds'
+  persistPosition()
+}
+
+function onRoundSetupSaved() {
+  settingUpIndividual.value = false
+  persistPosition()
 }
 
 function finishBeer() {
   store.recordBeerRound(beerHome.value, beerAway.value)
+  persistPosition()
   emit('done')
 }
 </script>

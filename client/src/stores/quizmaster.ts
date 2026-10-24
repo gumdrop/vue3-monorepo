@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import type { QuizPaper, QuizQuestion, QuizQuestionOutcome, QuizReportCommand, QuizRound } from '@quizleague/shared'
 import { applyOutcome, initialScore, isIndividualRound, jokerApplies, owningSide, subjectForQuestion, type Score, type TeamSide } from '@/services/QuizScoring'
 import { REST_ROOT } from '@/services/constants'
+import { clearQuizSession, loadQuizSession, saveQuizSession, type QuizSession } from '@/services/QuizMasterSession'
 import { useUserStore } from './app'
 
 export interface SelectedFixture {
@@ -24,6 +25,13 @@ export interface InvokedSpare {
 interface HistoryEntry {
   score: Score
   key: string
+}
+
+export type MatchPhase = 'rounds' | 'beer'
+export interface MatchPosition {
+  roundIndex: number
+  questionIndex: number
+  phase: MatchPhase
 }
 
 const isBeerRound = (round: QuizRound) => /beer/i.test(round.round)
@@ -59,6 +67,12 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
   const submitting = ref(false)
   const submitError = ref<string>()
   const submitted = ref(false)
+  const submittedScore = ref<Score>()
+  const submittedBeerRoundScore = ref<{ home: number; away: number }>()
+
+  const resumeStep = ref<2 | 3 | 4>(2)
+  const resuming = ref(false)
+  const matchPosition = ref<MatchPosition>({ roundIndex: 0, questionIndex: 0, phase: 'rounds' })
 
   const scoredRounds = computed(() => (quiz.value?.rounds ?? []).filter(isScoredRound))
   const sparesRound = computed(() => (quiz.value?.rounds ?? []).find(isSparesRound))
@@ -108,6 +122,78 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     return categoryAssignments.value[roundIndex]?.[side]?.[subject]
   }
 
+  function buildSession(): Omit<QuizSession, 'fixturePath' | 'updatedAt'> {
+    return {
+      homeIsAFirstHalf: homeIsAFirstHalf.value,
+      homePlayers: [...homePlayers.value],
+      awayPlayers: [...awayPlayers.value],
+      outcomes: { ...outcomes.value },
+      spares: { ...spares.value },
+      spareCursor: { ...spareCursor.value },
+      jokers: jokers.value as QuizSession['jokers'],
+      categoryAssignments: categoryAssignments.value as QuizSession['categoryAssignments'],
+      beerRoundScore: { ...beerRoundScore.value },
+      score: { ...score.value },
+      history: history.value.map((entry) => ({ score: { ...entry.score }, key: entry.key })),
+      step: resumeStep.value,
+      matchPosition: { ...matchPosition.value },
+      report: report.value ? { ...report.value } : undefined,
+    }
+  }
+
+  // Persistence is best-effort: a failed save must not interrupt the match.
+  async function persistSession() {
+    const selectedFixture = fixture.value
+    if (!selectedFixture) return
+
+    try {
+      await saveQuizSession(selectedFixture.path, buildSession())
+    } catch {
+      // Ignore persistence failures.
+    }
+  }
+
+  // Restores a previously saved session for the selected fixture. The quiz
+  // paper itself is not restored — it is re-parsed on re-acquire.
+  async function restoreSession(): Promise<boolean> {
+    const selectedFixture = fixture.value
+    if (!selectedFixture) return false
+
+    const session = await loadQuizSession(selectedFixture.path)
+    if (!session) return false
+
+    homeIsAFirstHalf.value = session.homeIsAFirstHalf
+    homePlayers.value = [...session.homePlayers]
+    awayPlayers.value = [...session.awayPlayers]
+    outcomes.value = { ...session.outcomes }
+    spares.value = { ...session.spares }
+    spareCursor.value = { ...session.spareCursor }
+    jokers.value = session.jokers as typeof jokers.value
+    categoryAssignments.value = session.categoryAssignments as typeof categoryAssignments.value
+    beerRoundScore.value = { ...session.beerRoundScore }
+    score.value = { ...session.score }
+    history.value = session.history.map((entry) => ({ score: { ...entry.score }, key: entry.key }))
+    report.value = session.report ? { ...session.report } : undefined
+    resumeStep.value = session.step
+    matchPosition.value = { ...session.matchPosition }
+    resuming.value = true
+    return true
+  }
+
+  function setResumeStep(next: 2 | 3 | 4) {
+    resumeStep.value = next
+    void persistSession()
+  }
+
+  function updateMatchPosition(position: MatchPosition) {
+    matchPosition.value = { ...position }
+    void persistSession()
+  }
+
+  function finishResume() {
+    resuming.value = false
+  }
+
   async function acquire(
     date: string,
     password: string,
@@ -123,14 +209,18 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
       })
       quiz.value = response.data
       fixtureDate.value = date
-      outcomes.value = {}
-      spares.value = {}
-      spareCursor.value = { A: 0, B: 0 }
-      jokers.value = {}
-      categoryAssignments.value = {}
-      beerRoundScore.value = { home: 0, away: 0 }
-      score.value = { ...initialScore }
-      history.value = []
+      // On resume, keep the restored progress; on a fresh start, clear it.
+      if (!resuming.value) {
+        outcomes.value = {}
+        spares.value = {}
+        spareCursor.value = { A: 0, B: 0 }
+        jokers.value = {}
+        categoryAssignments.value = {}
+        beerRoundScore.value = { home: 0, away: 0 }
+        score.value = { ...initialScore }
+        history.value = []
+      }
+      void persistSession()
       return true
     } catch (error) {
       acquireError.value = errorMessage(error, 'Could not acquire the quiz')
@@ -155,6 +245,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     history.value.push({ score: { ...score.value }, key })
     score.value = applyOutcome(score.value, owner, outcome, joker)
     outcomes.value[key] = outcome
+    void persistSession()
   }
 
   function undo() {
@@ -162,6 +253,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     if (!entry) return
     score.value = entry.score
     delete outcomes.value[entry.key]
+    void persistSession()
   }
 
   function invokeSpare(roundIndex: number, questionIndex: number): InvokedSpare | undefined {
@@ -177,11 +269,13 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     const key = questionKey(roundIndex, questionIndex)
     spares.value[key] = { number: spare.number, question: spare.question, answer: spare.answer }
     spareCursor.value[suffix] = cursor + 1
+    void persistSession()
     return spares.value[key]
   }
 
   function recordBeerRound(home: number, away: number) {
     beerRoundScore.value = { home, away }
+    void persistSession()
   }
 
   async function generateReport(): Promise<boolean> {
@@ -233,6 +327,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
         command,
       )
       report.value = response.data
+      void persistSession()
       return true
     } catch (error) {
       submitError.value = errorMessage(error, 'Could not generate the match report')
@@ -266,12 +361,59 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
         { headers: { 'Content-type': 'application/json' } },
       )
       submitted.value = true
+      submittedScore.value = { ...score.value }
+      submittedBeerRoundScore.value = { ...beerRoundScore.value }
+      try {
+        await clearQuizSession(fixture.value.path)
+      } catch {
+        // Best-effort cleanup; a failed delete only leaves a stale session.
+      }
+      clearMatchSession()
       return true
     } catch (error) {
       submitError.value = errorMessage(error, 'Could not submit the result')
       return false
     } finally {
       submitting.value = false
+    }
+  }
+
+  // Clears the recorded match data after a successful submit (FR-5.3). The
+  // fixture, report, and submit confirmation snapshots are intentionally kept
+  // so the result view can still show what was submitted.
+  function clearMatchSession() {
+    fixtureDate.value = undefined
+    homeIsAFirstHalf.value = true
+    homePlayers.value = []
+    awayPlayers.value = []
+    quiz.value = undefined
+    acquireError.value = undefined
+    outcomes.value = {}
+    spares.value = {}
+    spareCursor.value = { A: 0, B: 0 }
+    jokers.value = {}
+    categoryAssignments.value = {}
+    beerRoundScore.value = { home: 0, away: 0 }
+    score.value = { ...initialScore }
+    history.value = []
+    resuming.value = false
+    resumeStep.value = 2
+    matchPosition.value = { roundIndex: 0, questionIndex: 0, phase: 'rounds' }
+  }
+
+  function reset() {
+    const selectedFixture = fixture.value
+    clearMatchSession()
+    fixture.value = undefined
+    report.value = undefined
+    submitted.value = false
+    submittedScore.value = undefined
+    submittedBeerRoundScore.value = undefined
+    submitError.value = undefined
+    submitting.value = false
+    acquiring.value = false
+    if (selectedFixture) {
+      void clearQuizSession(selectedFixture.path).catch(() => {})
     }
   }
 
@@ -294,6 +436,11 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     submitting,
     submitError,
     submitted,
+    submittedScore,
+    submittedBeerRoundScore,
+    resumeStep,
+    resuming,
+    matchPosition,
     scoredRounds,
     sparesRound,
     beerRound,
@@ -310,6 +457,11 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     recordBeerRound,
     generateReport,
     submit,
+    reset,
+    restoreSession,
+    setResumeStep,
+    updateMatchPosition,
+    finishResume,
   }
 })
 

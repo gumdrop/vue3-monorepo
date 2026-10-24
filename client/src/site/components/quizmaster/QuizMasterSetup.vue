@@ -9,11 +9,18 @@
       <v-alert v-else type="warning" density="compact" class="mb-4">
         No fixture found for your team.
       </v-alert>
+      <v-alert v-if="fixtureHasResult" type="error" density="compact" class="mb-4">
+        This fixture already has a result — the quiz cannot be run.
+      </v-alert>
+      <v-alert v-if="store.resuming" type="info" density="compact" class="mb-4">
+        A quiz is already in progress for this fixture. Re-enter the quiz password to resume where
+        you left off.
+      </v-alert>
 
       <v-text-field
         v-model="password"
         label="Quiz PDF password"
-        :disabled="store.acquiring || !store.fixture"
+        :disabled="store.acquiring || !store.fixture || fixtureHasResult"
       />
 
       <div v-if="isLocalhost" class="mb-2">
@@ -23,7 +30,7 @@
         <input
           type="file"
           accept=".pdf,application/pdf"
-          :disabled="store.acquiring"
+          :disabled="store.acquiring || fixtureHasResult"
           @change="onFileSelected"
         />
       </div>
@@ -32,7 +39,7 @@
         <v-btn
           color="primary"
           :loading="store.acquiring"
-          :disabled="!store.fixture || !password"
+          :disabled="!store.fixture || !password || fixtureHasResult"
           @click="acquire"
         >
           Acquire quiz
@@ -59,7 +66,7 @@
               v-for="index in 4"
               :key="`home-${index}`"
               v-model="homePlayers[index - 1]"
-              :items="homeMemberNames"
+              :items="availablePlayers(homePlayers, index - 1, homeMemberNames)"
               :label="`Player ${index}`"
               class="mb-2"
               clearable
@@ -74,7 +81,7 @@
               v-for="index in 4"
               :key="`away-${index}`"
               v-model="awayPlayers[index - 1]"
-              :items="awayMemberNames"
+              :items="availablePlayers(awayPlayers, index - 1, awayMemberNames)"
               :label="`Player ${index}`"
               class="mb-2"
               clearable
@@ -109,10 +116,11 @@ import TeamMemberDAO from '@/dao/TeamMemberDAO'
 import UserDAO from '@/dao/UserDAO'
 import { useDateTime } from '@/services/DateService'
 import { useFixture } from '@/services/FixtureService'
+import { availablePlayers } from '@/services/QuizPlayers'
 import { useUserStore } from '@/stores/app'
 import { useQuizmasterStore } from '@/stores/quizmaster'
 
-const emit = defineEmits<{ done: [] }>()
+const emit = defineEmits<{ done: []; resume: [] }>()
 
 const store = useQuizmasterStore()
 const password = ref('')
@@ -122,6 +130,7 @@ const homePlayers = ref<string[]>(['', '', '', ''])
 const awayPlayers = ref<string[]>(['', '', '', ''])
 const homeMemberNames = ref<string[]>([])
 const awayMemberNames = ref<string[]>([])
+const fixtureHasResult = ref(false)
 
 const { fixturesForResultSubmission } = useFixture()
 const { user } = storeToRefs(useUserStore())
@@ -136,8 +145,8 @@ const fixtureLabel = computed(() =>
   store.fixture?.date ? date(store.fixture.date, 'd MMMM yyyy') ?? store.fixture.date : '',
 )
 
-const homePlayerCount = computed(() => homePlayers.value.filter((p) => p.trim()).length)
-const awayPlayerCount = computed(() => awayPlayers.value.filter((p) => p.trim()).length)
+const homePlayerCount = computed(() => homePlayers.value.filter((p) => (p ?? '').trim()).length)
+const awayPlayerCount = computed(() => awayPlayers.value.filter((p) => (p ?? '').trim()).length)
 
 const canContinue = computed(
   () => Boolean(store.fixture) && homePlayerCount.value >= 3 && awayPlayerCount.value >= 3,
@@ -168,6 +177,10 @@ onMounted(async () => {
   const fixture = await fixtureDAO.getDataByPath(fixtureRef.path)
   if (!fixture) return
 
+  if (fixture.result) {
+    fixtureHasResult.value = true
+  }
+
   const parent = await FixturesDAO.getDataByPath(parseParent(fixture.path))
   const homeTeam = await TeamDAO.getDataById(fixture.home.id)
   const awayTeam = await TeamDAO.getDataById(fixture.away.id)
@@ -179,6 +192,15 @@ onMounted(async () => {
     awayName: awayTeam?.name ?? '',
     homeId: fixture.home.id,
     awayId: fixture.away.id,
+  }
+
+  if (!fixtureHasResult.value) {
+    const restored = await store.restoreSession()
+    if (restored) {
+      homePlayers.value = [...store.homePlayers, '', '', '', ''].slice(0, 4)
+      awayPlayers.value = [...store.awayPlayers, '', '', '', ''].slice(0, 4)
+      homeIsAFirstHalf.value = store.homeIsAFirstHalf
+    }
   }
 })
 
@@ -198,7 +220,10 @@ async function acquire() {
   if (!store.fixture?.date || !password.value) return
 
   const pdfBase64 = localFile.value ? await readFileAsBase64(localFile.value) : undefined
-  await store.acquire(store.fixture.date, password.value, pdfBase64)
+  const ok = await store.acquire(store.fixture.date, password.value, pdfBase64)
+  if (ok && store.resuming) {
+    emit('resume')
+  }
 }
 
 function onFileSelected(event: Event) {
@@ -220,8 +245,8 @@ function readFileAsBase64(file: File): Promise<string> {
 
 function continueToReview() {
   store.homeIsAFirstHalf = homeIsAFirstHalf.value
-  store.homePlayers = homePlayers.value.map((p) => p.trim()).filter(Boolean)
-  store.awayPlayers = awayPlayers.value.map((p) => p.trim()).filter(Boolean)
+  store.homePlayers = homePlayers.value.map((p) => (p ?? '').trim()).filter(Boolean)
+  store.awayPlayers = awayPlayers.value.map((p) => (p ?? '').trim()).filter(Boolean)
   emit('done')
 }
 </script>

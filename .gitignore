@@ -30,5 +30,3 @@ coverage
 *.sw?
 
 *.tsbuildinfo
-
-/server/src/endpoint/__tests__/fixtures/quiz-password.txt

@@ -4,9 +4,11 @@ This document describes the experimental Question Master tool in the QuizLeague 
 
 ## Overview
 
-The Question Master (QM) section lets a signed-in user run a whole quiz match from one screen. The server scrapes the question writer's Wix site for the weekly password-protected quiz PDF, decrypts it using a password the QM supplies, parses it into an ordered JSON structure with DeepSeek, and the client presents questions one at a time while recording outcomes and tracking the score. At the end the QM submits the result (reusing the existing results-submission pipeline) with a DeepSeek-generated match report.
+The Question Master (QM) section lets a signed-in user run a whole quiz match from one screen. The server scrapes the question writer's Wix site for the weekly password-protected quiz PDF, decrypts it using a password the QM supplies, parses it deterministically into an ordered JSON structure, and the client presents questions one at a time while recording outcomes and tracking the score. At the end the QM submits the result (reusing the existing results-submission pipeline) with a DeepSeek-generated match report.
 
 The section is experimental and hidden from site navigation. It is reachable at `/quizmaster` and is guarded by `authGuard`.
+
+A match in progress is resumable: progress is persisted per fixture (shared by any team member who opens the same fixture), so an equipment failure or restart offers the question master a chance to re-enter the password and continue from the same round/question. The parsed paper and the password are never persisted (see ADR-007).
 
 ## Match rules encoded
 
@@ -21,9 +23,11 @@ The section is experimental and hidden from site navigation. It is reachable at 
 | File | Purpose |
 |------|---------|
 | `server/src/endpoint/QuizMasterFunctions.ts` | Wix scrape, PDF download/decrypt, orchestration |
-| `server/src/endpoint/DeepSeekResultsSummary.ts` | `parseQuiz` and `generateMatchReport` (shared DeepSeek client) |
+| `server/src/endpoint/QuizParser.ts` | Deterministic PDF structure parsing + template-drift validation |
+| `server/src/endpoint/DeepSeekResultsSummary.ts` | `generateMatchReport` (shared DeepSeek client) |
 | `server/src/endpoint/QuizMasterEndpoints.ts` | `POST /rest/site/quiz/acquire` and `/rest/site/quiz/report` |
-| `client/src/stores/quizmaster.ts` | In-memory match session state |
+| `client/src/stores/quizmaster.ts` | Match session state (in-memory) + persistence/resume orchestration |
+| `client/src/services/QuizMasterSession.ts` | Firestore save/load/clear of a resumable session (paper excluded) |
 | `client/src/services/QuizScoring.ts` | Pure scoring rules (ownership, half swap, bonuses, jokers) |
 | `client/src/site/components/quizmaster/*` | Setup, review, match, and result views |
 
