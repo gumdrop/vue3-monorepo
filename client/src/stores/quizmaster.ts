@@ -59,6 +59,8 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
   const submitting = ref(false)
   const submitError = ref<string>()
   const submitted = ref(false)
+  const submittedScore = ref<Score>()
+  const submittedBeerRoundScore = ref<{ home: number; away: number }>()
 
   const scoredRounds = computed(() => (quiz.value?.rounds ?? []).filter(isScoredRound))
   const sparesRound = computed(() => (quiz.value?.rounds ?? []).find(isSparesRound))
@@ -266,6 +268,9 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
         { headers: { 'Content-type': 'application/json' } },
       )
       submitted.value = true
+      submittedScore.value = { ...score.value }
+      submittedBeerRoundScore.value = { ...beerRoundScore.value }
+      clearMatchSession()
       return true
     } catch (error) {
       submitError.value = errorMessage(error, 'Could not submit the result')
@@ -273,6 +278,38 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     } finally {
       submitting.value = false
     }
+  }
+
+  // Clears the recorded match data after a successful submit (FR-5.3). The
+  // fixture, report, and submit confirmation snapshots are intentionally kept
+  // so the result view can still show what was submitted.
+  function clearMatchSession() {
+    fixtureDate.value = undefined
+    homeIsAFirstHalf.value = true
+    homePlayers.value = []
+    awayPlayers.value = []
+    quiz.value = undefined
+    acquireError.value = undefined
+    outcomes.value = {}
+    spares.value = {}
+    spareCursor.value = { A: 0, B: 0 }
+    jokers.value = {}
+    categoryAssignments.value = {}
+    beerRoundScore.value = { home: 0, away: 0 }
+    score.value = { ...initialScore }
+    history.value = []
+  }
+
+  function reset() {
+    clearMatchSession()
+    fixture.value = undefined
+    report.value = undefined
+    submitted.value = false
+    submittedScore.value = undefined
+    submittedBeerRoundScore.value = undefined
+    submitError.value = undefined
+    submitting.value = false
+    acquiring.value = false
   }
 
   return {
@@ -294,6 +331,8 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     submitting,
     submitError,
     submitted,
+    submittedScore,
+    submittedBeerRoundScore,
     scoredRounds,
     sparesRound,
     beerRound,
@@ -310,6 +349,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     recordBeerRound,
     generateReport,
     submit,
+    reset,
   }
 })
 

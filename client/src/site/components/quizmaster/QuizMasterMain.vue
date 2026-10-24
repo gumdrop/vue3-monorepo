@@ -13,7 +13,7 @@
       <QuizMasterSetup v-if="step === 1" @done="step = 2" />
       <QuizMasterReview v-else-if="step === 2" @back="step = 1" @start="step = 3" />
       <QuizMasterMatch v-else-if="step === 3" @back="step = 2" @done="step = 4" />
-      <QuizMasterResult v-else @back="step = 3" />
+      <QuizMasterResult v-else @back="step = 3" @restart="step = 1" />
     </template>
 
     <v-row v-else class="justify-center mt-8 align-center">

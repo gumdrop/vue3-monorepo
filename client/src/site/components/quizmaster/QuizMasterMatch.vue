@@ -18,6 +18,50 @@
         />
 
         <template v-else-if="round && question">
+          <v-expansion-panels v-if="isIndividualRound(round)" class="mb-3">
+            <v-expansion-panel>
+              <v-expansion-panel-title>View assignments &amp; jokers</v-expansion-panel-title>
+              <v-expansion-panel-text>
+                <v-table v-if="round.subjects" density="compact">
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>{{ homeName }} contestant</th>
+                      <th>{{ awayName }} contestant</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="subjectName in round.subjects" :key="subjectName">
+                      <td>{{ subjectName }}</td>
+                      <td>
+                        {{ store.categoryAssignments[roundIndex]?.home[subjectName] ?? '—' }}
+                        <v-chip
+                          v-if="store.jokers[roundIndex]?.home === subjectName"
+                          size="x-small"
+                          color="warning"
+                          class="ml-1"
+                        >
+                          Joker
+                        </v-chip>
+                      </td>
+                      <td>
+                        {{ store.categoryAssignments[roundIndex]?.away[subjectName] ?? '—' }}
+                        <v-chip
+                          v-if="store.jokers[roundIndex]?.away === subjectName"
+                          size="x-small"
+                          color="warning"
+                          class="ml-1"
+                        >
+                          Joker
+                        </v-chip>
+                      </td>
+                    </tr>
+                  </tbody>
+                </v-table>
+              </v-expansion-panel-text>
+            </v-expansion-panel>
+          </v-expansion-panels>
+
           <div class="text-subtitle-1 text-medium-emphasis mb-2">
             {{ round.round }}
             <span v-if="subject"> · {{ subject }}</span>

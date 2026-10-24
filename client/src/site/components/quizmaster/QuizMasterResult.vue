@@ -3,11 +3,10 @@
     <v-card-title>Submit result</v-card-title>
     <v-card-text>
       <div class="text-h5 mb-2">
-        {{ store.fixture?.homeName }} {{ store.score.home }} — {{ store.score.away }}
-        {{ store.fixture?.awayName }}
+        {{ teamNames.home }} {{ displayScore.home }} — {{ displayScore.away }} {{ teamNames.away }}
       </div>
       <div class="text-subtitle-1 text-medium-emphasis mb-4">
-        Beer round: {{ store.beerRoundScore.home }} — {{ store.beerRoundScore.away }}
+        Beer round: {{ displayBeer.home }} — {{ displayBeer.away }}
       </div>
 
       <v-btn color="primary" :loading="generating" :disabled="store.submitted" @click="generate">
@@ -37,19 +36,27 @@
         {{ store.submitError }}
       </v-alert>
 
-      <div class="mt-4">
+      <div class="mt-4 d-flex ga-2">
         <v-btn variant="text" :disabled="store.submitted" @click="emit('back')">Back</v-btn>
+        <v-btn v-if="store.submitted" color="primary" @click="restart">Run another match</v-btn>
       </div>
     </v-card-text>
   </v-card>
 </template>
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useQuizmasterStore } from '@/stores/quizmaster'
 
-const emit = defineEmits<{ back: [] }>()
+const emit = defineEmits<{ back: []; restart: [] }>()
 const store = useQuizmasterStore()
 const generating = ref(false)
+
+const teamNames = computed(() => ({
+  home: store.fixture?.homeName ?? 'Home',
+  away: store.fixture?.awayName ?? 'Away',
+}))
+const displayScore = computed(() => store.submittedScore ?? store.score)
+const displayBeer = computed(() => store.submittedBeerRoundScore ?? store.beerRoundScore)
 
 async function generate() {
   generating.value = true
@@ -62,6 +69,11 @@ async function generate() {
 
 async function submit() {
   await store.submit()
+}
+
+function restart() {
+  store.reset()
+  emit('restart')
 }
 </script>
 <style scoped>
