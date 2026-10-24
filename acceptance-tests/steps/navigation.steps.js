@@ -91,6 +91,10 @@ When('I open the help page', async ({ page }) => {
   await page.goto('/help')
 })
 
+When('I open the Question Master page', async ({ page }) => {
+  await page.goto('/quizmaster')
+})
+
 When('I open the {string} team page', async ({ page }, teamId) => {
   await page.goto(`/team/${teamId}`)
 })
@@ -179,6 +183,10 @@ Then('the main navigation includes:', async ({ page }, dataTable) => {
   for (const [label] of dataTable.raw()) {
     await namedLink(page, label).first().waitFor({ state: 'visible' })
   }
+})
+
+Then('there is no link named {string}', async ({ page }, label) => {
+  assert.equal(await namedLink(page, label).count(), 0)
 })
 
 Then('the results menu includes:', async ({ page }, dataTable) => {
