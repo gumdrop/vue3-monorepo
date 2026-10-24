@@ -14,7 +14,7 @@
           v-if="settingUpIndividual && round"
           :round-index="roundIndex"
           :round="round"
-          @saved="settingUpIndividual = false"
+          @saved="onRoundSetupSaved"
         />
 
         <template v-else-if="round && question">
@@ -141,7 +141,7 @@
         <v-alert v-else type="success" class="mt-4">
           All scored rounds complete. Continue to the beer round.
           <template #append>
-            <v-btn color="primary" @click="phase = 'beer'">Beer round</v-btn>
+            <v-btn color="primary" @click="goToBeer">Beer round</v-btn>
           </template>
         </v-alert>
       </template>
@@ -225,7 +225,7 @@
         </div>
 
         <div class="d-flex justify-space-between mt-2">
-          <v-btn variant="text" @click="phase = 'rounds'">Back to match</v-btn>
+          <v-btn variant="text" @click="goToRounds">Back to match</v-btn>
           <v-btn color="primary" @click="finishBeer">Finish match</v-btn>
         </div>
       </template>
@@ -258,10 +258,23 @@ const emit = defineEmits<{ back: []; done: [] }>()
 
 const store = useQuizmasterStore()
 
-const phase = ref<'rounds' | 'beer'>('rounds')
-const roundIndex = ref(0)
-const questionIndex = ref(0)
-const settingUpIndividual = ref(false)
+const clampRoundIndex = (index: number) =>
+  Math.max(0, Math.min(index, Math.max(0, store.scoredRounds.length - 1)))
+const clampQuestionIndex = (roundIdx: number, index: number) =>
+  Math.max(0, Math.min(index, Math.max(0, (store.scoredRounds[roundIdx]?.questions.length ?? 1) - 1)))
+
+const initialRoundIndex = clampRoundIndex(store.matchPosition.roundIndex)
+const initialRound = store.scoredRounds[initialRoundIndex]
+const phase = ref<'rounds' | 'beer'>(store.matchPosition.phase)
+const roundIndex = ref(initialRoundIndex)
+const questionIndex = ref(clampQuestionIndex(initialRoundIndex, store.matchPosition.questionIndex))
+const settingUpIndividual = ref(
+  Boolean(
+    initialRound &&
+      isIndividualRound(initialRound) &&
+      !store.categoryAssignments[initialRoundIndex],
+  ),
+)
 const beerHome = ref(0)
 const beerAway = ref(0)
 
@@ -433,10 +446,35 @@ function next() {
   } else {
     phase.value = 'beer'
   }
+  persistPosition()
+}
+
+function persistPosition() {
+  store.updateMatchPosition({
+    roundIndex: roundIndex.value,
+    questionIndex: questionIndex.value,
+    phase: phase.value,
+  })
+}
+
+function goToBeer() {
+  phase.value = 'beer'
+  persistPosition()
+}
+
+function goToRounds() {
+  phase.value = 'rounds'
+  persistPosition()
+}
+
+function onRoundSetupSaved() {
+  settingUpIndividual.value = false
+  persistPosition()
 }
 
 function finishBeer() {
   store.recordBeerRound(beerHome.value, beerAway.value)
+  persistPosition()
   emit('done')
 }
 </script>

@@ -8,6 +8,8 @@ The Question Master (QM) section lets a signed-in user run a whole quiz match fr
 
 The section is experimental and hidden from site navigation. It is reachable at `/quizmaster` and is guarded by `authGuard`.
 
+A match in progress is resumable: progress is persisted per fixture and user, so an equipment failure or restart offers the question master a chance to re-enter the password and continue from the same round/question. The parsed paper and the password are never persisted (see ADR-007).
+
 ## Match rules encoded
 
 - 10 scored rounds (rounds 3 and 8 are individual rounds; the rest are team rounds).
@@ -24,7 +26,8 @@ The section is experimental and hidden from site navigation. It is reachable at 
 | `server/src/endpoint/QuizParser.ts` | Deterministic PDF structure parsing + template-drift validation |
 | `server/src/endpoint/DeepSeekResultsSummary.ts` | `generateMatchReport` (shared DeepSeek client) |
 | `server/src/endpoint/QuizMasterEndpoints.ts` | `POST /rest/site/quiz/acquire` and `/rest/site/quiz/report` |
-| `client/src/stores/quizmaster.ts` | In-memory match session state |
+| `client/src/stores/quizmaster.ts` | Match session state (in-memory) + persistence/resume orchestration |
+| `client/src/services/QuizMasterSession.ts` | Firestore save/load/clear of a resumable session (paper excluded) |
 | `client/src/services/QuizScoring.ts` | Pure scoring rules (ownership, half swap, bonuses, jokers) |
 | `client/src/site/components/quizmaster/*` | Setup, review, match, and result views |
 

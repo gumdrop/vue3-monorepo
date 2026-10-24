@@ -12,6 +12,10 @@
       <v-alert v-if="fixtureHasResult" type="error" density="compact" class="mb-4">
         This fixture already has a result — the quiz cannot be run.
       </v-alert>
+      <v-alert v-if="store.resuming" type="info" density="compact" class="mb-4">
+        A quiz is already in progress for this fixture. Re-enter the quiz password to resume where
+        you left off.
+      </v-alert>
 
       <v-text-field
         v-model="password"
@@ -116,7 +120,7 @@ import { availablePlayers } from '@/services/QuizPlayers'
 import { useUserStore } from '@/stores/app'
 import { useQuizmasterStore } from '@/stores/quizmaster'
 
-const emit = defineEmits<{ done: [] }>()
+const emit = defineEmits<{ done: []; resume: [] }>()
 
 const store = useQuizmasterStore()
 const password = ref('')
@@ -189,6 +193,15 @@ onMounted(async () => {
     homeId: fixture.home.id,
     awayId: fixture.away.id,
   }
+
+  if (!fixtureHasResult.value) {
+    const restored = await store.restoreSession()
+    if (restored) {
+      homePlayers.value = [...store.homePlayers, '', '', '', ''].slice(0, 4)
+      awayPlayers.value = [...store.awayPlayers, '', '', '', ''].slice(0, 4)
+      homeIsAFirstHalf.value = store.homeIsAFirstHalf
+    }
+  }
 })
 
 async function teamMemberNames(teamId: string): Promise<string[]> {
@@ -207,7 +220,10 @@ async function acquire() {
   if (!store.fixture?.date || !password.value) return
 
   const pdfBase64 = localFile.value ? await readFileAsBase64(localFile.value) : undefined
-  await store.acquire(store.fixture.date, password.value, pdfBase64)
+  const ok = await store.acquire(store.fixture.date, password.value, pdfBase64)
+  if (ok && store.resuming) {
+    emit('resume')
+  }
 }
 
 function onFileSelected(event: Event) {

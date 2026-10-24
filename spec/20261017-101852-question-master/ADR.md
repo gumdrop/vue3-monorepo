@@ -49,3 +49,11 @@
 - **Decision:** Commit `server/src/endpoint/__tests__/fixtures/quiz-password.txt`, which decrypts the 13-Oct-2026 sample paper only. The `QUIZ_PDF_TEST_PASSWORD` env override is retained for future fixture swaps.
 - **Rationale:** A past paper's password is not a live secret; it is test data. The per-week password a question master supplies at runtime remains never-persisted (FR-1.2).
 - **Consequences:** Tests are self-contained; `.gitignore` no longer excludes the fixture password. The spec/plan's "never commit the password" wording applies to the live per-week password, not this sample fixture.
+
+## ADR-007: Resumable match sessions (paper never persisted)
+- **Date:** 2026-10-24
+- **Status:** Accepted
+- **Context:** The v1 session was in-memory only, so an equipment failure or browser restart lost the match. A question master needs to resume where they left off.
+- **Decision:** Persist a per-fixture, per-user session document (collection `quizmaster-sessions`) holding fixture-agnostic progress: players, outcomes, spares, jokers, category assignments, beer score, running score, undo history, wizard step, and match position. The parsed quiz paper and the password are **not** persisted — on resume the question master re-enters the password and the quiz is re-parsed.
+- **Rationale:** Keeps the embargoed question paper out of Firestore and honours FR-1.2 (password never persisted), while still allowing crash recovery to the exact round/question.
+- **Consequences:** `client/src/services/QuizMasterSession.ts` provides save/load/clear; the store persists on every mutation and clears on submit/reset; setup detects a saved session, notifies the user, and resumes to the saved step after re-acquire.

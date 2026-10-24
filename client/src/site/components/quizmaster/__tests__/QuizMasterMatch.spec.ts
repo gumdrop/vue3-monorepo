@@ -38,6 +38,12 @@ vi.mock('@/services/TeamService', () => ({
   useTeams: () => ({ teamForUser: mocks.teamForUser }),
 }))
 
+vi.mock('@/services/QuizMasterSession', () => ({
+  saveQuizSession: vi.fn(),
+  loadQuizSession: vi.fn().mockResolvedValue(undefined),
+  clearQuizSession: vi.fn(),
+}))
+
 const quizPaper = (): QuizPaper => ({
   rounds: [
     { round: 'ROUND ONE', questions: [{ number: '1A', question: 'Original question?', answer: 'Original answer' }] },
