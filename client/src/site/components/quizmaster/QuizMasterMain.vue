@@ -37,7 +37,7 @@ const user = computed(() => useUserStore().user)
 
 function goTo(next: 1 | 2 | 3 | 4) {
   step.value = next
-  if (next >= 2) {
+  if (next !== 1) {
     store.setResumeStep(next)
   }
 }
