@@ -39,6 +39,10 @@ A dedicated data maintenance application is available at `/maintain`.
 - If you need implementation help, use a code-focused agent and link the relevant package (`client/`, `server/`, or `shared/`).
 - If you need to update shared APIs, preserve backward compatibility.
 
+## Git / PR Conventions
+
+- When merging PRs, always squash and delete the source branch.
+
 ## Coding Conventions
 
 - **Lifecycle Hooks**: When implementing or debugging features that depend on external state (like URL parameters or Firebase auth links), always ensure that the appropriate lifecycle hooks (e.g., `onMounted`) are used to initialize or check that state.
