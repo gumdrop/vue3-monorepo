@@ -2,7 +2,10 @@
   <div class="quiz-match-wrap mt-4">
   <v-card>
     <v-card-title class="d-flex justify-space-between align-center" style="padding-right: 100px;">
-      <span>Match</span>
+      <div class="d-flex align-center ga-2">
+        <span>Match</span>
+        <v-btn size="small" variant="tonal" @click="scoresheetOpen = true">Scoresheet</v-btn>
+      </div>
       <span class="text-h5">
         {{ homeName }} {{ store.score.home }} — {{ store.score.away }} {{ awayName }}
       </span>
@@ -392,6 +395,73 @@
     </v-card-text>
   </v-card>
 
+  <v-dialog v-model="scoresheetOpen" max-width="960">
+    <v-card>
+      <v-card-title class="d-flex justify-space-between align-center">
+        <span>Scoresheet</span>
+        <v-btn icon variant="text" @click="scoresheetOpen = false">✕</v-btn>
+      </v-card-title>
+      <v-card-text>
+        <div class="text-h6 mb-4">
+          {{ homeName }} {{ store.score.home }} — {{ store.score.away }} {{ awayName }}
+        </div>
+
+        <v-table density="compact">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>Directed at</th>
+              <th>Joker</th>
+              <th>Outcome</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template v-for="(round, roundIndex) in store.scoresheet" :key="roundIndex">
+              <tr class="scoresheet-round-row">
+                <td colspan="5" class="font-weight-bold">{{ round.name }}</td>
+              </tr>
+              <tr v-for="(entry, entryIndex) in round.entries" :key="entryIndex">
+                <td>
+                  {{ entry.number }}
+                  <v-chip
+                    v-if="entry.spareInvoked"
+                    size="x-small"
+                    color="warning"
+                    class="ml-1"
+                  >
+                    Spare
+                  </v-chip>
+                </td>
+                <td>{{ directedText(entry) }}</td>
+                <td>
+                  <v-chip v-if="entry.joker" size="x-small" color="warning">
+                    {{ jokerText(entry) }}
+                  </v-chip>
+                  <template v-else>—</template>
+                </td>
+                <td>{{ outcomeText(entry) }}</td>
+                <td>{{ pointsText(entry) }}</td>
+              </tr>
+              <tr class="scoresheet-total-row">
+                <td colspan="5" class="text-right">
+                  <div>Round: {{ homeName }} {{ round.homePoints }} — {{ round.awayPoints }} {{ awayName }}</div>
+                  <div class="font-weight-bold">
+                    Running total: {{ homeName }} {{ round.homeTotal }} — {{ round.awayTotal }} {{ awayName }}
+                  </div>
+                </td>
+              </tr>
+            </template>
+          </tbody>
+        </v-table>
+
+        <div class="d-flex justify-end mt-4">
+          <v-btn variant="text" @click="scoresheetOpen = false">Close</v-btn>
+        </div>
+      </v-card-text>
+    </v-card>
+  </v-dialog>
+
   <v-btn
     v-if="showTimer"
     class="timer-fab"
@@ -410,7 +480,7 @@
 import { computed, onUnmounted, ref } from 'vue'
 import type { QuizQuestionOutcome } from '@quizleague/shared'
 import { isIndividualRound } from '@/services/QuizScoring'
-import { useQuizmasterStore } from '@/stores/quizmaster'
+import { useQuizmasterStore, type ScoresheetEntry } from '@/stores/quizmaster'
 import { underlineHtml } from '@/utils/underlines'
 import IndividualRoundSetup from './IndividualRoundSetup.vue'
 
@@ -440,6 +510,36 @@ const beerAway = ref(0)
 
 const homeName = computed(() => store.fixture?.homeName ?? 'Home')
 const awayName = computed(() => store.fixture?.awayName ?? 'Away')
+
+const scoresheetOpen = ref(false)
+
+function directedText(entry: ScoresheetEntry): string {
+  if (entry.category) {
+    return `${entry.category} · ${entry.contestant ?? '—'}`
+  }
+  return entry.owner === 'home' ? homeName.value : awayName.value
+}
+
+function outcomeText(entry: ScoresheetEntry): string {
+  if (!entry.outcome) return '—'
+  if (entry.outcome === 'correct') return 'Correct'
+  if (entry.outcome === 'bonus') return 'Bonus'
+  return 'Unanswered'
+}
+
+function pointsText(entry: ScoresheetEntry): string {
+  if (!entry.outcome) return '—'
+  if (entry.points === 0) return '0'
+  const side = entry.scoringSide === 'home' ? homeName.value : awayName.value
+  return `+${entry.points} ${side}`
+}
+
+function jokerText(entry: ScoresheetEntry): string {
+  if (entry.joker === 'both') return `Joker (${homeName.value} & ${awayName.value})`
+  if (entry.joker === 'home') return `Joker (${homeName.value})`
+  if (entry.joker === 'away') return `Joker (${awayName.value})`
+  return ''
+}
 
 const currentTieBreakSection = computed(
   () => store.tieBreakSections[store.tieBreakSectionIndex],
@@ -759,5 +859,13 @@ function finishBeer() {
 
 .timer-done {
   animation: timer-flash 0.6s ease-in-out infinite;
+}
+
+.scoresheet-round-row td {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.scoresheet-total-row td {
+  background: rgba(0, 0, 0, 0.02);
 }
 </style>
