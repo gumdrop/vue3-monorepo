@@ -212,6 +212,8 @@ onMounted(async () => {
     homeId: fixture.home.id,
     awayId: fixture.away.id,
     isCup: competition?._name === 'cup',
+    homeTeam,
+    awayTeam,
   }
 
   if (!fixtureHasResult.value) {

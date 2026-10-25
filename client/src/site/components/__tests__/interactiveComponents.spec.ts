@@ -15,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   routerPush: vi.fn(),
   route: {
     query: {} as Record<string, unknown>,
+    matched: [] as Array<{ components?: Record<string, unknown> }>,
   },
   saveSiteUser: vi.fn(),
   seasons: [] as Array<{ id: string; startYear: number; endYear: number }>,

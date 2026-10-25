@@ -22,6 +22,7 @@ import {
 } from '@/services/QuizScoring'
 import { REST_ROOT } from '@/services/constants'
 import { clearQuizSession, loadQuizSession, saveQuizSession, type QuizSession } from '@/services/QuizMasterSession'
+import type Team from '@/entity/Team'
 import { useUserStore } from './app'
 
 export interface SelectedFixture {
@@ -32,6 +33,8 @@ export interface SelectedFixture {
   homeId: string
   awayId: string
   isCup?: boolean
+  homeTeam?: Team
+  awayTeam?: Team
 }
 
 export interface InvokedSpare {

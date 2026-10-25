@@ -1,13 +1,17 @@
 <template>
   <div class="quiz-match-wrap mt-4">
   <v-card>
-    <v-card-title class="d-flex justify-space-between align-center" style="padding-right: 100px;">
+    <v-card-title class="match-header-title d-flex justify-space-between align-center">
       <div class="d-flex align-center ga-2">
         <span>Match</span>
         <v-btn size="small" variant="tonal" @click="scoresheetOpen = true">Scoresheet</v-btn>
       </div>
-      <span class="text-h5">
-        {{ homeName }} {{ store.score.home }} — {{ store.score.away }} {{ awayName }}
+      <span class="match-score score-line">
+        <ResponsiveTeamName v-if="homeTeam" :team="homeTeam" />
+        <template v-else>{{ homeName }}</template>
+        {{ store.score.home }} — {{ store.score.away }}
+        <ResponsiveTeamName v-if="awayTeam" :team="awayTeam" />
+        <template v-else>{{ awayName }}</template>
       </span>
     </v-card-title>
 
@@ -402,8 +406,12 @@
         <v-btn icon variant="text" @click="scoresheetOpen = false">✕</v-btn>
       </v-card-title>
       <v-card-text>
-        <div class="text-h6 mb-4">
-          {{ homeName }} {{ store.score.home }} — {{ store.score.away }} {{ awayName }}
+        <div class="score-line text-h6 mb-4">
+          <ResponsiveTeamName v-if="homeTeam" :team="homeTeam" />
+          <template v-else>{{ homeName }}</template>
+          {{ store.score.home }} — {{ store.score.away }}
+          <ResponsiveTeamName v-if="awayTeam" :team="awayTeam" />
+          <template v-else>{{ awayName }}</template>
         </div>
 
         <v-table density="compact">
@@ -482,6 +490,7 @@ import type { QuizQuestionOutcome } from '@quizleague/shared'
 import { isIndividualRound } from '@/services/QuizScoring'
 import { useQuizmasterStore, type ScoresheetEntry } from '@/stores/quizmaster'
 import { underlineHtml } from '@/utils/underlines'
+import ResponsiveTeamName from '../common/ResponsiveTeamName.vue'
 import IndividualRoundSetup from './IndividualRoundSetup.vue'
 
 const emit = defineEmits<{ back: []; done: [] }>()
@@ -510,6 +519,8 @@ const beerAway = ref(0)
 
 const homeName = computed(() => store.fixture?.homeName ?? 'Home')
 const awayName = computed(() => store.fixture?.awayName ?? 'Away')
+const homeTeam = computed(() => store.fixture?.homeTeam)
+const awayTeam = computed(() => store.fixture?.awayTeam)
 
 const scoresheetOpen = ref(false)
 
@@ -802,6 +813,22 @@ function finishBeer() {
 }
 </script>
 <style scoped>
+.match-header-title {
+  padding-right: 100px;
+}
+
+.score-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5ch;
+}
+
+.match-score {
+  font-size: 1.5rem;
+  line-height: 1.3;
+}
+
 .timer-fab {
   position: absolute;
   top: 0;
@@ -813,6 +840,22 @@ function finishBeer() {
   padding: 0 !important;
   border-radius: 50% !important;
   z-index: 20;
+}
+
+@media (max-width: 600px) {
+  .match-header-title {
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 8px;
+    padding-right: 16px;
+  }
+
+  .match-score {
+    font-size: 1.25rem;
+    line-height: 1.3;
+    padding-right: 88px;
+  }
 }
 
 .quiz-match-wrap {

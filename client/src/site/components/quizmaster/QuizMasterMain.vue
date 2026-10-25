@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container class="pa-0">
     <template v-if="user">
       <v-row>
         <v-col cols="12">
