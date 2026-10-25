@@ -107,11 +107,11 @@ describe('QuizMasterMatch', () => {
     expect(wrapper.text()).toContain('Running total: Home Team 2 — 0 Away Team')
   })
 
-  it('shows Invoke spare question with Correct and Pass Over, disabled until the timer starts', async () => {
+  it('shows Invoke spare question with Correct and Pass Across, disabled until the timer starts', async () => {
     wrapper = mountMatch()
 
     expect(findButton(wrapper, 'Correct').exists()).toBe(true)
-    expect(findButton(wrapper, 'Pass Over').exists()).toBe(true)
+    expect(findButton(wrapper, 'Pass Across').exists()).toBe(true)
 
     const invokeSpare = findButton(wrapper, 'Invoke spare question')
     expect(invokeSpare.attributes('disabled')).toBeDefined()
@@ -192,9 +192,9 @@ describe('QuizMasterMatch', () => {
   it('starts the countdown immediately when the question is passed over', async () => {
     wrapper = mountMatch()
 
-    // Start the timer so the Pass Over button becomes enabled.
+    // Start the timer so the Pass Across button becomes enabled.
     await wrapper.find('button.timer-fab').trigger('click')
-    await findButton(wrapper, 'Pass Over').trigger('click')
+    await findButton(wrapper, 'Pass Across').trigger('click')
 
     // The shorter passed-over countdown (15s) is already running.
     const timerFab = wrapper.find('button.timer-fab')
@@ -287,11 +287,11 @@ describe('QuizMasterMatch', () => {
     // The opposing contestant is shown as the target.
     expect(wrapper.text()).toContain('Dave')
 
-    // The question is already passed over: bonus buttons, no Pass Over button.
+    // The question is already passed over: bonus buttons, no Pass Across button.
     expect(findButton(wrapper, 'Correct (+1)').exists()).toBe(true)
     expect(findButton(wrapper, 'Incorrect').exists()).toBe(true)
     expect(
-      wrapper.findAll('button').some((button) => button.text().includes('Pass Over')),
+      wrapper.findAll('button').some((button) => button.text().includes('Pass Across')),
     ).toBe(false)
   })
 
