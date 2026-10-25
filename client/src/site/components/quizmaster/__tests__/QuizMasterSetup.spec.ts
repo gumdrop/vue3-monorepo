@@ -90,12 +90,13 @@ const VRadioStub = defineComponent({
 })
 
 const VComboboxStub = defineComponent({
-  props: { label: String, modelValue: [String, Array, Number] },
+  props: { label: String, modelValue: [String, Array, Number], items: Array },
   emits: ['update:modelValue'],
   setup(props, { emit }) {
     return () =>
       h('input', {
         'aria-label': String(props.label),
+        'data-items': JSON.stringify(props.items ?? []),
         value: props.modelValue ?? '',
         onInput: (event: Event) =>
           emit('update:modelValue', (event.target as HTMLInputElement).value),
@@ -184,6 +185,51 @@ describe('QuizMasterSetup', () => {
     expect(wrapper.text()).not.toContain('This fixture already has a result')
   })
 
+  it('does not offer retired team members when selecting players', async () => {
+    mocks.fixtureDAO.getDataByPath.mockResolvedValue(fixture(false))
+    mocks.teamMemberDAO.getDataForTeam.mockImplementation(async (teamPath: string) =>
+      teamPath === 'team/home-team'
+        ? {
+            users: [
+              { id: 'active', path: 'user/active' },
+              { id: 'retired', path: 'user/retired' },
+            ],
+          }
+        : { users: [] },
+    )
+    mocks.userDAO.getDataById.mockImplementation(async (id: string) => {
+      if (id === 'active') {
+        return {
+          id,
+          path: 'user/active',
+          name: 'Active Alice',
+          email: 'alice@example.com',
+          retired: false,
+        }
+      }
+      if (id === 'retired') {
+        return {
+          id,
+          path: 'user/retired',
+          name: 'Retired Bob',
+          email: 'bob@example.com',
+          retired: true,
+        }
+      }
+      return undefined
+    })
+
+    const wrapper = await mountSetup()
+    useQuizmasterStore().quiz = quizPaper()
+    await nextTick()
+
+    const homePlayerItems = wrapper
+      .findAll('input[aria-label="Player 1"]')[0]
+      .attributes('data-items')
+    expect(homePlayerItems).toContain('Active Alice')
+    expect(homePlayerItems).not.toContain('Retired Bob')
+  })
+
   it('notifies and restores an in-progress quiz for re-acquire', async () => {
     mocks.user = { team: { id: 'team-1' } }
     mocks.fixtureDAO.getDataByPath.mockResolvedValue(fixture(false))
@@ -224,6 +270,7 @@ describe('QuizMasterSetup', () => {
         name: '',
         email: '',
         retired: false,
+        placeholder: false,
       }
     })
     mocks.teamMemberDAO.getDataForTeam.mockImplementation(async (teamPath: string) =>
@@ -265,19 +312,39 @@ describe('QuizMasterSetup', () => {
 
     expect(mocks.userDAO.save).toHaveBeenCalledTimes(5)
     expect(mocks.userDAO.save).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'New Home Player', email: 'placeholder@dummy.com' }),
+      expect.objectContaining({
+        name: 'New Home Player',
+        email: 'placeholder@dummy.com',
+        placeholder: true,
+      }),
     )
     expect(mocks.userDAO.save).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Another New Home', email: 'placeholder@dummy.com' }),
+      expect.objectContaining({
+        name: 'Another New Home',
+        email: 'placeholder@dummy.com',
+        placeholder: true,
+      }),
     )
     expect(mocks.userDAO.save).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'New Away Player', email: 'placeholder@dummy.com' }),
+      expect.objectContaining({
+        name: 'New Away Player',
+        email: 'placeholder@dummy.com',
+        placeholder: true,
+      }),
     )
     expect(mocks.userDAO.save).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Second Away Player', email: 'placeholder@dummy.com' }),
+      expect.objectContaining({
+        name: 'Second Away Player',
+        email: 'placeholder@dummy.com',
+        placeholder: true,
+      }),
     )
     expect(mocks.userDAO.save).toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'Third Away Player', email: 'placeholder@dummy.com' }),
+      expect.objectContaining({
+        name: 'Third Away Player',
+        email: 'placeholder@dummy.com',
+        placeholder: true,
+      }),
     )
 
     expect(mocks.teamMemberDAO.saveForTeam).toHaveBeenCalledTimes(2)

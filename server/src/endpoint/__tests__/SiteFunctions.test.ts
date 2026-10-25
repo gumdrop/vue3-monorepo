@@ -212,6 +212,34 @@ describe('SiteFunctions', () => {
     })
   })
 
+  it('throws when the league user is retired', async () => {
+    vi.mocked(list).mockImplementation(async (type) => {
+      if (type === 'user') return [{ ...user, retired: true }] as never
+      if (type === 'siteuser') return [] as never
+      return [] as never
+    })
+
+    await expect(siteUserForEmail('player@example.com')).rejects.toThrow('no user found for email')
+    await expect(siteUserForEmail('player@example.com')).rejects.toMatchObject({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+    })
+  })
+
+  it('throws when the league user is a placeholder', async () => {
+    vi.mocked(list).mockImplementation(async (type) => {
+      if (type === 'user') return [{ ...user, placeholder: true }] as never
+      if (type === 'siteuser') return [] as never
+      return [] as never
+    })
+
+    await expect(siteUserForEmail('player@example.com')).rejects.toThrow('no user found for email')
+    await expect(siteUserForEmail('player@example.com')).rejects.toMatchObject({
+      statusCode: 404,
+      statusMessage: 'Not Found',
+    })
+  })
+
   it('sends team email to users in the member document', async () => {
     mockContactLoads()
     vi.mocked(list).mockImplementation(async (type) => {

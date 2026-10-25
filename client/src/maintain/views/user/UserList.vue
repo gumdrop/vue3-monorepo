@@ -11,7 +11,11 @@
           <v-list>
             <v-list-item v-for="user in users" :key="user.id" :to="'/user/' + user.id">
               <v-list-item-title>{{ user.name }}</v-list-item-title>
-              <v-list-item-subtitle>{{ user.email }}</v-list-item-subtitle>
+              <v-list-item-subtitle>
+                {{ user.email }}
+                <template v-if="user.placeholder"> · Placeholder</template>
+                <template v-if="user.retired"> · Retired</template>
+              </v-list-item-subtitle>
             </v-list-item>
           </v-list>
         </v-card>

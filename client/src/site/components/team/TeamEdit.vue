@@ -28,7 +28,10 @@
             <v-dialog v-model="dialog" persistent max-width="600px">
               <v-card>
                 <v-card-title>
-                  <span class="headline"><v-icon>mdi-account-plus</v-icon>&nbsp;New User</span>
+                  <span class="headline"
+                    ><v-icon>{{ editing ? 'mdi-account-edit' : 'mdi-account-plus' }}</v-icon
+                    >&nbsp;{{ editing ? 'Edit User' : 'New User' }}</span
+                  >
                 </v-card-title>
                 <v-card-text v-if="user">
                   <v-container grid-list-md>
@@ -36,6 +39,7 @@
                       <v-text-field
                         prepend-icon="mdi-account"
                         label="Name"
+                        data-test="user-name"
                         required
                         :rules="[required('Name')]"
                         v-model="user.name"
@@ -45,6 +49,7 @@
                         prepend-icon="mdi-email"
                         label="Email"
                         type="email"
+                        data-test="user-email"
                         required
                         :rules="[required('Email'), isEmail('Email')]"
                         v-model="user.email"
@@ -62,22 +67,28 @@
                   >
                   <v-btn
                     color="blue darken-1"
+                    data-test="confirm-user"
                     @click="confirmAddUser(user)"
                     :disabled="!valid"
                     prepend-icon="mdi-account-plus"
-                    >Add</v-btn
+                    >{{ editing ? 'Save' : 'Add' }}</v-btn
                   >
                 </v-card-actions>
               </v-card>
             </v-dialog>
-            <v-col v-if="users">
-              <v-icon color="primary">mdi-account-multiple</v-icon>&nbsp;<v-chip
-                v-for="usr in users"
-                closable
-                @click:close="removeUser(usr.id, users)"
-                :key="usr.id"
-                >{{ usr.name }}</v-chip
-              >
+            <v-col v-if="users" class="mt-3">
+              <v-icon color="primary">mdi-account-multiple</v-icon>&nbsp;
+              <template v-for="usr in users" :key="usr.id">
+                <v-chip closable @click:close="removeUser(usr.id, users)">{{ usr.name }}</v-chip>
+                <v-btn
+                  v-if="usr.placeholder"
+                  icon="mdi-pencil"
+                  size="small"
+                  variant="text"
+                  aria-label="Edit placeholder user"
+                  @click="editUser(usr)"
+                ></v-btn>
+              </template>
             </v-col>
           </v-card-text>
         </v-card>
@@ -134,6 +145,7 @@ import { storeToRefs } from 'pinia'
 
 const valid = ref(false)
 const dialog = ref(false)
+const editing = ref(false)
 const success = ref(false)
 
 const { gridSize } = useLayout()
@@ -168,19 +180,38 @@ const submit = async (team: Team, text: Text | undefined, users: User[] | undefi
 
 const newUser = () => {
   user.value = UserDAO.newInstance()
+  editing.value = false
+  dialog.value = true
+}
+
+const editUser = (usr: User) => {
+  user.value = { ...usr }
+  editing.value = true
   dialog.value = true
 }
 
 const addUser = (user: User) => {
   UserDAO.save(user)
   if (users.value) {
-    users.value.push(user)
+    users.value = [...users.value, user]
+  }
+}
+
+const updateUser = (user: User) => {
+  user.placeholder = false
+  UserDAO.save(user)
+  if (users.value) {
+    users.value = users.value.map((u) => (u.id === user.id ? user : u))
   }
 }
 
 const confirmAddUser = (user: User) => {
   dialog.value = false
-  addUser(user)
+  if (editing.value) {
+    updateUser(user)
+  } else {
+    addUser(user)
+  }
 }
 
 watch(
@@ -188,7 +219,8 @@ watch(
   async (team) => {
     if (team) {
       const teamMember = await TeamMemberDAO.getDataForTeam(team)
-      users.value = (await UserDAO.entityList(teamMember?.users ?? [])) ?? []
+      const memberUsers = (await UserDAO.entityList(teamMember?.users ?? [])) ?? []
+      users.value = memberUsers.filter((user) => !user.retired)
       textDoc.value = TextDAO.getByPath(team.text)
     }
   },

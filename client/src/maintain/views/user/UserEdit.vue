@@ -14,6 +14,8 @@
             label="Email"
             :rules="[rules.required('Email'), rules.isEmail('Email')]"
           ></v-text-field>
+          <v-checkbox v-model="user.placeholder" label="Placeholder"></v-checkbox>
+          <v-checkbox v-model="user.retired" label="Retired"></v-checkbox>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
@@ -49,6 +51,8 @@ onMounted(async () => {
       path: 'user',
       name: '',
       email: '',
+      placeholder: false,
+      retired: false,
     } as User
   } else {
     const id = route.params.id as string

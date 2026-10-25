@@ -728,6 +728,48 @@ describe('maintenance edit views', () => {
     expect(mocks.routerPush).toHaveBeenCalledWith('/user')
   })
 
+  it('saves the placeholder flag on a user', async () => {
+    mocks.route.params = { id: 'new' }
+    const wrapper = await mountMaintenance(UserEdit)
+
+    await setField(wrapper, 'Name', 'Placeholder Player')
+    await setField(wrapper, 'Email', 'placeholder@dummy.com')
+    await wrapper.get('input[aria-label="Placeholder"]').setValue(true)
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.userDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'uuid-1',
+        path: 'user/uuid-1',
+        name: 'Placeholder Player',
+        email: 'placeholder@dummy.com',
+        placeholder: true,
+      }),
+    )
+    expect(mocks.routerPush).toHaveBeenCalledWith('/user')
+  })
+
+  it('saves the retired flag on a user', async () => {
+    mocks.route.params = { id: 'new' }
+    const wrapper = await mountMaintenance(UserEdit)
+
+    await setField(wrapper, 'Name', 'Retired Player')
+    await setField(wrapper, 'Email', 'retired@example.com')
+    await wrapper.get('input[aria-label="Retired"]').setValue(true)
+    await clickButton(wrapper, 'Save')
+
+    expect(mocks.userDAO.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'uuid-1',
+        path: 'user/uuid-1',
+        name: 'Retired Player',
+        email: 'retired@example.com',
+        retired: true,
+      }),
+    )
+    expect(mocks.routerPush).toHaveBeenCalledWith('/user')
+  })
+
   it('loads and saves an existing user without regenerating its identity', async () => {
     mocks.route.params = { id: 'alice_example_com' }
     mocks.userDAO.getDataById.mockResolvedValue({

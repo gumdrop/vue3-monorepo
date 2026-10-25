@@ -168,7 +168,7 @@ export async function siteUserForEmail(email: string) {
 
   const siteUsers = await list<SiteUser>('siteuser')
 
-  if (user) {
+  if (user && !user.retired && !user.placeholder) {
     const userHasTeam = await teamForUser(user)
     if (userHasTeam) {
       const siteUser = siteUsers.find((su) => su.user && su.user.id === user.id)
