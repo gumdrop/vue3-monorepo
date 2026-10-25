@@ -577,10 +577,12 @@ function startTimer() {
 function pauseTimer() {
   clearTimer()
   timerState.value = 'paused'
+  answerRevealed.value = false
 }
 
 function resumeTimer() {
   timerState.value = 'running'
+  answerRevealed.value = true
   timerHandle = setInterval(tick, 1000)
 }
 

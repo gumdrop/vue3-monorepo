@@ -1,4 +1,5 @@
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { QuizPaper } from '@quizleague/shared'
@@ -104,6 +105,50 @@ describe('QuizMasterMatch', () => {
     await wrapper.find('button.timer-fab').trigger('click')
 
     expect(findButton(wrapper, 'Invoke spare question').attributes('disabled')).toBeUndefined()
+  })
+
+  it('hides the answer while the timer is paused and reveals it again on resume', async () => {
+    wrapper = mountMatch()
+
+    await wrapper.find('button.timer-fab').trigger('click')
+    expect(wrapper.text()).toContain('Original answer')
+
+    // Pausing via the timer toggle hides the answer.
+    await wrapper.find('button.timer-fab').trigger('click')
+    expect(wrapper.text()).toContain('Answer hidden')
+    expect(wrapper.text()).not.toContain('Original answer')
+
+    // Resuming reveals it again.
+    await wrapper.find('button.timer-fab').trigger('click')
+    expect(wrapper.text()).toContain('Original answer')
+  })
+
+  it('keeps the answer visible when recording an outcome halts the timer', async () => {
+    wrapper = mountMatch()
+
+    await wrapper.find('button.timer-fab').trigger('click')
+    await findButton(wrapper, 'Correct (+2)').trigger('click')
+
+    // Recording an outcome pauses the timer internally, but the answer stays visible.
+    expect(wrapper.text()).toContain('Original answer')
+    expect(wrapper.text()).not.toContain('Answer hidden')
+  })
+
+  it('keeps the answer visible when the countdown reaches zero', async () => {
+    vi.useFakeTimers()
+    try {
+      wrapper = mountMatch()
+
+      await wrapper.find('button.timer-fab').trigger('click')
+      vi.advanceTimersByTime(30_000)
+      await nextTick()
+
+      expect(wrapper.find('button.timer-fab').text()).toContain('Time')
+      expect(wrapper.text()).toContain('Original answer')
+      expect(wrapper.text()).not.toContain('Answer hidden')
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('invokes a spare and resets the timer when clicked', async () => {
