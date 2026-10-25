@@ -19,7 +19,7 @@ class UserDAO extends DAO<User> {
 
 class UserConverter extends DataConverter<User> {
   buildObject(data: DocumentData, key: string): User {
-    return new User(data.id, data.name, data.email, key, data.retired)
+    return new User(data.id, data.name, data.email, key, data.retired, data.placeholder)
   }
 }
 

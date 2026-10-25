@@ -7,6 +7,7 @@ export default class User implements Entity {
     public email: string,
     public readonly key: string,
     public retired: boolean = false,
+    public placeholder: boolean = false,
   ) {
     this.path = key
   }

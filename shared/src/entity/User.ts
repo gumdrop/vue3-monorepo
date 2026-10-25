@@ -4,4 +4,5 @@ export interface User extends Entity {
   name: string
   email: string
   retired: boolean
+  placeholder: boolean
 }

@@ -231,7 +231,7 @@ async function teamMembers(teamId: string): Promise<{ names: string[]; users: Pa
   const names: string[] = []
   for (const ref of users) {
     const teamUser = await UserDAO.getDataById(ref.id)
-    if (teamUser?.name?.trim()) names.push(teamUser.name)
+    if (teamUser?.name?.trim() && !teamUser.retired) names.push(teamUser.name)
   }
   return { names, users }
 }
@@ -302,6 +302,7 @@ async function saveAdhocPlayers(teamId: string, players: string[]) {
     const user = UserDAO.newInstance()
     user.name = player.trim()
     user.email = 'placeholder@dummy.com'
+    user.placeholder = true
     newUsers.push(user)
   }
 

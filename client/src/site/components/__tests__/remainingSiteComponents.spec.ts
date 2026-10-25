@@ -2170,6 +2170,59 @@ describe('remaining team, venue, and statistics components', () => {
     expect(mountSite(TeamsMain).text()).toContain('teams-header')
   })
 
+  it('allows editing placeholder user details from the team edit page', async () => {
+    mocks.userEntityList.mockResolvedValue([
+      { id: 'user-1', path: 'user/user-1', name: 'Alice', email: 'alice@example.com' },
+      {
+        id: 'user-2',
+        path: 'user/user-2',
+        name: 'Spare Player',
+        email: 'placeholder@dummy.com',
+        placeholder: true,
+      },
+    ])
+
+    const wrapper = mountSite(TeamEdit)
+    await flushPromises()
+
+    await wrapper.get('button[aria-label="Edit placeholder user"]').trigger('click')
+    expect(wrapper.text()).toContain('Edit User')
+
+    await wrapper.get('input[data-test="user-name"]').setValue('Real Player')
+    await wrapper.get('input[data-test="user-email"]').setValue('real@example.com')
+    await wrapper.get('button[data-test="confirm-user"]').trigger('click')
+    await flushPromises()
+
+    expect(mocks.userSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 'user-2',
+        path: 'user/user-2',
+        name: 'Real Player',
+        email: 'real@example.com',
+        placeholder: false,
+      }),
+    )
+  })
+
+  it('excludes retired users from the team edit member list', async () => {
+    mocks.userEntityList.mockResolvedValue([
+      { id: 'user-1', path: 'user/user-1', name: 'Alice', email: 'alice@example.com' },
+      {
+        id: 'user-2',
+        path: 'user/user-2',
+        name: 'Old Bob',
+        email: 'bob@example.com',
+        retired: true,
+      },
+    ])
+
+    const wrapper = mountSite(TeamEdit)
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Alice')
+    expect(wrapper.text()).not.toContain('Old Bob')
+  })
+
   it('renders venue and team mobile lists when compact display is active', () => {
     mocks.smAndDown = true
     const compactGlobal = {
