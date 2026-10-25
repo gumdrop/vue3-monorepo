@@ -51,7 +51,7 @@
       <v-container fluid class="px-0 px-sm-6 py-6">
         <v-row justify="start">
           <v-col cols="12">
-            <div class="title-view-container mb-4">
+            <div v-if="hasTitleView" class="title-view-container mb-4">
               <router-view name="title" v-slot="{ Component }">
                 <component :is="Component" />
               </router-view>
@@ -98,7 +98,8 @@
 import ApplicationContextDAO from "@/dao/ApplicationContextDAO";
 import { useSideMenuStore, useUserStore } from "@/stores/app";
 import { storeToRefs } from "pinia";
-import { ref } from "vue";
+import { computed, ref } from "vue";
+import { useRoute } from "vue-router";
 import { useDocument } from "vuefire";
 import { useDisplay } from "vuetify";
 import PageTitle from "./common/PageTitle.vue";
@@ -108,7 +109,12 @@ import LoggedOnMenu from "./auth/LoggedOnMenu.vue";
 
 const appData = useDocument(ApplicationContextDAO.get())
 
-const { mdAndDown, smAndDown, smAndUp, mdAndUp, lgAndUp } = useDisplay()
+const { mdAndDown, smAndDown, mdAndUp, lgAndUp } = useDisplay()
+
+const route = useRoute()
+const hasTitleView = computed(
+  () => route.matched?.some((record) => Boolean(record.components?.title)) ?? false,
+)
 
 const { user } = storeToRefs(useUserStore())
 

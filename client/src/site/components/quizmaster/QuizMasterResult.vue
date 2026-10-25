@@ -2,8 +2,12 @@
   <v-card class="mt-4">
     <v-card-title>Submit result</v-card-title>
     <v-card-text>
-      <div class="text-h5 mb-2">
-        {{ teamNames.home }} {{ displayScore.home }} — {{ displayScore.away }} {{ teamNames.away }}
+      <div class="score-line text-h5 mb-2">
+        <ResponsiveTeamName v-if="homeTeam" :team="homeTeam" />
+        <template v-else>{{ teamNames.home }}</template>
+        {{ displayScore.home }} — {{ displayScore.away }}
+        <ResponsiveTeamName v-if="awayTeam" :team="awayTeam" />
+        <template v-else>{{ teamNames.away }}</template>
       </div>
       <div class="text-subtitle-1 text-medium-emphasis mb-4">
         Beer round: {{ displayBeer.home }} — {{ displayBeer.away }}
@@ -46,6 +50,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useQuizmasterStore } from '@/stores/quizmaster'
+import ResponsiveTeamName from '../common/ResponsiveTeamName.vue'
 
 const emit = defineEmits<{ back: []; restart: [] }>()
 const store = useQuizmasterStore()
@@ -55,6 +60,8 @@ const teamNames = computed(() => ({
   home: store.fixture?.homeName ?? 'Home',
   away: store.fixture?.awayName ?? 'Away',
 }))
+const homeTeam = computed(() => store.fixture?.homeTeam)
+const awayTeam = computed(() => store.fixture?.awayTeam)
 const displayScore = computed(() => store.submittedScore ?? store.submissionScore)
 const displayBeer = computed(() => store.submittedBeerRoundScore ?? store.beerRoundScore)
 
@@ -77,6 +84,13 @@ function restart() {
 }
 </script>
 <style scoped>
+.score-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5ch;
+}
+
 .report-text {
   white-space: pre-wrap;
 }
