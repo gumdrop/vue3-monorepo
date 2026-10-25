@@ -109,7 +109,7 @@
                 :disabled="outcomeButtonsDisabled"
                 @click="passOver"
               >
-                Pass Over
+                Pass Across
               </v-btn>
               <v-btn
                 v-if="!spare"
