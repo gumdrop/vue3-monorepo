@@ -40,9 +40,8 @@
         {{ store.submitError }}
       </v-alert>
 
-      <div class="mt-4 d-flex ga-2">
+      <div class="mt-4">
         <v-btn variant="text" :disabled="store.submitted" @click="emit('back')">Back</v-btn>
-        <v-btn v-if="store.submitted" color="primary" @click="restart">Run another match</v-btn>
       </div>
     </v-card-text>
   </v-card>
@@ -52,7 +51,7 @@ import { computed, ref } from 'vue'
 import { useQuizmasterStore } from '@/stores/quizmaster'
 import ResponsiveTeamName from '../common/ResponsiveTeamName.vue'
 
-const emit = defineEmits<{ back: []; restart: [] }>()
+const emit = defineEmits<{ back: [] }>()
 const store = useQuizmasterStore()
 const generating = ref(false)
 
@@ -76,11 +75,6 @@ async function generate() {
 
 async function submit() {
   await store.submit()
-}
-
-function restart() {
-  store.reset()
-  emit('restart')
 }
 </script>
 <style scoped>
