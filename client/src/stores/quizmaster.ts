@@ -10,6 +10,7 @@ import {
   initialScore,
   isIndividualRound,
   jokerApplies,
+  outcomePoints,
   ownCorrectCounts,
   owningSide,
   subjectForQuestion,
@@ -49,6 +50,27 @@ export interface MatchPosition {
   roundIndex: number
   questionIndex: number
   phase: MatchPhase
+}
+
+export interface ScoresheetEntry {
+  number: string
+  owner: TeamSide
+  outcome?: QuizQuestionOutcome
+  category?: string
+  contestant?: string
+  joker?: 'home' | 'away' | 'both'
+  points: number
+  scoringSide: TeamSide
+  spareInvoked: boolean
+}
+
+export interface ScoresheetRound {
+  name: string
+  entries: ScoresheetEntry[]
+  homePoints: number
+  awayPoints: number
+  homeTotal: number
+  awayTotal: number
 }
 
 const isBeerRound = (round: QuizRound) => /beer/i.test(round.round)
@@ -230,6 +252,57 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     return tieBreakWinner.value === 'home'
       ? { home: score.value.home + 1, away: score.value.away }
       : { home: score.value.home, away: score.value.away + 1 }
+  })
+
+  // A per-question ledger of the scored rounds, derived from recorded outcomes
+  // so the question master can review the running scoresheet at any time.
+  const scoresheet = computed<ScoresheetRound[]>(() => {
+    let runningHome = 0
+    let runningAway = 0
+
+    return scoredRounds.value.map((round, roundIndex) => {
+      const individual = isIndividualRound(round)
+      const entries: ScoresheetEntry[] = round.questions.map((question, questionIndex) => {
+        const key = questionKey(roundIndex, questionIndex)
+        const owner = ownerFor(roundIndex, question)
+        const outcome = outcomes.value[key]
+        const category = individual ? subjectFor(roundIndex, question) : undefined
+        const joker = scoringJoker(owner, roundIndex, question)
+        const homeJoker = category ? jokers.value[roundIndex]?.home === category : false
+        const awayJoker = category ? jokers.value[roundIndex]?.away === category : false
+
+        return {
+          number: question.number,
+          owner,
+          outcome,
+          category,
+          contestant: individual ? contestantFor(roundIndex, question, owner) : undefined,
+          joker:
+            homeJoker && awayJoker ? 'both' : homeJoker ? 'home' : awayJoker ? 'away' : undefined,
+          points: outcome ? outcomePoints(outcome, joker) : 0,
+          scoringSide: outcome === 'bonus' ? (owner === 'home' ? 'away' : 'home') : owner,
+          spareInvoked: Boolean(spares.value[key]),
+        }
+      })
+
+      const homePoints = entries
+        .filter((entry) => entry.scoringSide === 'home')
+        .reduce((total, entry) => total + entry.points, 0)
+      const awayPoints = entries
+        .filter((entry) => entry.scoringSide === 'away')
+        .reduce((total, entry) => total + entry.points, 0)
+      runningHome += homePoints
+      runningAway += awayPoints
+
+      return {
+        name: round.round,
+        entries,
+        homePoints,
+        awayPoints,
+        homeTotal: runningHome,
+        awayTotal: runningAway,
+      }
+    })
   })
 
   function buildSession(): Omit<QuizSession, 'fixturePath' | 'updatedAt'> {
@@ -651,6 +724,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     ownQuestionCorrect,
     bonusQuestionCorrect,
     submissionScore,
+    scoresheet,
     tieBreakKey,
     tieBreakMarkFor,
     ownerFor,

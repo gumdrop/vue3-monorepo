@@ -93,6 +93,20 @@ describe('QuizMasterMatch', () => {
     wrapper?.unmount()
   })
 
+  it('shows the current scoresheet on demand', async () => {
+    wrapper = mountMatch()
+    const store = useQuizmasterStore()
+    store.recordOutcome(0, 0, 'correct')
+
+    await findButton(wrapper, 'Scoresheet').trigger('click')
+
+    expect(wrapper.text()).toContain('Scoresheet')
+    expect(wrapper.text()).toContain('ROUND ONE')
+    expect(wrapper.text()).toContain('Correct')
+    expect(wrapper.text()).toContain('+2 Home Team')
+    expect(wrapper.text()).toContain('Running total: Home Team 2 — 0 Away Team')
+  })
+
   it('shows Invoke spare question with Correct and Pass Over, disabled until the timer starts', async () => {
     wrapper = mountMatch()
 
