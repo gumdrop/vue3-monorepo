@@ -9,6 +9,7 @@ import QuizMasterSetup from '../QuizMasterSetup.vue'
 const mocks = vi.hoisted(() => ({
   user: undefined as { team?: { id: string }; siteUser?: { user?: { id?: string } } } | undefined,
   fixturesForResultSubmission: vi.fn(),
+  fixtureForQuizmaster: vi.fn(),
   fixtureDAO: { getDataByPath: vi.fn() },
   fixturesDAO: { getDataByPath: vi.fn() },
   competitionDAO: { getDataByPath: vi.fn() },
@@ -35,7 +36,10 @@ vi.mock('@/stores/app', () => ({
 }))
 
 vi.mock('@/services/FixtureService', () => ({
-  useFixture: () => ({ fixturesForResultSubmission: mocks.fixturesForResultSubmission }),
+  useFixture: () => ({
+    fixturesForResultSubmission: mocks.fixturesForResultSubmission,
+    fixtureForQuizmaster: mocks.fixtureForQuizmaster,
+  }),
 }))
 
 vi.mock('@/dao/FixturesDAO', () => ({
@@ -154,6 +158,7 @@ describe('QuizMasterSetup', () => {
 
     mocks.user = { team: { id: 'team-1' } }
     mocks.fixturesForResultSubmission.mockResolvedValue([{ path: FIXTURE_PATH }])
+    mocks.fixtureForQuizmaster.mockResolvedValue([{ path: FIXTURE_PATH }])
     mocks.fixturesDAO.getDataByPath.mockResolvedValue({ date: '2026-10-13' })
     mocks.competitionDAO.getDataByPath.mockResolvedValue({ _name: 'cup' })
     mocks.teamDAO.getDataById.mockImplementation(async (id: string) => ({
@@ -173,6 +178,7 @@ describe('QuizMasterSetup', () => {
     const wrapper = await mountSetup()
 
     expect(useQuizmasterStore().fixture).toBeDefined()
+    expect(mocks.fixtureForQuizmaster).toHaveBeenCalledWith('team-1')
     expect(wrapper.text()).toContain('This fixture already has a result')
     expect(acquireButton(wrapper).attributes('disabled')).toBeDefined()
   })

@@ -153,6 +153,64 @@ describe('FixtureService', () => {
     expect(mocks.fixtureDAO.entities).toHaveBeenCalledTimes(1)
   })
 
+  it('returns the team fixture scheduled for today for the quizmaster', async () => {
+    vi.stubEnv('VITE_CURRENT_DATE', '2000-01-01')
+    mocks.fixturesService.seasonFixtures.mockResolvedValue([
+      fixtureGroup('today', '2000-01-01'),
+      fixtureGroup('past', '1999-12-31'),
+    ])
+    mocks.fixtureDAO.entities.mockResolvedValue([fixture('fixture-1', 'alpha', 'bravo')])
+
+    await expect(useFixture().fixtureForQuizmaster('alpha')).resolves.toEqual([
+      {
+        id: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+        path: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+      },
+    ])
+    expect(mocks.fixtureDAO.entities).toHaveBeenCalledTimes(1)
+
+    vi.unstubAllEnvs()
+  })
+
+  it('falls back to the regular result-submission fixture when no team fixture is due today', async () => {
+    vi.stubEnv('VITE_CURRENT_DATE', '2000-01-02')
+    mocks.fixturesService.seasonFixtures.mockResolvedValue([
+      fixtureGroup('due', '2000-01-01'),
+      fixtureGroup('future', '2999-01-01'),
+    ])
+    mocks.fixtureDAO.entities.mockResolvedValue([fixture('fixture-1', 'alpha', 'bravo')])
+
+    await expect(useFixture().fixtureForQuizmaster('alpha')).resolves.toEqual([
+      {
+        id: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+        path: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+      },
+    ])
+    expect(mocks.fixtureDAO.entities).toHaveBeenCalledTimes(1)
+
+    vi.unstubAllEnvs()
+  })
+
+  it('finds the team fixture among today fixtures and ignores others', async () => {
+    vi.stubEnv('VITE_CURRENT_DATE', '2000-01-01')
+    mocks.fixturesService.seasonFixtures.mockResolvedValue([
+      fixtureGroup('today-other-team', '2000-01-01'),
+      fixtureGroup('due', '2000-01-01'),
+    ])
+    mocks.fixtureDAO.entities
+      .mockResolvedValueOnce([fixture('fixture-1', 'charlie', 'delta')])
+      .mockResolvedValueOnce([fixture('fixture-2', 'alpha', 'bravo')])
+
+    await expect(useFixture().fixtureForQuizmaster('alpha')).resolves.toEqual([
+      {
+        id: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-2',
+        path: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-2',
+      },
+    ])
+
+    vi.unstubAllEnvs()
+  })
+
   it('submits result details to the result endpoint', () => {
     const fixturePath = 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1'
     const result = { homeScore: 3, awayScore: 2 }
