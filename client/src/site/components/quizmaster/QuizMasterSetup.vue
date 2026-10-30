@@ -148,7 +148,7 @@ const fixtureHasResult = ref(false)
 const saving = ref(false)
 const saveError = ref<string>()
 
-const { fixturesForResultSubmission } = useFixture()
+const { fixtureForQuizmaster } = useFixture()
 const { user } = storeToRefs(useUserStore())
 const { date } = useDateTime()
 
@@ -188,7 +188,7 @@ onMounted(async () => {
   const team = user.value?.team
   if (!team) return
 
-  const fixtureRefs = await fixturesForResultSubmission(team.id)
+  const fixtureRefs = await fixtureForQuizmaster(team.id)
   const fixtureRef = fixtureRefs[0]
   if (!fixtureRef) return
 

@@ -6,6 +6,7 @@ import type { Fixture, Result } from '@/entity/Fixtures'
 import { LocalDateTime } from '@js-joda/core'
 import { DocumentReference } from 'firebase/firestore'
 import { useFixtures } from './FixturesService'
+import { currentLocalDate } from './DateService'
 import axios from 'axios'
 import { REST_ROOT } from './constants'
 import type { ResultsSubmitCommand } from '@quizleague/shared'
@@ -47,6 +48,32 @@ export const useFixture = () => {
       .filter((f) => f.home.id == teamId || f.away.id == teamId)
       .slice(0, 1)
       .map((f) => fixtureDAO.getByPath(f.path))
+  }
+
+  const fixtureForQuizmaster = async (teamId: string | undefined) => {
+    const today = currentLocalDate().toString()
+
+    const appContext = await getAppContext()
+
+    const { seasonFixtures } = useFixtures()
+
+    const todaysFixtures = (await seasonFixtures(`${appContext?.currentSeason.id}`)).filter(
+      (fixtureSet) => fixtureSet.date === today,
+    )
+
+    const todaysTeamFixtures = (await fixtureList(todaysFixtures)).filter(
+      (fixture) => fixture.home.id == teamId || fixture.away.id == teamId,
+    )
+
+    if (todaysTeamFixtures.length > 0) {
+      return todaysTeamFixtures
+        .slice(0, 1)
+        .map((fixture) => fixtureDAO.getByPath(fixture.path))
+    }
+
+    // No fixture for the team today — fall back to the regular result-submission
+    // discovery (the most recent fixture whose scheduled start has passed).
+    return fixturesForResultSubmission(teamId)
   }
 
   const teamFixtureSet = async (
@@ -109,7 +136,15 @@ export const useFixture = () => {
     })
   }
 
-  return { fixturesForResultSubmission, teamFixtures, teamResults, fixtureList, submitResult, competitionFixtureList }
+  return {
+    fixturesForResultSubmission,
+    fixtureForQuizmaster,
+    teamFixtures,
+    teamResults,
+    fixtureList,
+    submitResult,
+    competitionFixtureList,
+  }
 }
 
 // def fixturesForResultSubmission(teamId:String) = {
