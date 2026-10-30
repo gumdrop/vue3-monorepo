@@ -137,15 +137,70 @@ describe('QuizMasterMatch', () => {
     expect(wrapper.text()).toContain('Original answer')
   })
 
-  it('keeps the answer visible when recording an outcome halts the timer', async () => {
-    wrapper = mountMatch()
+  it('advances to the next question when an outcome is recorded', async () => {
+    const store = useQuizmasterStore()
+    store.fixture = {
+      path: 'season/season-1/competition/league/fixtures/set-1/fixture/f-1',
+      date: '2026-10-13',
+      homeName: 'Home Team',
+      awayName: 'Away Team',
+      homeId: 'home',
+      awayId: 'away',
+    }
+    store.quiz = {
+      rounds: [
+        {
+          round: 'ROUND ONE',
+          questions: [
+            { number: '1A', question: 'First question?', answer: 'First answer' },
+            { number: '1B', question: 'Second question?', answer: 'Second answer' },
+          ],
+        },
+      ],
+    }
+
+    wrapper = mount(QuizMasterMatch, { global: { stubs: siteComponentStubs } })
 
     await wrapper.find('button.timer-fab').trigger('click')
     await findButton(wrapper, 'Correct (+2)').trigger('click')
 
-    // Recording an outcome pauses the timer internally, but the answer stays visible.
-    expect(wrapper.text()).toContain('Original answer')
-    expect(wrapper.text()).not.toContain('Answer hidden')
+    expect(store.outcomes['0:0']).toBe('correct')
+    expect(wrapper.text()).toContain('Second question?')
+    expect(wrapper.text()).not.toContain('First question?')
+  })
+
+  it('shows a Back button that returns to the previous question', async () => {
+    const store = useQuizmasterStore()
+    store.fixture = {
+      path: 'season/season-1/competition/league/fixtures/set-1/fixture/f-1',
+      date: '2026-10-13',
+      homeName: 'Home Team',
+      awayName: 'Away Team',
+      homeId: 'home',
+      awayId: 'away',
+    }
+    store.quiz = {
+      rounds: [
+        {
+          round: 'ROUND ONE',
+          questions: [
+            { number: '1A', question: 'First question?', answer: 'First answer' },
+            { number: '1B', question: 'Second question?', answer: 'Second answer' },
+          ],
+        },
+      ],
+    }
+    store.matchPosition = { roundIndex: 0, questionIndex: 1, phase: 'rounds' }
+
+    wrapper = mount(QuizMasterMatch, { global: { stubs: siteComponentStubs } })
+
+    expect(wrapper.text()).toContain('Second question?')
+    await findButton(wrapper, 'Back').trigger('click')
+    expect(wrapper.text()).toContain('First question?')
+    expect(wrapper.text()).not.toContain('Second question?')
+
+    // The first question has no previous question to return to.
+    expect(findButton(wrapper, 'Back').attributes('disabled')).toBeDefined()
   })
 
   it('keeps the answer visible when the countdown reaches zero', async () => {
