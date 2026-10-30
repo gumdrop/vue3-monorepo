@@ -21,7 +21,7 @@ const mocks = vi.hoisted(() => ({
     seasonFixtures: vi.fn(),
     spentFixtures: vi.fn(),
   },
-  resultIndexDAO: {
+  fixtureIndexDAO: {
     teamFixtureDocuments: vi.fn(),
   },
 }))
@@ -35,8 +35,8 @@ vi.mock('@/dao/FixturesDAO', () => ({
   fixtureDAO: mocks.fixtureDAO,
 }))
 
-vi.mock('@/dao/ResultIndexDAO', () => ({
-  default: mocks.resultIndexDAO,
+vi.mock('@/dao/FixtureIndexDAO', () => ({
+  default: mocks.fixtureIndexDAO,
 }))
 
 vi.mock('../FixturesService', () => ({
@@ -70,7 +70,7 @@ describe('FixtureService', () => {
     mocks.applicationContextDAO.getData.mockResolvedValue({ currentSeason: { id: 'season-1' } })
     mocks.fixtureDAO.subCollection.mockImplementation((path: string) => `${path}/fixture`)
     mocks.fixtureDAO.getByPath.mockImplementation((path: string) => ({ id: path, path }))
-    mocks.resultIndexDAO.teamFixtureDocuments.mockResolvedValue(undefined)
+    mocks.fixtureIndexDAO.teamFixtureDocuments.mockResolvedValue(undefined)
   })
 
   it('flattens fixture groups into their child fixtures', async () => {
@@ -118,8 +118,8 @@ describe('FixtureService', () => {
     expect(mocks.fixturesService.spentFixtures).toHaveBeenCalledWith('season-2')
   })
 
-  it('returns team results from the result index when the season has been rebuilt', async () => {
-    mocks.resultIndexDAO.teamFixtureDocuments.mockResolvedValue([
+  it('returns team results from the fixture index when the season has been rebuilt', async () => {
+    mocks.fixtureIndexDAO.teamFixtureDocuments.mockResolvedValue([
       {
         id: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
         path: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
@@ -132,7 +132,7 @@ describe('FixtureService', () => {
         path: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
       },
     ])
-    expect(mocks.resultIndexDAO.teamFixtureDocuments).toHaveBeenCalledWith('bravo', 'season-2', 1)
+    expect(mocks.fixtureIndexDAO.teamFixtureDocuments).toHaveBeenCalledWith('bravo', 'season-2', 1)
     expect(mocks.fixturesService.spentFixtures).not.toHaveBeenCalled()
   })
 

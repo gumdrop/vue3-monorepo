@@ -23,9 +23,9 @@ vi.mock('../../storage/Storage', () => ({
 }))
 
 import {
-  rebuildSeasonResultIndex,
-  upsertResultIndexForCompletedFixtureSet,
-} from '../ResultIndexUtils'
+  rebuildSeasonFixtureIndex,
+  upsertFixtureIndexForFixtureSet,
+} from '../FixtureIndexUtils'
 
 const season = { id: 'season-1', path: 'season/season-1' }
 const competition = {
@@ -49,10 +49,10 @@ const completedFixture = {
   result: { homeScore: 43, awayScore: 42 },
 }
 
-describe('ResultIndexUtils', () => {
+describe('FixtureIndexUtils', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mocks.collectionWhere.mockReturnValue('result-index-query')
+    mocks.collectionWhere.mockReturnValue('fixture-index-query')
     mocks.collection.mockReturnValue({ where: mocks.collectionWhere })
     mocks.deleteAll.mockResolvedValue(undefined)
     mocks.runQuery.mockResolvedValue([])
@@ -65,13 +65,13 @@ describe('ResultIndexUtils', () => {
     })
   })
 
-  it('writes one result index document for a completed fixture set', async () => {
-    await upsertResultIndexForCompletedFixtureSet(fixtureSet, [completedFixture])
+  it('writes one fixture index document for a fixture set', async () => {
+    await upsertFixtureIndexForFixtureSet(fixtureSet, [completedFixture])
 
     expect(mocks.save).toHaveBeenCalledWith(
       expect.objectContaining({
         id: encodeURIComponent(fixtureSet.path),
-        path: `resultindex/${encodeURIComponent(fixtureSet.path)}`,
+        path: `fixtureindex/${encodeURIComponent(fixtureSet.path)}`,
         seasonId: 'season-1',
         competitionPath: competition.path,
         firstClass: true,
@@ -85,56 +85,69 @@ describe('ResultIndexUtils', () => {
             homeTeamPath: 'team/team-a',
             awayTeamId: 'team-b',
             awayTeamPath: 'team/team-b',
-            homeScore: 43,
-            awayScore: 42,
+            result: { homeScore: 43, awayScore: 42 },
           },
         ],
       }),
     )
   })
 
-  it('rebuilds a season result index from completed fixture sets only', async () => {
+  it('does not write a fixture index for an empty fixture set', async () => {
+    await upsertFixtureIndexForFixtureSet(fixtureSet, [])
+
+    expect(mocks.save).not.toHaveBeenCalled()
+  })
+
+  it('rebuilds a season fixture index from every non-empty fixture set', async () => {
     const incompleteFixtureSet = {
       ...fixtureSet,
       id: 'week-2',
       path: 'season/season-1/competition/league/fixtures/week-2',
     }
-    mocks.runQuery.mockResolvedValue([{ id: 'old', path: 'resultindex/old' }])
+    const emptyFixtureSet = {
+      ...fixtureSet,
+      id: 'week-3',
+      path: 'season/season-1/competition/league/fixtures/week-3',
+    }
+    mocks.runQuery.mockResolvedValue([{ id: 'old', path: 'fixtureindex/old' }])
     mocks.list.mockImplementation(async (type: string, parent: string) => {
       if (type === 'competition' && parent === season.path) return [competition]
       if (type === 'fixtures' && parent === competition.path)
-        return [fixtureSet, incompleteFixtureSet]
+        return [fixtureSet, incompleteFixtureSet, emptyFixtureSet]
       if (type === 'fixture' && parent === fixtureSet.path) return [completedFixture]
       if (type === 'fixture' && parent === incompleteFixtureSet.path) {
         return [
           {
             ...completedFixture,
+            id: 'fixture-2',
             path: `${incompleteFixtureSet.path}/fixture/fixture-2`,
             result: undefined,
           },
         ]
       }
+      if (type === 'fixture' && parent === emptyFixtureSet.path) return []
       return []
     })
 
-    await expect(rebuildSeasonResultIndex(season)).resolves.toEqual(
+    await expect(rebuildSeasonFixtureIndex(season)).resolves.toEqual(
       expect.objectContaining({
         seasonId: 'season-1',
-        fixtureSetCount: 1,
+        fixtureSetCount: 2,
       }),
     )
 
     expect(mocks.collectionWhere).toHaveBeenCalledWith('seasonId', '==', 'season-1')
-    expect(mocks.deleteAll).toHaveBeenCalledWith([{ id: 'old', path: 'resultindex/old' }])
+    expect(mocks.deleteAll).toHaveBeenCalledWith([{ id: 'old', path: 'fixtureindex/old' }])
     expect(mocks.saveAll).toHaveBeenCalledWith([
       expect.objectContaining({ fixtureSetPath: fixtureSet.path }),
+      expect.objectContaining({ fixtureSetPath: incompleteFixtureSet.path }),
     ])
     expect(mocks.save).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'season-1',
-        path: 'resultindexstatus/season-1',
+        path: 'fixtureindexstatus/season-1',
         seasonId: 'season-1',
-        fixtureSetCount: 1,
+        fixtureSetCount: 2,
       }),
     )
   })

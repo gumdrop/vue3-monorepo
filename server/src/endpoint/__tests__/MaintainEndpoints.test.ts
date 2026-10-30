@@ -4,7 +4,7 @@ import configure from '../MaintainEndpoints'
 import { regenerateCompetitionRoundup, regenerateFixtureSetResultsSummary } from '../TaskFunctions'
 import { calculateStats } from '../StatisticsUtils'
 import { recalculateSeasonStatisticsAggregation } from '../SeasonStatisticsAggregationUtils'
-import { rebuildSeasonResultIndex } from '../ResultIndexUtils'
+import { rebuildSeasonFixtureIndex } from '../FixtureIndexUtils'
 import { load } from '../../storage/Storage'
 
 vi.mock('../TaskFunctions', () => ({
@@ -34,10 +34,10 @@ vi.mock('../SeasonStatisticsAggregationUtils', () => ({
   }),
 }))
 
-vi.mock('../ResultIndexUtils', () => ({
-  rebuildSeasonResultIndex: vi.fn().mockResolvedValue({
+vi.mock('../FixtureIndexUtils', () => ({
+  rebuildSeasonFixtureIndex: vi.fn().mockResolvedValue({
     id: 'season-1',
-    path: 'resultindexstatus/season-1',
+    path: 'fixtureindexstatus/season-1',
     seasonId: 'season-1',
     rebuiltAt: '2026-06-08T09:00:00.000Z',
     fixtureSetCount: 12,
@@ -148,7 +148,7 @@ describe('MaintainEndpoints', () => {
     expect(response.json).toHaveBeenCalledWith({ seasonId: 'season-1', competitions: 2 })
   })
 
-  it('routes season result index rebuild to the result index helper', async () => {
+  it('routes season fixture index rebuild to the fixture index helper', async () => {
     const { app, routes } = createApp()
     configure(app)
 
@@ -158,14 +158,14 @@ describe('MaintainEndpoints', () => {
       send: vi.fn(),
     } as unknown as Response
 
-    routes.get('POST /rest/maintain/season/:seasonId/result-index/rebuild')?.(
+    routes.get('POST /rest/maintain/season/:seasonId/fixture-index/rebuild')?.(
       { params: { seasonId: 'season-1' } } as unknown as Request,
       response,
     )
     await flushPromises()
 
     expect(load).toHaveBeenCalledWith('season/season-1')
-    expect(rebuildSeasonResultIndex).toHaveBeenCalledWith({
+    expect(rebuildSeasonFixtureIndex).toHaveBeenCalledWith({
       id: 'season-1',
       path: 'season/season-1',
     })

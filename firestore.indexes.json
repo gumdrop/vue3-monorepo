@@ -1,7 +1,7 @@
 {
   "indexes": [
     {
-      "collectionGroup": "resultindex",
+      "collectionGroup": "fixtureindex",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "seasonId", "order": "ASCENDING" },
@@ -10,7 +10,16 @@
       ]
     },
     {
-      "collectionGroup": "resultindex",
+      "collectionGroup": "fixtureindex",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "seasonId", "order": "ASCENDING" },
+        { "fieldPath": "firstClass", "order": "ASCENDING" },
+        { "fieldPath": "fixtureSetDate", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "fixtureindex",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "seasonId", "order": "ASCENDING" },
@@ -20,11 +29,19 @@
       ]
     },
     {
-      "collectionGroup": "resultindex",
+      "collectionGroup": "fixtureindex",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "competitionPath", "order": "ASCENDING" },
         { "fieldPath": "fixtureSetDate", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "fixtureindex",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "competitionPath", "order": "ASCENDING" },
+        { "fieldPath": "fixtureSetDate", "order": "ASCENDING" }
       ]
     }
   ],

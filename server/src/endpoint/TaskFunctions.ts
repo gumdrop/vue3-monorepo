@@ -31,7 +31,7 @@ import {
 } from './DeepSeekResultsSummary'
 import { updateAggregationForCompletedFixtureSet } from './SeasonStatisticsAggregationUtils'
 import { teamForUser } from './TeamMembership'
-import { upsertResultIndexForCompletedFixtureSet } from './ResultIndexUtils'
+import { upsertFixtureIndexForFixtureSet } from './FixtureIndexUtils'
 
 const teamCompetitionTypes = new Set<Competition['_name']>(['league', 'cup', 'subsidiary'])
 
@@ -186,11 +186,13 @@ async function updateCompletedFixtureSetSummary(fixtureSetPath: string) {
   if (!fixtureSet) return
 
   const fixtures = await list<Fixture>('fixture', fixtureSet.path)
+
+  await upsertFixtureIndexForFixtureSet(fixtureSet, fixtures)
+
   if (!fixtureSetHasCompletedResults(fixtures)) return
 
   queueFixtureSetStatisticsRecalculation(fixtureSet.path)
   await updateAggregationForCompletedFixtureSet(fixtureSet.path)
-  await upsertResultIndexForCompletedFixtureSet(fixtureSet, fixtures)
   await generateAndSaveFixtureSetResultsSummary(fixtureSet, fixtures, false)
 
   return parseParent(fixtureSet.path)

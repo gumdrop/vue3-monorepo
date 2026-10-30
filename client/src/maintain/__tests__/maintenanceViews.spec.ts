@@ -451,7 +451,7 @@ describe('maintenance list views', () => {
     expect(wrapper.text()).toContain('Statistics aggregation recalculated for 2025/2026')
   })
 
-  it('rebuilds the result index for the selected season', async () => {
+  it('rebuilds the fixture index for the selected season', async () => {
     mocks.seasonDAO.list.mockResolvedValue([
       { id: '2025-2026', path: 'season/2025-2026', startYear: 2025, endYear: 2026 },
     ])
@@ -459,13 +459,13 @@ describe('maintenance list views', () => {
     const wrapper = await mountMaintenance(StatisticsRecalculate)
 
     await wrapper.get('select[data-test="statistics-season"]').setValue('2025-2026')
-    await clickButton(wrapper, 'Rebuild Result Index')
+    await clickButton(wrapper, 'Rebuild Fixture Index')
     await flushPromises()
 
     expect(mocks.axiosPost).toHaveBeenCalledWith(
-      '/rest/maintain/season/2025-2026/result-index/rebuild',
+      '/rest/maintain/season/2025-2026/fixture-index/rebuild',
     )
-    expect(wrapper.text()).toContain('Result index rebuilt for 2025/2026 (12 fixture sets)')
+    expect(wrapper.text()).toContain('Fixture index rebuilt for 2025/2026 (12 fixture sets)')
   })
 
   it('requires a selected season before recalculating statistics', async () => {
@@ -482,10 +482,10 @@ describe('maintenance list views', () => {
       .findAll('button')
       .find((candidate) => candidate.text().includes('Recalculate Aggregation'))
     expect(aggregationButton?.attributes('disabled')).toBeDefined()
-    const resultIndexButton = wrapper
+    const fixtureIndexButton = wrapper
       .findAll('button')
-      .find((candidate) => candidate.text().includes('Rebuild Result Index'))
-    expect(resultIndexButton?.attributes('disabled')).toBeDefined()
+      .find((candidate) => candidate.text().includes('Rebuild Fixture Index'))
+    expect(fixtureIndexButton?.attributes('disabled')).toBeDefined()
     expect(mocks.axiosPost).not.toHaveBeenCalled()
   })
 })

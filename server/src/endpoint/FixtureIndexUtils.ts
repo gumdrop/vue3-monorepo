@@ -3,9 +3,9 @@ import {
   Fixture,
   Fixtures,
   parseParent,
-  ResultIndex,
-  ResultIndexFixture,
-  ResultIndexStatus,
+  FixtureIndex,
+  FixtureIndexFixture,
+  FixtureIndexStatus,
   Season,
 } from '@quizleague/shared'
 import {
@@ -19,63 +19,63 @@ import {
   saveAll,
 } from '../storage/Storage'
 
-export async function upsertResultIndexForCompletedFixtureSet(
+export async function upsertFixtureIndexForFixtureSet(
   fixtureSet: Fixtures,
   fixtures: Fixture[],
 ) {
-  const resultIndex = await resultIndexForCompletedFixtureSet(fixtureSet, fixtures)
-  if (!resultIndex) return undefined
+  const fixtureIndex = await fixtureIndexForFixtureSet(fixtureSet, fixtures)
+  if (!fixtureIndex) return undefined
 
-  await save(resultIndex)
-  return resultIndex
+  await save(fixtureIndex)
+  return fixtureIndex
 }
 
-export async function rebuildSeasonResultIndex(season: Season) {
-  const existing = await runQuery<ResultIndex>(
-    collection<ResultIndex>('resultindex').where('seasonId', '==', season.id),
+export async function rebuildSeasonFixtureIndex(season: Season) {
+  const existing = await runQuery<FixtureIndex>(
+    collection<FixtureIndex>('fixtureindex').where('seasonId', '==', season.id),
   )
   await deleteAll(existing)
 
-  const resultIndexes: ResultIndex[] = []
+  const fixtureIndexes: FixtureIndex[] = []
   const competitions = await list<Competition>('competition', season.path)
 
   for (const competition of competitions) {
     const fixtureSets = await list<Fixtures>('fixtures', competition.path)
     for (const fixtureSet of fixtureSets) {
       const fixtures = await list<Fixture>('fixture', fixtureSet.path)
-      const resultIndex = await resultIndexForCompletedFixtureSet(
+      const fixtureIndex = await fixtureIndexForFixtureSet(
         fixtureSet,
         fixtures,
         competition,
         season,
       )
-      if (resultIndex) {
-        resultIndexes.push(resultIndex)
+      if (fixtureIndex) {
+        fixtureIndexes.push(fixtureIndex)
       }
     }
   }
 
-  await saveAll(resultIndexes)
+  await saveAll(fixtureIndexes)
 
-  const status: ResultIndexStatus = {
+  const status: FixtureIndexStatus = {
     id: season.id,
-    path: entityPath('resultindexstatus', season.id),
+    path: entityPath('fixtureindexstatus', season.id),
     seasonId: season.id,
     rebuiltAt: new Date().toISOString(),
-    fixtureSetCount: resultIndexes.length,
+    fixtureSetCount: fixtureIndexes.length,
   }
   await save(status)
 
   return status
 }
 
-async function resultIndexForCompletedFixtureSet(
+async function fixtureIndexForFixtureSet(
   fixtureSet: Fixtures,
   fixtures: Fixture[],
   providedCompetition?: Competition,
   providedSeason?: Season,
 ) {
-  if (fixtures.length === 0 || fixtures.some((fixture) => !fixture.result)) return undefined
+  if (fixtures.length === 0) return undefined
 
   const competitionPath = parseParent(fixtureSet.path)
   const seasonPath = parseParent(competitionPath)
@@ -83,12 +83,12 @@ async function resultIndexForCompletedFixtureSet(
   const season = providedSeason ?? (await load<Season>(seasonPath))
   if (!competition || !season) return undefined
 
-  const resultFixtures = fixtures.map(resultIndexFixture)
-  const id = resultIndexId(fixtureSet.path)
+  const indexedFixtures = fixtures.map(fixtureIndexFixture)
+  const id = fixtureIndexId(fixtureSet.path)
 
   return {
     id,
-    path: entityPath('resultindex', id),
+    path: entityPath('fixtureindex', id),
     seasonId: season.id,
     seasonPath: season.path,
     competitionId: competition.id,
@@ -99,33 +99,33 @@ async function resultIndexForCompletedFixtureSet(
     fixtureSetDate: fixtureSet.date,
     fixtureSetStart: fixtureSet.start,
     fixtureSetDescription: fixtureSet.description,
-    teamIds: teamIds(resultFixtures),
-    fixtures: resultFixtures,
-  } satisfies ResultIndex
+    teamIds: teamIds(indexedFixtures),
+    fixtures: indexedFixtures,
+  } satisfies FixtureIndex
 }
 
-function resultIndexFixture(fixture: Fixture): ResultIndexFixture {
+function fixtureIndexFixture(fixture: Fixture): FixtureIndexFixture {
   const result = fixture.result
-  if (!result) {
-    throw new Error(`Cannot index fixture without a result: ${fixture.path}`)
-  }
-
-  return {
+  const indexedFixture: FixtureIndexFixture = {
     fixturePath: fixture.path,
     homeTeamId: fixture.home.id,
     homeTeamPath: fixture.home.path,
     awayTeamId: fixture.away.id,
     awayTeamPath: fixture.away.path,
-    homeScore: result.homeScore,
-    awayScore: result.awayScore,
   }
+
+  if (result) {
+    indexedFixture.result = { homeScore: result.homeScore, awayScore: result.awayScore }
+  }
+
+  return indexedFixture
 }
 
-function resultIndexId(fixtureSetPath: string) {
+function fixtureIndexId(fixtureSetPath: string) {
   return encodeURIComponent(fixtureSetPath)
 }
 
-function teamIds(fixtures: ResultIndexFixture[]) {
+function teamIds(fixtures: FixtureIndexFixture[]) {
   return Array.from(
     new Set(fixtures.flatMap((fixture) => [fixture.homeTeamId, fixture.awayTeamId])),
   ).sort((left, right) => left.localeCompare(right))
