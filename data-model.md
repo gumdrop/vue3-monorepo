@@ -46,10 +46,10 @@ flowchart TD
   seasonStats["SeasonStats"]
   headToHead["HeadToHead"]
   weekStats["WeekStats"]
-  resultIndexCollection["resultindex collection"]
-  resultIndex["Result Index"]
-  resultIndexStatusCollection["resultindexstatus collection"]
-  resultIndexStatus["Result Index Status"]
+  fixtureIndexCollection["fixtureindex collection"]
+  fixtureIndex["Fixture Index"]
+  fixtureIndexStatusCollection["fixtureindexstatus collection"]
+  fixtureIndexStatus["Fixture Index Status"]
   seasonStatisticsAggregationCollection["seasonstatisticsaggregation collection"]
   seasonStatisticsAggregation["SeasonStatisticsAggregation"]
   competitionStatisticsAggregation["CompetitionStatisticsAggregation"]
@@ -95,10 +95,10 @@ flowchart TD
   statistics --> seasonStats
   seasonStats --> headToHead
   statistics --> weekStats
-  firestore --> resultIndexCollection
-  resultIndexCollection --> resultIndex
-  firestore --> resultIndexStatusCollection
-  resultIndexStatusCollection --> resultIndexStatus
+  firestore --> fixtureIndexCollection
+  fixtureIndexCollection --> fixtureIndex
+  firestore --> fixtureIndexStatusCollection
+  fixtureIndexStatusCollection --> fixtureIndexStatus
   firestore --> seasonStatisticsAggregationCollection
   seasonStatisticsAggregationCollection --> seasonStatisticsAggregation
   seasonStatisticsAggregation --> competitionStatisticsAggregation
@@ -121,10 +121,10 @@ flowchart TD
   statistics --> team
   statistics --> season
   statistics --> leagueTable
-  resultIndex --> season
-  resultIndex --> competition
-  resultIndex --> fixturesDoc
-  resultIndexStatus --> season
+  fixtureIndex --> season
+  fixtureIndex --> competition
+  fixtureIndex --> fixturesDoc
+  fixtureIndexStatus --> season
   seasonStatisticsAggregation --> season
   competitionStatisticsAggregation --> competition
   competitionStatisticsAggregation --> team
@@ -193,11 +193,11 @@ The Teams public visitor browse feature reads active public team documents direc
 
 Public competition pages have an existing bounded team-name resolution read contract on the same `team` collection. They may continue to read bounded public team-name data needed for historical competitions and do not use the Teams browse requirement to exclude retired teams from competition results, fixtures, or tables. Firestore rules preserve both bounded query shapes and deny unbounded or over-limit `team` list queries. Because Firestore rules cannot distinguish reads by app route, selected Teams route rendering must validate `retired == false` in the frontend before showing a team name.
 
-## Result Index
+## Fixture Index
 
-`resultindex/{resultIndexId}` is a top-level denormalized read model for public results pages. Each document represents one completed fixture set and stores the season, competition, fixture-set path/date, participating team IDs, and the completed child fixture paths/scores. The document ID is `encodeURIComponent(fixtureSet.path)` so rebuilding is idempotent.
+`fixtureindex/{fixtureIndexId}` is a top-level denormalized read model for public fixtures and results pages. Each document represents one fixture set (whether or not its fixtures have results yet) and stores the season, competition, fixture-set path/date, participating team IDs, and the child fixture paths/team references with optional home/away scores. The document ID is `encodeURIComponent(fixtureSet.path)` so rebuilding is idempotent.
 
-`resultindexstatus/{seasonId}` records that the result index has been rebuilt for a season. Public result services only use the fast result-index queries after this status exists; otherwise they fall back to the canonical nested `season -> competition -> fixtures -> fixture` data to avoid hiding historical results during rollout.
+`fixtureindexstatus/{seasonId}` records that the fixture index has been rebuilt for a season. Public fixture and result services only use the fast fixture-index queries after this status exists; otherwise they fall back to the canonical nested `season -> competition -> fixtures -> fixture` data to avoid hiding historical data during rollout.
 
 | Field                   | Type            | Required | Notes                                                               |
 | ----------------------- | --------------- | -------- | ------------------------------------------------------------------- |
@@ -208,11 +208,11 @@ Public competition pages have an existing bounded team-name resolution read cont
 | `competitionName`       | `string`        | Yes      | Display name captured for lightweight clients and diagnostics.      |
 | `firstClass`            | `boolean`       | Yes      | `false` for subsidiary competitions excluded from all-team results. |
 | `fixtureSetPath`        | `string`        | Yes      | Canonical nested fixture-set path.                                  |
-| `fixtureSetDate`        | `LocalDate`     | Yes      | Date used for latest/all/team result ordering.                      |
+| `fixtureSetDate`        | `LocalDate`     | Yes      | Date used for latest/all/team fixture and result ordering.          |
 | `fixtureSetStart`       | `LocalTime`     | Yes      | Start time copied from the fixture set.                             |
 | `fixtureSetDescription` | `string`        | Yes      | Fixture-set description copied from the canonical document.         |
 | `teamIds`               | `array<UUID>`   | Yes      | Unique participating team IDs, used with `array-contains`.          |
-| `fixtures`              | `array<object>` | Yes      | Completed fixture paths, team IDs/paths, and home/away scores.      |
+| `fixtures`              | `array<object>` | Yes      | Fixture paths, team IDs/paths, and optional home/away scores.       |
 
 ## Season
 

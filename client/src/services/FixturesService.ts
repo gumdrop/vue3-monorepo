@@ -1,7 +1,7 @@
 import FixturesDAO from '@/dao/FixturesDAO'
 import type Competition from '@/entity/Competition'
 import Fixtures from '@/entity/Fixtures'
-import ResultIndexDAO from '@/dao/ResultIndexDAO'
+import FixtureIndexDAO from '@/dao/FixtureIndexDAO'
 import { useCompetitions } from './CompetitionService'
 import { currentLocalDate } from './DateService'
 import { completedFixtureSets } from './FixtureSetCompletion'
@@ -16,6 +16,12 @@ const QUESTION_PAPER_EMBARGO_WEEKS = 3
 
 export const useFixtures = () => {
   const activeFixtures = async (seasonId: string, take?: number) => {
+    const fixtureIndexFixtures = await FixtureIndexDAO.seasonUpcomingFixtureSetDocuments(
+      seasonId,
+      take,
+    )
+    if (fixtureIndexFixtures) return fixtureIndexFixtures
+
     const today = currentLocalDate().toString()
     return (await seasonFixtures(seasonId))
       .filter((f) => f.date >= today)
@@ -25,8 +31,8 @@ export const useFixtures = () => {
   }
 
   const spentFixtures = async (seasonId: string, take?: number) => {
-    const resultIndexFixtures = await ResultIndexDAO.seasonFixtureSetDocuments(seasonId, take)
-    if (resultIndexFixtures) return resultIndexFixtures
+    const fixtureIndexFixtures = await FixtureIndexDAO.seasonFixtureSetDocuments(seasonId, take)
+    if (fixtureIndexFixtures) return fixtureIndexFixtures
 
     const today = currentLocalDate().toString()
     return (
@@ -38,8 +44,8 @@ export const useFixtures = () => {
   }
 
   const spentFixturesForDay = async (seasonId: string) => {
-    const resultIndexFixtures = await ResultIndexDAO.seasonFixtureSetDocumentsForDay(seasonId)
-    if (resultIndexFixtures) return resultIndexFixtures
+    const fixtureIndexFixtures = await FixtureIndexDAO.seasonFixtureSetDocumentsForDay(seasonId)
+    if (fixtureIndexFixtures) return fixtureIndexFixtures
 
     const today = currentLocalDate().toString()
     const completed = await completedFixtureSets(

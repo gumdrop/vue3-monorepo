@@ -1,7 +1,7 @@
 import CompetitionDAO from '@/dao/CompetitionDAO'
 import FixturesDAO from '@/dao/FixturesDAO'
 import LeagueTableDAO from '@/dao/LeagueTableDAO'
-import ResultIndexDAO from '@/dao/ResultIndexDAO'
+import FixtureIndexDAO from '@/dao/FixtureIndexDAO'
 import SeasonDao from '@/dao/SeasonDAO'
 import TextDAO from '@/dao/TextDAO'
 import type Competition from '@/entity/Competition'
@@ -34,6 +34,12 @@ export const useCompetitions = () => {
   }
 
   async function nextFixtures(competitionPath: string, take: number | undefined = undefined) {
+    const fixtureIndexFixtures = await FixtureIndexDAO.competitionUpcomingFixtureSetDocuments(
+      competitionPath,
+      take,
+    )
+    if (fixtureIndexFixtures) return fixtureIndexFixtures
+
     const today = currentLocalDate().toString()
     return (await fixtures(competitionPath))
       .filter((f) => f.date >= today)
@@ -43,11 +49,11 @@ export const useCompetitions = () => {
   }
 
   async function latestResults(competitionPath: string, take: number | undefined = undefined) {
-    const resultIndexFixtures = await ResultIndexDAO.competitionFixtureSetDocuments(
+    const fixtureIndexFixtures = await FixtureIndexDAO.competitionFixtureSetDocuments(
       competitionPath,
       take,
     )
-    if (resultIndexFixtures) return resultIndexFixtures
+    if (fixtureIndexFixtures) return fixtureIndexFixtures
 
     const today = currentLocalDate().toString()
     return (

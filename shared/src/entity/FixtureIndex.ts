@@ -1,16 +1,15 @@
 import type Entity from './Entity'
 
-export interface ResultIndexFixture {
+export interface FixtureIndexFixture {
   fixturePath: string
   homeTeamId: string
   homeTeamPath: string
   awayTeamId: string
   awayTeamPath: string
-  homeScore: number
-  awayScore: number
+  result?: { homeScore: number; awayScore: number }
 }
 
-export interface ResultIndex extends Entity {
+export interface FixtureIndex extends Entity {
   seasonId: string
   seasonPath: string
   competitionId: string
@@ -22,10 +21,10 @@ export interface ResultIndex extends Entity {
   fixtureSetStart: string
   fixtureSetDescription: string
   teamIds: string[]
-  fixtures: ResultIndexFixture[]
+  fixtures: FixtureIndexFixture[]
 }
 
-export interface ResultIndexStatus extends Entity {
+export interface FixtureIndexStatus extends Entity {
   seasonId: string
   rebuiltAt: string
   fixtureSetCount: number

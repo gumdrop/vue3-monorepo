@@ -1,6 +1,6 @@
 import ApplicationContextDAO from '@/dao/ApplicationContextDAO'
 import FixturesDAO, { fixtureDAO } from '@/dao/FixturesDAO'
-import ResultIndexDAO from '@/dao/ResultIndexDAO'
+import FixtureIndexDAO from '@/dao/FixtureIndexDAO'
 import type Fixtures from '@/entity/Fixtures'
 import type { Fixture, Result } from '@/entity/Fixtures'
 import { LocalDateTime } from '@js-joda/core'
@@ -101,8 +101,8 @@ export const useFixture = () => {
   }
 
   const teamResults = async (teamId: string, seasonId: string, take?: number) => {
-    const resultIndexFixtures = await ResultIndexDAO.teamFixtureDocuments(teamId, seasonId, take)
-    if (resultIndexFixtures) return resultIndexFixtures
+    const fixtureIndexFixtures = await FixtureIndexDAO.teamFixtureDocuments(teamId, seasonId, take)
+    if (fixtureIndexFixtures) return fixtureIndexFixtures
 
     const { spentFixtures } = useFixtures()
 

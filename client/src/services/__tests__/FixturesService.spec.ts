@@ -12,8 +12,9 @@ const mocks = vi.hoisted(() => ({
     entities: vi.fn(),
     subCollection: vi.fn(),
   },
-  resultIndexDAO: {
+  fixtureIndexDAO: {
     seasonFixtureSetDocuments: vi.fn(),
+    seasonUpcomingFixtureSetDocuments: vi.fn(),
     seasonFixtureSetDocumentsForDay: vi.fn(),
   },
 }))
@@ -30,8 +31,8 @@ vi.mock('@/dao/FixturesDAO', () => ({
   fixtureDAO: mocks.fixtureDAO,
 }))
 
-vi.mock('@/dao/ResultIndexDAO', () => ({
-  default: mocks.resultIndexDAO,
+vi.mock('@/dao/FixtureIndexDAO', () => ({
+  default: mocks.fixtureIndexDAO,
 }))
 
 const fixturesSet = (id: string, date: string, questionsUrl?: string) => ({
@@ -56,12 +57,13 @@ describe('FixturesService', () => {
     mocks.fixturesDAO.getByPath.mockImplementation((path: string) => ({ id: path, path }))
     mocks.fixtureDAO.subCollection.mockImplementation((path: string) => `${path}/fixture`)
     mocks.fixtureDAO.entities.mockResolvedValue([completedFixture('fixture-1')])
-    mocks.resultIndexDAO.seasonFixtureSetDocuments.mockResolvedValue(undefined)
-    mocks.resultIndexDAO.seasonFixtureSetDocumentsForDay.mockResolvedValue(undefined)
+    mocks.fixtureIndexDAO.seasonFixtureSetDocuments.mockResolvedValue(undefined)
+    mocks.fixtureIndexDAO.seasonUpcomingFixtureSetDocuments.mockResolvedValue(undefined)
+    mocks.fixtureIndexDAO.seasonFixtureSetDocumentsForDay.mockResolvedValue(undefined)
   })
 
-  it('returns spent fixtures from the result index when the season has been rebuilt', async () => {
-    mocks.resultIndexDAO.seasonFixtureSetDocuments.mockResolvedValue([
+  it('returns spent fixtures from the fixture index when the season has been rebuilt', async () => {
+    mocks.fixtureIndexDAO.seasonFixtureSetDocuments.mockResolvedValue([
       {
         id: 'season/season-1/competition/league/fixtures/latest',
         path: 'season/season-1/competition/league/fixtures/latest',
@@ -74,7 +76,28 @@ describe('FixturesService', () => {
         path: 'season/season-1/competition/league/fixtures/latest',
       },
     ])
-    expect(mocks.resultIndexDAO.seasonFixtureSetDocuments).toHaveBeenCalledWith('season-1', 1)
+    expect(mocks.fixtureIndexDAO.seasonFixtureSetDocuments).toHaveBeenCalledWith('season-1', 1)
+    expect(mocks.firstClassCompetitions).not.toHaveBeenCalled()
+  })
+
+  it('returns active fixtures from the fixture index when the season has been rebuilt', async () => {
+    mocks.fixtureIndexDAO.seasonUpcomingFixtureSetDocuments.mockResolvedValue([
+      {
+        id: 'season/season-1/competition/league/fixtures/future-1',
+        path: 'season/season-1/competition/league/fixtures/future-1',
+      },
+    ])
+
+    await expect(useFixtures().activeFixtures('season-1', 1)).resolves.toEqual([
+      {
+        id: 'season/season-1/competition/league/fixtures/future-1',
+        path: 'season/season-1/competition/league/fixtures/future-1',
+      },
+    ])
+    expect(mocks.fixtureIndexDAO.seasonUpcomingFixtureSetDocuments).toHaveBeenCalledWith(
+      'season-1',
+      1,
+    )
     expect(mocks.firstClassCompetitions).not.toHaveBeenCalled()
   })
 
