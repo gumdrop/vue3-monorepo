@@ -141,7 +141,7 @@
           <div class="d-flex flex-wrap ga-2 mt-4">
             <v-btn v-if="outcome" variant="text" @click="undo">Undo</v-btn>
             <v-spacer />
-            <v-btn v-if="outcome" color="primary" @click="next">Next</v-btn>
+            <v-btn color="primary" :disabled="!canGoBack" @click="back">Back</v-btn>
           </div>
         </template>
 
@@ -625,6 +625,8 @@ const contestantName = computed(() => {
 
 const targetName = computed(() => (targetSide.value === 'home' ? homeName.value : awayName.value))
 
+const canGoBack = computed(() => roundIndex.value > 0 || questionIndex.value > 0)
+
 const displayQuestion = computed(() => spare.value?.question ?? question.value?.question ?? '')
 const displayAnswer = computed(() => spare.value?.answer ?? question.value?.answer ?? '')
 const questionHtml = computed(() => underlineHtml(displayQuestion.value))
@@ -721,20 +723,13 @@ function jokerPoints(base: number): number {
 
 function record(outcome: QuizQuestionOutcome) {
   store.recordOutcome(roundIndex.value, questionIndex.value, outcome)
-  haltTimer()
+  next()
 }
 
 function passOver() {
   passedOver.value = true
   // The other team now has the shorter countdown: start it right away.
   startTimer()
-}
-
-function haltTimer() {
-  if (timerState.value === 'running') {
-    clearTimer()
-    timerState.value = 'paused'
-  }
 }
 
 function resetQuestionState() {
@@ -769,6 +764,24 @@ function next() {
     phase.value = 'tiebreak'
   } else {
     phase.value = 'beer'
+  }
+  persistPosition()
+}
+
+function back() {
+  resetQuestionState()
+
+  if (questionIndex.value > 0) {
+    questionIndex.value -= 1
+  } else if (roundIndex.value > 0) {
+    roundIndex.value -= 1
+    const previousRound = store.scoredRounds[roundIndex.value]
+    questionIndex.value = Math.max(0, (previousRound?.questions.length ?? 1) - 1)
+    settingUpIndividual.value = Boolean(
+      previousRound &&
+        isIndividualRound(previousRound) &&
+        !store.categoryAssignments[roundIndex.value],
+    )
   }
   persistPosition()
 }
