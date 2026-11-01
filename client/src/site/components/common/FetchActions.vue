@@ -20,6 +20,6 @@ watch(fetchSize, (fetch) => {
 </script>
 <style lang="css" scoped>
 .selected {
-  color: #03A9F4;
+  color: rgb(var(--v-theme-info));
 }
 </style>

@@ -145,7 +145,7 @@ const items = [
 
 <style lang="css" scoped>
 .ql-app {
-  background-color: #f8fafc !important;
+  background-color: rgb(var(--v-theme-background));
 }
 
 .app-header {
@@ -192,12 +192,12 @@ const items = [
 }
 
 .side-drawer {
-  background-color: #ffffff !important;
-  border-right: 1px solid #e2e8f0 !important;
+  background-color: rgb(var(--v-theme-surface)) !important;
+  border-right: 1px solid rgba(var(--v-border-color), var(--v-border-opacity)) !important;
 }
 
 .drawer-header {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .drawer-item {
@@ -206,7 +206,7 @@ const items = [
 }
 
 .app-content {
-  background-color: #f8fafc;
+  background-color: rgb(var(--v-theme-background));
   min-height: 100vh;
 }
 
@@ -216,6 +216,6 @@ const items = [
 
 .mobile-nav {
   box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05) !important;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 </style>

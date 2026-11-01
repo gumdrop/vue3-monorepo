@@ -11,7 +11,7 @@
         <v-slide-y-transition>
           <div v-if="$vuetify.display.smAndDown && teams" class="mobile-teams-list">
             <v-card elevation="2" class="rounded-xl overflow-hidden">
-              <v-card-title class="bg-grey-lighten-4 py-3 px-4">
+              <v-card-title class="bg-surface py-3 px-4">
                 <span class="text-subtitle-1 font-weight-bold">Registered Teams</span>
               </v-card-title>
               <v-divider></v-divider>
@@ -52,7 +52,7 @@ const teams = useCollection(() => TeamDAO.sortedActive("name"))
 
 <style scoped>
 .content-wrapper {
-  background-color: white;
+  background-color: rgb(var(--v-theme-surface));
   border-radius: 12px;
   overflow: hidden;
 }

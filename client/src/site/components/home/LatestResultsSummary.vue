@@ -46,7 +46,7 @@ const latestSummary = usePromise(async () => {
 
 <style scoped>
 .latest-results-summary {
-  background-color: white;
+  background-color: rgb(var(--v-theme-surface));
   border-radius: 12px;
 }
 

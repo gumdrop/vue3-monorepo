@@ -6,7 +6,7 @@
   </div>
   <div v-else-if="reports && reports.length === 0" class="no-reports-message pa-8 text-center">
     <v-icon size="48" color="grey-lighten-1" class="mb-2">mdi-note-off-outline</v-icon>
-    <div class="text-body-1 text-grey-darken-1">No match reports available yet.</div>
+    <div class="text-body-1 text-medium-emphasis">No match reports available yet.</div>
   </div>
 </template>
 
@@ -24,11 +24,11 @@ const reports = useCollection(reportsDoc)
 
 <style scoped>
 .match-reports-container {
-  background-color: white;
+  background-color: rgb(var(--v-theme-surface));
 }
 
 .no-reports-message {
-  background-color: #fafafa;
+  background-color: rgba(var(--v-theme-on-surface), 0.03);
   border-radius: 8px;
 }
 </style>

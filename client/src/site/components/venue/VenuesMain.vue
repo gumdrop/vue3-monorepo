@@ -10,7 +10,7 @@
         
         <div v-if="smAndDown" class="mt-6">
           <v-card elevation="2" class="venues-mobile-list">
-            <v-card-title class="bg-grey-lighten-4 py-3">
+            <v-card-title class="bg-surface py-3">
               <span class="text-subtitle-1 font-weight-bold">Available Venues</span>
             </v-card-title>
             <v-divider></v-divider>
@@ -50,7 +50,7 @@ const { smAndDown } = useDisplay()
 
 <style scoped>
 .content-wrapper {
-  background-color: white;
+  background-color: rgb(var(--v-theme-surface));
   border-radius: 12px;
   overflow: hidden;
 }

@@ -1,14 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Montserrat:wght@600;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
 :root {
-  --v-primary-base: #2563eb;
-  --v-secondary-base: #64748b;
-  --v-accent-base: #f59e0b;
-  --v-error-base: #ef4444;
-  --v-info-base: #3b82f6;
-  --v-success-base: #10b981;
-  --v-warning-base: #f59e0b;
-
   --border-radius-sm: 4px;
   --border-radius-md: 8px;
   --border-radius-lg: 12px;
@@ -21,8 +13,8 @@
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
-  background-color: #f8fafc;
-  color: #1e293b;
+  background-color: rgb(var(--v-theme-background));
+  color: rgb(var(--v-theme-on-surface));
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -40,7 +32,7 @@ h1, h2, h3, h4, h5, h6 {
 /* Vuetify Overrides for Global Polish */
 .v-card {
   border-radius: var(--border-radius-lg) !important;
-  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity)) !important;
   transition: transform 0.2s ease, box-shadow 0.2s ease !important;
 }
 
@@ -58,7 +50,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .v-app-bar {
   backdrop-filter: blur(10px);
-  background-color: rgba(21, 101, 192, 0.9) !important; /* Semi-transparent blue-darken-3 */
+  background-color: rgba(var(--v-theme-primary), 0.9) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
@@ -79,16 +71,16 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: rgba(var(--v-theme-on-surface), 0.05);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: rgba(var(--v-theme-on-surface), 0.25);
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: rgba(var(--v-theme-on-surface), 0.4);
 }
 
 .roll-of-honour td {
@@ -105,9 +97,9 @@ h1, h2, h3, h4, h5, h6 {
   text-overflow: ellipsis;
   white-space: nowrap;
   border-radius: var(--border-radius-sm);
-  background-color: var(--v-primary-base);
-  color: #ffffff;
-  border: 1px solid var(--v-primary-base);
+  background-color: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
+  border: 1px solid rgb(var(--v-theme-primary));
   width: 100%;
   font-size: 12px;
   padding: 3px;

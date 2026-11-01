@@ -25,7 +25,7 @@ setSidemenu(false)
 </script>
 <style scoped>
 .content-wrapper {
-  background-color: white;
+  background-color: rgb(var(--v-theme-surface));
   border-radius: 12px;
   overflow: hidden;
 }

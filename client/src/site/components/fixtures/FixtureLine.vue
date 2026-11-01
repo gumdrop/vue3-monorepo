@@ -269,15 +269,15 @@ const fixtureVenueName = computed(
 <style lang="css" scoped>
 .match-row {
   transition: background-color 0.2s ease;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .user-team-row {
-  background-color: #f0f9ff;
+  background-color: rgba(var(--v-theme-primary), 0.08);
 }
 
 .match-row:hover {
-  background-color: #f8fafc;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 .match-row:last-child {
@@ -286,7 +286,7 @@ const fixtureVenueName = computed(
 
 /* Inline Details Styling */
 .details-row {
-  background-color: #fcfdfe;
+  background-color: rgba(var(--v-theme-on-surface), 0.02);
 }
 
 .inline-details-cell {
@@ -297,7 +297,7 @@ const fixtureVenueName = computed(
   display: flex;
   align-items: center;
   font-size: 0.75rem;
-  color: #64748b;
+  color: rgba(var(--v-theme-on-surface), 0.6);
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.025em;
@@ -305,19 +305,19 @@ const fixtureVenueName = computed(
 
 .details-sep {
   margin: 0 8px;
-  color: #cbd5e1;
+  color: rgba(var(--v-theme-on-surface), 0.3);
 }
 
 .details-desc {
   margin-left: 8px;
   font-style: italic;
-  color: #94a3b8;
+  color: rgba(var(--v-theme-on-surface), 0.45);
 }
 
 .inline-details-col {
   padding: 12px 16px;
   width: 136px;
-  border-right: 1px solid #f1f5f9;
+  border-right: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .details-content-stacked {
@@ -326,12 +326,12 @@ const fixtureVenueName = computed(
 }
 
 .details-date {
-  color: #1e293b;
+  color: rgb(var(--v-theme-on-surface));
   font-weight: 600;
 }
 
 .details-comp {
-  color: #64748b;
+  color: rgba(var(--v-theme-on-surface), 0.6);
 }
 
 /* Team Styling */
@@ -359,11 +359,11 @@ const fixtureVenueName = computed(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #334155;
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 
 .winner .team-name-wrapper {
-  color: #1e293b;
+  color: rgb(var(--v-theme-on-surface));
   font-weight: 700;
 }
 
@@ -386,7 +386,7 @@ const fixtureVenueName = computed(
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background-color: #f1f5f9;
+  background-color: rgba(var(--v-theme-on-surface), 0.08);
   box-sizing: border-box;
   max-width: 100%;
   padding: 4px 10px;
@@ -402,12 +402,12 @@ const fixtureVenueName = computed(
 }
 
 .score-num.winner {
-  color: #2563eb;
+  color: rgb(var(--v-theme-primary));
 }
 
 .score-divider {
   margin: 0 4px;
-  color: #94a3b8;
+  color: rgba(var(--v-theme-on-surface), 0.45);
   font-weight: 400;
 }
 
@@ -416,7 +416,7 @@ const fixtureVenueName = computed(
 }
 
 .result-note-text {
-  color: #334155;
+  color: rgba(var(--v-theme-on-surface), 0.87);
   font-size: 0.875rem;
   line-height: 1.4;
   white-space: pre-wrap;
@@ -425,7 +425,7 @@ const fixtureVenueName = computed(
 .vs-label {
   font-size: 0.75rem;
   font-weight: 700;
-  color: #94a3b8;
+  color: rgba(var(--v-theme-on-surface), 0.45);
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
@@ -463,15 +463,15 @@ const fixtureVenueName = computed(
 }
 
 .fixture-venue-text {
-  color: #334155;
+  color: rgba(var(--v-theme-on-surface), 0.87);
   font-size: 0.875rem;
   line-height: 1.4;
 }
 
 /* Dialog Styling */
 .match-summary-banner {
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, rgb(var(--v-theme-background)) 0%, rgb(var(--v-theme-surface)) 100%);
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 @media (max-width: 600px) {

@@ -47,7 +47,7 @@ setSidemenu(false)
 }
 
 .content-section {
-  background-color: white;
+  background-color: rgb(var(--v-theme-surface));
   border-radius: 12px;
   padding: 8px;
 }

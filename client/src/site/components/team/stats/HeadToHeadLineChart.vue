@@ -23,6 +23,7 @@
 import type Statistics from '@/entity/Statisitics'
 import { usePromise } from '@/utils/PromiseRef'
 import type { ChartData, ChartOptions, Point } from 'chart.js/auto'
+import '@/settings/chart'
 import { Line } from 'vue-chartjs'
 
 type dataType = ChartData<'line', (number | Point | null)[], unknown>

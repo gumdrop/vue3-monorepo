@@ -13,7 +13,7 @@
       <v-row v-if="aggregation === undefined" justify="center" class="mt-12">
         <v-col cols="12" class="text-center">
           <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
-          <div class="mt-4 text-grey">Loading analytics data...</div>
+          <div class="mt-4 text-medium-emphasis">Loading analytics data...</div>
         </v-col>
       </v-row>
 
@@ -25,7 +25,7 @@
                 <div id="analytics-all-seasons-title" class="text-h5 font-weight-bold">
                   {{ selectedCompetition.competitionName }}
                 </div>
-                <div class="text-body-2 text-grey-darken-1">All seasons</div>
+                <div class="text-body-2 text-medium-emphasis">All seasons</div>
               </div>
             </div>
 
@@ -83,7 +83,7 @@
       <v-row v-else-if="selectedCompetition" justify="center" class="mt-12">
         <v-col cols="12" md="6" class="text-center">
           <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-chart-line</v-icon>
-          <div class="text-h5 text-grey-darken-1">
+          <div class="text-h5 text-medium-emphasis">
             No all-season analytics data available for this competition
           </div>
         </v-col>
@@ -92,14 +92,14 @@
       <v-row v-else-if="aggregation && !competitionId" justify="center" class="mt-12">
         <v-col cols="12" md="6" class="text-center">
           <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-chart-line</v-icon>
-          <div class="text-h5 text-grey-darken-1">Select a competition to view analytics</div>
+          <div class="text-h5 text-medium-emphasis">Select a competition to view analytics</div>
         </v-col>
       </v-row>
 
       <v-row v-else-if="aggregation === null" justify="center" class="mt-12">
         <v-col cols="12" md="6" class="text-center">
           <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-alert-circle-outline</v-icon>
-          <div class="text-h5 text-grey-darken-1">No analytics data available for this season</div>
+          <div class="text-h5 text-medium-emphasis">No analytics data available for this season</div>
         </v-col>
       </v-row>
     </div>
@@ -115,6 +115,7 @@ import type {
 } from '@quizleague/shared'
 import type { ChartData, ChartOptions } from 'chart.js'
 import 'chart.js/auto'
+import '@/settings/chart'
 import { computed } from 'vue'
 import { Line } from 'vue-chartjs'
 import SeasonStatisticsAggregationDAO from '@/dao/SeasonStatisticsAggregationDAO'
@@ -358,22 +359,22 @@ const averageScoresData = computed<ChartData<'line', number[], string>>(() => ({
     {
       label: 'Average score',
       data: allSeasonRows.value.map((row) => averageValue(row.competition.averageScore)),
-      borderColor: '#1565c0',
-      backgroundColor: 'rgba(21, 101, 192, 0.12)',
+      borderColor: '#3b82f6',
+      backgroundColor: 'rgba(59, 130, 246, 0.12)',
       tension: 0.25,
     },
     {
       label: 'Average winning score',
       data: allSeasonRows.value.map((row) => averageValue(row.competition.averageWinningScore)),
-      borderColor: '#2e7d32',
-      backgroundColor: 'rgba(46, 125, 50, 0.12)',
+      borderColor: '#22c55e',
+      backgroundColor: 'rgba(34, 197, 94, 0.12)',
       tension: 0.25,
     },
     {
       label: 'Average losing score',
       data: allSeasonRows.value.map((row) => averageValue(row.competition.averageLosingScore)),
-      borderColor: '#c62828',
-      backgroundColor: 'rgba(198, 40, 40, 0.12)',
+      borderColor: '#ef4444',
+      backgroundColor: 'rgba(239, 68, 68, 0.12)',
       tension: 0.25,
     },
   ],
@@ -404,8 +405,8 @@ const averageScoresOptions: ChartOptions<'line'> = {
 
 <style scoped>
 .analytics-all-seasons {
-  background-color: white;
-  border: 1px solid #e2e8f0;
+  background-color: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 8px;
   padding: 24px;
 }
@@ -431,13 +432,13 @@ const averageScoresOptions: ChartOptions<'line'> = {
   gap: 12px;
   min-height: 76px;
   padding: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 8px;
-  background-color: #f8fafc;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 .analytics-metric-label {
-  color: #64748b;
+  color: rgba(var(--v-theme-on-surface), 0.6);
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.35;
@@ -445,7 +446,7 @@ const averageScoresOptions: ChartOptions<'line'> = {
 }
 
 .analytics-metric-value {
-  color: #1e293b;
+  color: rgb(var(--v-theme-on-surface));
   font-size: 1.4rem;
   font-weight: 700;
   line-height: 1.25;
@@ -456,14 +457,14 @@ const averageScoresOptions: ChartOptions<'line'> = {
 }
 
 .analytics-chart-panel {
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 8px;
   margin-bottom: 24px;
   padding: 16px;
 }
 
 .analytics-panel-title {
-  color: #1e293b;
+  color: rgb(var(--v-theme-on-surface));
   font-size: 1rem;
   font-weight: 700;
   margin-bottom: 12px;

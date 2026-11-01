@@ -43,7 +43,7 @@ const teamKey = (row: LeagueTableRowData, index: number) => {
 </script>
 <style lang="css" scoped>
 .league-table-container {
-  background-color: white;
+  background-color: rgb(var(--v-theme-surface));
   border-radius: 8px;
   overflow: hidden;
 }
@@ -60,20 +60,20 @@ caption {
   padding: 16px;
   font-size: 1.1rem;
   font-weight: 600;
-  color: #1a1a1a;
-  background-color: #fdfdfd;
-  border-bottom: 1px solid #eee;
+  color: rgb(var(--v-theme-on-surface));
+  background-color: rgb(var(--v-theme-surface));
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 th {
-  background-color: #f8f9fa;
-  color: #5f6368;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
+  color: rgba(var(--v-theme-on-surface), 0.6);
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 12px 8px;
-  border-bottom: 2px solid #edf2f7;
+  border-bottom: 2px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .text-center {

@@ -4,14 +4,14 @@
   </div>
   
   <v-card v-if="fixture" class="submit-result-card elevation-2 overflow-hidden">
-    <v-toolbar color="grey-lighten-4" density="compact" flat>
-      <v-toolbar-title class="text-subtitle-2 font-weight-bold grey--text text--darken-2">
+    <v-toolbar color="surface" density="compact" flat>
+      <v-toolbar-title class="text-subtitle-2 font-weight-bold text-medium-emphasis">
         Match Details
       </v-toolbar-title>
     </v-toolbar>
     
     <v-card-text class="pa-0">
-      <div class="match-info pa-4 bg-white">
+      <div class="match-info pa-4">
         <SimpleFixtures :fixtures="[fixtureDoc]" inline-details />
       </div>
       
@@ -79,11 +79,11 @@
 
         <v-expand-transition>
           <v-card v-if="preview" class="report-preview mt-4 mb-6 border">
-            <v-toolbar density="compact" color="info-lighten-5" flat>
+            <v-toolbar density="compact" color="surface" flat>
               <v-icon color="info" start class="ml-4">mdi-eye-outline</v-icon>
               <v-toolbar-title class="text-subtitle-2 font-weight-bold info--text">Report Preview</v-toolbar-title>
             </v-toolbar>
-            <v-card-text class="pa-4 bg-grey-lighten-5">
+            <v-card-text class="pa-4 bg-surface">
               <QlMarkdown :text="reportText || '*No report text entered yet*'" />
             </v-card-text>
           </v-card>
@@ -114,7 +114,7 @@
         </v-toolbar>
         <v-card-text class="pa-6">
           <p class="text-body-1 mb-4">Please verify the result before finalizing:</p>
-          <div class="confirmation-match-view pa-4 bg-grey-lighten-4 rounded-lg">
+          <div class="confirmation-match-view pa-4 bg-surface rounded-lg">
             <table v-if="fixtureForSubmission" class="w-100">
               <FixtureLine :fixture="fixtureForSubmission" inline-details />
             </table>
@@ -123,7 +123,7 @@
         <v-divider></v-divider>
         <v-card-actions class="pa-4">
           <v-spacer></v-spacer>
-          <v-btn variant="text" color="grey-darken-1" @click="confirm = false" class="px-4">
+          <v-btn variant="text" color="grey" @click="confirm = false" class="px-4">
             <v-icon start>mdi-close</v-icon>
             Cancel
           </v-btn>
@@ -216,17 +216,17 @@ const confirmSubmit = async () => {
 <style scoped>
 .submit-result-card {
   border-radius: 16px !important;
-  border: 1px solid #e2e8f0 !important;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity)) !important;
 }
 
 .match-info {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .team-label {
   font-size: 0.85rem;
   font-weight: 700;
-  color: #64748b;
+  color: rgba(var(--v-theme-on-surface), 0.6);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-right: 8px;
@@ -244,7 +244,7 @@ const confirmSubmit = async () => {
 }
 
 .preview-active {
-  background-color: rgba(59, 130, 246, 0.1);
+  background-color: rgba(var(--v-theme-primary), 0.1);
 }
 
 .report-preview {
@@ -253,7 +253,7 @@ const confirmSubmit = async () => {
 }
 
 .confirmation-match-view {
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 @media (max-width: 600px) {

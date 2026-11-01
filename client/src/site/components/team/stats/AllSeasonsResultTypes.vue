@@ -12,6 +12,7 @@
 import type Statistics from '@/entity/Statisitics'
 import { useTeams } from '@/services/TeamService'
 import 'chart.js/auto'
+import '@/settings/chart'
 import { computed } from 'vue'
 import { Pie } from 'vue-chartjs'
 

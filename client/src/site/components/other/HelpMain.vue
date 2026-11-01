@@ -79,13 +79,13 @@ const { user } = storeToRefs(useUserStore())
 }
 
 .bg-blue-lighten-5 {
-  background-color: #f0f7ff !important;
+  background-color: rgba(var(--v-theme-primary), 0.08) !important;
 }
 
 .pa-6 :deep(p) {
   margin-bottom: 1rem;
   line-height: 1.6;
-  color: #334155;
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 
 .pa-6 :deep(p:last-child) {

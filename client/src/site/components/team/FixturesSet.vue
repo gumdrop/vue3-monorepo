@@ -10,14 +10,14 @@
     </div>
     
     <v-card-text class="pa-0">
-      <div class="fixtures-list bg-white">
+      <div class="fixtures-list">
         <SimpleFixtures :fixtures="fixtures" inline-details />
       </div>
     </v-card-text>
     
     <v-divider></v-divider>
     
-    <v-card-actions class="pa-2 bg-grey-lighten-5">
+    <v-card-actions class="fixtures-set-actions pa-2">
       <FetchActions :initial-fetch="initialFetch" @fetch="(fetch) => fetchSize = fetch" />
     </v-card-actions>
   </v-card>
@@ -45,18 +45,22 @@ const fixtures = usePromise(() => props.fetchFunction(props.teamId, fetchSize.va
 <style scoped>
 .fixtures-set-card {
   border-radius: 16px !important;
-  border: 1px solid #e2e8f0 !important;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity)) !important;
 }
 
 .fixtures-set-header {
   align-items: center;
-  background: #f5f5f5;
-  color: #374151;
+  background: rgba(var(--v-theme-on-surface), 0.05);
+  color: rgba(var(--v-theme-on-surface), 0.87);
   display: flex;
   gap: 12px;
   justify-content: space-between;
   min-height: 56px;
   padding: 8px 16px;
+}
+
+.fixtures-set-actions {
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 .fixtures-set-title {

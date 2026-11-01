@@ -1,7 +1,7 @@
 <template><v-slide-y-transition>
     <v-card class="team-info-card elevation-2 overflow-hidden">
-      <v-toolbar color="grey-lighten-4" density="compact" flat>
-        <v-toolbar-title class="text-subtitle-2 font-weight-bold grey--text text--darken-2">
+      <v-toolbar color="surface" density="compact" flat>
+        <v-toolbar-title class="text-subtitle-2 font-weight-bold text-medium-emphasis">
           Team Information
         </v-toolbar-title>
       </v-toolbar>
@@ -10,7 +10,7 @@
         <div v-if="team.venue?.id" class="d-flex align-center mb-6">
           <v-icon color="primary" class="mr-3">mdi-map-marker-radius</v-icon>
           <div>
-            <div class="text-caption text-uppercase font-weight-bold grey--text">Home Venue</div>
+            <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">Home Venue</div>
             <VenueLink :id="team.venue.id" class="text-subtitle-1 font-weight-medium text-primary text-decoration-none" />
           </div>
         </div>
@@ -18,7 +18,7 @@
         <div class="standings-section">
           <div class="d-flex align-center mb-3">
             <v-icon color="primary" class="mr-3">mdi-format-list-numbered</v-icon>
-            <span class="text-subtitle-2 font-weight-bold grey--text text--darken-2">Current Standings</span>
+            <span class="text-subtitle-2 font-weight-bold text-medium-emphasis">Current Standings</span>
           </div>
           <v-divider class="mb-4"></v-divider>
           <TeamStandings :team-id="teamId" />
@@ -83,13 +83,13 @@ const copy = (teamId: string) => {
 <style scoped>
 .team-info-card {
   border-radius: 16px !important;
-  border: 1px solid #e2e8f0 !important;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity)) !important;
 }
 
 .standings-section {
-  background-color: #f8fafc;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
   padding: 16px;
   border-radius: 12px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 </style>

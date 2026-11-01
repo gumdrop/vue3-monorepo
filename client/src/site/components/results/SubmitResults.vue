@@ -9,10 +9,10 @@
     </v-row>
     <v-row v-else-if="fixtures && fixtures.length === 0">
       <v-col cols="12">
-        <v-card class="pa-8 text-center bg-grey-lighten-4 rounded-xl">
+        <v-card class="pa-8 text-center bg-surface rounded-xl">
           <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-check-all</v-icon>
-          <div class="text-h6 font-weight-bold grey--text text--darken-2">No pending results to submit</div>
-          <p class="text-body-1 grey--text">You're all caught up!</p>
+          <div class="text-h6 font-weight-bold text-medium-emphasis">No pending results to submit</div>
+          <p class="text-body-1 text-medium-emphasis">You're all caught up!</p>
         </v-card>
       </v-col>
     </v-row>

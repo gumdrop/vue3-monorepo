@@ -18,6 +18,7 @@
 <script setup lang="ts">
 import type Statistics from '@/entity/Statisitics'
 import 'chart.js/auto'
+import '@/settings/chart'
 import type { ChartData, ChartOptions, Point } from 'chart.js/auto'
 import { computed } from 'vue'
 import { Line } from 'vue-chartjs'

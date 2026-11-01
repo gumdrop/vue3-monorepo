@@ -19,6 +19,7 @@
 import type Statistics from '@/entity/Statisitics'
 import { usePromise } from '@/utils/PromiseRef'
 import 'chart.js/auto'
+import '@/settings/chart'
 import type { ChartData, ChartOptions, Point } from 'chart.js/auto'
 import { Line } from 'vue-chartjs'
 

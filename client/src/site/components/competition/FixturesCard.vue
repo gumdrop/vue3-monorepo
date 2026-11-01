@@ -48,13 +48,13 @@ const fixtureList = usePromise(() =>
 .fixtures-card {
   border-radius: 12px;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .card-header {
   padding: 16px 20px;
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .header-main {
@@ -67,18 +67,18 @@ const fixtureList = usePromise(() =>
 .header-date {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #1e293b;
+  color: rgb(var(--v-theme-on-surface));
 }
 
 .header-sep {
-  color: #cbd5e1;
+  color: rgba(var(--v-theme-on-surface), 0.3);
   font-weight: 300;
 }
 
 .header-desc {
   font-size: 1rem;
   font-weight: 600;
-  color: #3b82f6;
+  color: rgb(var(--v-theme-info));
 }
 
 @media (max-width: 600px) {
