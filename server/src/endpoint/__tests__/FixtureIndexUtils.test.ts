@@ -92,13 +92,20 @@ describe('FixtureIndexUtils', () => {
     )
   })
 
-  it('does not write a fixture index for an empty fixture set', async () => {
+  it('writes a fixture index for an empty fixture set', async () => {
     await upsertFixtureIndexForFixtureSet(fixtureSet, [])
 
-    expect(mocks.save).not.toHaveBeenCalled()
+    expect(mocks.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: encodeURIComponent(fixtureSet.path),
+        fixtureSetPath: fixtureSet.path,
+        teamIds: [],
+        fixtures: [],
+      }),
+    )
   })
 
-  it('rebuilds a season fixture index from every non-empty fixture set', async () => {
+  it('rebuilds a season fixture index from every fixture set, including empty ones', async () => {
     const incompleteFixtureSet = {
       ...fixtureSet,
       id: 'week-2',
@@ -132,7 +139,7 @@ describe('FixtureIndexUtils', () => {
     await expect(rebuildSeasonFixtureIndex(season)).resolves.toEqual(
       expect.objectContaining({
         seasonId: 'season-1',
-        fixtureSetCount: 2,
+        fixtureSetCount: 3,
       }),
     )
 
@@ -141,13 +148,14 @@ describe('FixtureIndexUtils', () => {
     expect(mocks.saveAll).toHaveBeenCalledWith([
       expect.objectContaining({ fixtureSetPath: fixtureSet.path }),
       expect.objectContaining({ fixtureSetPath: incompleteFixtureSet.path }),
+      expect.objectContaining({ fixtureSetPath: emptyFixtureSet.path }),
     ])
     expect(mocks.save).toHaveBeenCalledWith(
       expect.objectContaining({
         id: 'season-1',
         path: 'fixtureindexstatus/season-1',
         seasonId: 'season-1',
-        fixtureSetCount: 2,
+        fixtureSetCount: 3,
       }),
     )
   })

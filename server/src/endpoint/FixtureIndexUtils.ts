@@ -75,8 +75,6 @@ async function fixtureIndexForFixtureSet(
   providedCompetition?: Competition,
   providedSeason?: Season,
 ) {
-  if (fixtures.length === 0) return undefined
-
   const competitionPath = parseParent(fixtureSet.path)
   const seasonPath = parseParent(competitionPath)
   const competition = providedCompetition ?? (await load<Competition>(competitionPath))
