@@ -196,6 +196,19 @@ describe('FixtureIndexDAO', () => {
     expect(mocks.where).toHaveBeenCalledWith('teamIds', 'array-contains', 'team-b')
   })
 
+  it('maps upcoming team fixture indexes to matching fixture document references', async () => {
+    await expect(
+      FixtureIndexDAO.teamUpcomingFixtureDocuments('team-b', 'season-1', 5),
+    ).resolves.toEqual([expect.objectContaining({ path: fixtureIndex.fixtures[0].fixturePath })])
+
+    expect(mocks.where).toHaveBeenCalledWith('seasonId', '==', 'season-1')
+    expect(mocks.where).toHaveBeenCalledWith('firstClass', '==', true)
+    expect(mocks.where).toHaveBeenCalledWith('teamIds', 'array-contains', 'team-b')
+    expect(mocks.where).toHaveBeenCalledWith('fixtureSetDate', '>=', expect.any(String))
+    expect(mocks.orderBy).toHaveBeenCalledWith('fixtureSetDate', 'asc')
+    expect(mocks.limit).toHaveBeenCalledWith(5)
+  })
+
   it('skips the limit call when take is Number.MAX_SAFE_INTEGER', async () => {
     await FixtureIndexDAO.teamFixtureDocuments('team-b', 'season-1', Number.MAX_SAFE_INTEGER)
 
