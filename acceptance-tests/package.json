@@ -9,8 +9,8 @@
     "test:headed": "PW_HEADLESS=false npm test"
   },
   "devDependencies": {
-    "@playwright/test": "^1.60.0",
+    "@playwright/test": "^1.64.1",
     "axe-core": "^4.11.4",
-    "playwright-bdd": "^8.5.1"
+    "playwright-bdd": "^9.2.1"
   }
 }
