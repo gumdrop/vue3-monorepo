@@ -195,7 +195,7 @@ Public competition pages have an existing bounded team-name resolution read cont
 
 ## Fixture Index
 
-`fixtureindex/{fixtureIndexId}` is a top-level denormalized read model for public fixtures and results pages. Each document represents one fixture set (whether or not its fixtures have results yet) and stores the season, competition, fixture-set path/date, participating team IDs, and the child fixture paths/team references with optional home/away scores. The document ID is `encodeURIComponent(fixtureSet.path)` so rebuilding is idempotent.
+`fixtureindex/{fixtureIndexId}` is a top-level denormalized read model for public fixtures and results pages. Each document represents one fixture set (whether or not it has fixtures or results yet) and stores the season, competition, fixture-set path/date, participating team IDs, and the child fixture paths/team references with optional home/away scores. The document ID is `encodeURIComponent(fixtureSet.path)` so rebuilding is idempotent.
 
 `fixtureindexstatus/{seasonId}` records that the fixture index has been rebuilt for a season. Public fixture and result services only use the fast fixture-index queries after this status exists; otherwise they fall back to the canonical nested `season -> competition -> fixtures -> fixture` data to avoid hiding historical data during rollout.
 
