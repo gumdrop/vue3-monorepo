@@ -92,7 +92,7 @@ const openContactDialog = (contactAlias: string, displayText: string) => {
 </script>
 <style scoped>
 .content-wrapper {
-  background-color: white;
+  background-color: rgb(var(--v-theme-surface));
   border-radius: 12px;
   overflow: hidden;
 }
@@ -100,7 +100,7 @@ const openContactDialog = (contactAlias: string, displayText: string) => {
 .contact-section p {
   font-size: 1.05rem;
   line-height: 1.6;
-  color: #334155;
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 
 .v-btn {

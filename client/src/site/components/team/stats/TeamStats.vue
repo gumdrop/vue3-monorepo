@@ -5,7 +5,7 @@
         <v-card class="stats-card elevation-2 overflow-hidden">
           <v-tabs 
             v-model="tab" 
-            bg-color="grey-lighten-4" 
+            bg-color="surface" 
             color="primary" 
             align-tabs="start"
             density="comfortable"

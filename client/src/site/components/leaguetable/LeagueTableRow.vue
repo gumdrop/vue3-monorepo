@@ -82,11 +82,11 @@ const team = useDocument(() => (teamId.value ? TeamDAO.getById(teamId.value) : u
 }
 
 .highlight-team {
-  background-color: rgba(37, 99, 235, 0.1);
+  background-color: rgba(var(--v-theme-primary), 0.1);
 }
 
 .league-table-row:hover {
-  background-color: #f1f5f9;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 .league-table-row:last-child td {
@@ -95,8 +95,8 @@ const team = useDocument(() => (teamId.value ? TeamDAO.getById(teamId.value) : u
 
 td {
   padding: 12px 8px;
-  border-bottom: 1px solid #f0f0f0;
-  color: #374151;
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+  color: rgba(var(--v-theme-on-surface), 0.87);
   vertical-align: middle;
 }
 
@@ -111,30 +111,30 @@ td {
 
 .team-link {
   text-decoration: none;
-  color: #2563eb;
+  color: rgb(var(--v-theme-primary));
   font-weight: 500;
   transition: color 0.2s ease;
 }
 
 .team-link:hover {
-  color: #1d4ed8;
+  color: rgba(var(--v-theme-primary), 0.8);
   text-decoration: underline;
 }
 
 .pos-col {
   font-weight: 500;
-  color: #6b7280;
+  color: rgba(var(--v-theme-on-surface), 0.55);
   width: 40px;
 }
 
 .num-col {
-  color: #4b5563;
+  color: rgba(var(--v-theme-on-surface), 0.7);
 }
 
 .pts-col {
   font-weight: 700;
-  color: #111827;
-  background-color: rgba(37, 99, 235, 0.03);
+  color: rgb(var(--v-theme-on-surface));
+  background-color: rgba(var(--v-theme-primary), 0.04);
 }
 
 @media (max-width: 600px) {

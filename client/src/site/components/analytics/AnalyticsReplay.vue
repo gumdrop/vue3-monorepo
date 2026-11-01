@@ -13,7 +13,7 @@
       <v-row v-if="aggregation === undefined" justify="center" class="mt-12">
         <v-col cols="12" class="text-center">
           <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
-          <div class="mt-4 text-grey">Loading analytics data...</div>
+          <div class="mt-4 text-medium-emphasis">Loading analytics data...</div>
         </v-col>
       </v-row>
 
@@ -25,11 +25,11 @@
                 <div class="d-flex justify-space-between align-center">
                   <div class="text-h6 font-weight-bold">
                     {{ currentSnapshot?.fixtureSetDescription }}
-                    <span class="text-subtitle-1 text-grey-darken-1 font-weight-regular ml-2">
+                    <span class="text-subtitle-1 text-medium-emphasis font-weight-regular ml-2">
                       ({{ currentSnapshot?.fixtureSetDate }})
                     </span>
                   </div>
-                  <div class="text-caption text-grey">
+                  <div class="text-caption text-medium-emphasis">
                     Snapshot {{ snapshotIndex + 1 }} of
                     {{ selectedCompetition.tableSnapshots.length }}
                   </div>
@@ -138,7 +138,7 @@
       >
         <v-col cols="12" md="6" class="text-center">
           <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-play-box-outline</v-icon>
-          <div class="text-h5 text-grey-darken-1">
+          <div class="text-h5 text-medium-emphasis">
             No replay data available for this competition
           </div>
         </v-col>
@@ -147,14 +147,14 @@
       <v-row v-else-if="aggregation && !competitionId" justify="center" class="mt-12">
         <v-col cols="12" md="6" class="text-center">
           <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-chart-timeline-variant</v-icon>
-          <div class="text-h5 text-grey-darken-1">Select a competition to view replay</div>
+          <div class="text-h5 text-medium-emphasis">Select a competition to view replay</div>
         </v-col>
       </v-row>
 
       <v-row v-else-if="aggregation === null" justify="center" class="mt-12">
         <v-col cols="12" md="6" class="text-center">
           <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-alert-circle-outline</v-icon>
-          <div class="text-h5 text-grey-darken-1">No analytics data available for this season</div>
+          <div class="text-h5 text-medium-emphasis">No analytics data available for this season</div>
         </v-col>
       </v-row>
     </div>
@@ -245,7 +245,7 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .league-table-container {
-  background-color: white;
+  background-color: rgb(var(--v-theme-surface));
   border-radius: 12px;
   overflow: hidden;
 }
@@ -260,20 +260,20 @@ onBeforeUnmount(() => {
 caption {
   text-align: left;
   font-size: 1.1rem;
-  color: #1a1a1a;
-  background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  color: rgb(var(--v-theme-on-surface));
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 th {
-  background-color: #f8fafc;
-  color: #64748b;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
+  color: rgba(var(--v-theme-on-surface), 0.6);
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   padding: 12px 16px;
-  border-bottom: 2px solid #e2e8f0;
+  border-bottom: 2px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .text-center {

@@ -19,14 +19,14 @@
               <div class="d-flex align-center mb-4">
                 <v-icon color="primary" class="mr-3">mdi-map-marker-radius</v-icon>
                 <div>
-                  <div class="text-caption text-uppercase font-weight-bold grey--text">Venue</div>
+                  <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">Venue</div>
                   <VenueLink v-if="event.venue?.id" :id="event.venue.id" class="text-subtitle-1 font-weight-medium text-primary text-decoration-none" />
                 </div>
               </div>
               <div class="d-flex align-center">
                 <v-icon color="primary" class="mr-3">mdi-calendar-clock</v-icon>
                 <div>
-                  <div class="text-caption text-uppercase font-weight-bold grey--text">Date & Time</div>
+                  <div class="text-caption text-uppercase font-weight-bold text-medium-emphasis">Date & Time</div>
                   <div class="text-subtitle-1 font-weight-medium">
                     {{ date(event.date, 'd MMMM yyyy') }} starting at {{ event.time }}
                   </div>
@@ -77,7 +77,7 @@ const event = computed<CompetitionEvent | undefined>(() => {
 </script>
 <style scoped>
 .content-wrapper {
-  background-color: white;
+  background-color: rgb(var(--v-theme-surface));
   border-radius: 12px;
   overflow: hidden;
 }
@@ -88,9 +88,9 @@ const event = computed<CompetitionEvent | undefined>(() => {
 }
 
 .event-info {
-  background-color: #f8fafc;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
   padding: 20px;
   border-radius: 12px;
-  border: 1px solid #f1f5f9;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 </style>

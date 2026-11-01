@@ -31,19 +31,19 @@ const team = useDocument(() => TeamDAO.getById(props.report.team.id))
 <style scoped>
 .match-report-item {
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   overflow: hidden;
 }
 
 .report-header {
-  background-color: #f8fafc;
-  border-bottom: 1px solid #f1f5f9;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
+  border-bottom: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .report-content {
   font-size: 1rem;
   line-height: 1.6;
-  color: #334155;
+  color: rgba(var(--v-theme-on-surface), 0.87);
 }
 
 :deep(.html p) {

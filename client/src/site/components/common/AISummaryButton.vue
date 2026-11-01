@@ -13,7 +13,7 @@
         </v-btn>
       </v-toolbar>
       <v-card-text class="pa-6">
-        <div class="text-subtitle-1 font-weight-bold mb-4 text-grey-darken-2">
+        <div class="text-subtitle-1 font-weight-bold mb-4 text-medium-emphasis">
           {{ date(fixtures.date, 'd MMM yyyy') }}{{ parentName ? ` - ${parentName}` : '' }}{{ fixtures.description ? ` (${fixtures.description})` : '' }}
         </div>
         <QlText v-if="resultsSummaryDoc" :id="resultsSummaryDoc.id" />

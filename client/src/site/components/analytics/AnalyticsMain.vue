@@ -13,7 +13,7 @@
       <v-row v-if="aggregation === undefined" justify="center" class="mt-12">
         <v-col cols="12" class="text-center">
           <v-progress-circular indeterminate color="primary" size="48"></v-progress-circular>
-          <div class="mt-4 text-grey">Loading analytics data...</div>
+          <div class="mt-4 text-medium-emphasis">Loading analytics data...</div>
         </v-col>
       </v-row>
 
@@ -25,7 +25,7 @@
                 <div id="analytics-overview-title" class="text-h5 font-weight-bold">
                   {{ selectedCompetition.competitionName }}
                 </div>
-                <div class="text-body-2 text-grey-darken-1" v-if="formattedGeneratedAt">
+                <div class="text-body-2 text-medium-emphasis" v-if="formattedGeneratedAt">
                   Generated {{ formattedGeneratedAt }}
                 </div>
               </div>
@@ -63,14 +63,14 @@
       <v-row v-else-if="aggregation && !competitionId" justify="center" class="mt-12">
         <v-col cols="12" md="6" class="text-center">
           <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-chart-line</v-icon>
-          <div class="text-h5 text-grey-darken-1">Select a competition to view analytics</div>
+          <div class="text-h5 text-medium-emphasis">Select a competition to view analytics</div>
         </v-col>
       </v-row>
 
       <v-row v-else-if="aggregation === null" justify="center" class="mt-12">
         <v-col cols="12" md="6" class="text-center">
           <v-icon size="64" color="grey-lighten-1" class="mb-4">mdi-alert-circle-outline</v-icon>
-          <div class="text-h5 text-grey-darken-1">No analytics data available for this season</div>
+          <div class="text-h5 text-medium-emphasis">No analytics data available for this season</div>
         </v-col>
       </v-row>
     </div>
@@ -192,8 +192,8 @@ const overviewRows = computed(() => {
 
 <style scoped>
 .analytics-overview {
-  background-color: white;
-  border: 1px solid #e2e8f0;
+  background-color: rgb(var(--v-theme-surface));
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 8px;
   padding: 24px;
 }
@@ -223,13 +223,13 @@ const overviewRows = computed(() => {
   gap: 12px;
   min-height: 76px;
   padding: 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
   border-radius: 8px;
-  background-color: #f8fafc;
+  background-color: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 .analytics-metric-label {
-  color: #64748b;
+  color: rgba(var(--v-theme-on-surface), 0.6);
   font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.35;
@@ -237,7 +237,7 @@ const overviewRows = computed(() => {
 }
 
 .analytics-metric-value {
-  color: #1e293b;
+  color: rgb(var(--v-theme-on-surface));
   font-size: 1.4rem;
   font-weight: 700;
   line-height: 1.25;
@@ -251,7 +251,7 @@ const overviewRows = computed(() => {
 .analytics-summary-table th,
 .analytics-summary-table td {
   padding: 12px 16px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
 }
 
 .analytics-summary-table th {
@@ -261,13 +261,13 @@ const overviewRows = computed(() => {
   letter-spacing: 0;
   font-size: 0.875rem;
   line-height: 1.4;
-  color: #475569;
+  color: rgba(var(--v-theme-on-surface), 0.7);
   background-color: transparent;
   border-bottom: 0;
 }
 
 .analytics-summary-table td {
-  color: #1e293b;
+  color: rgb(var(--v-theme-on-surface));
   font-weight: 600;
 }
 

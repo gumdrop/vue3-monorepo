@@ -653,7 +653,7 @@ const timerCaption = computed(() => {
 const timerColor = computed(() => {
   if (timerState.value === 'done') return 'error'
   if (timerState.value === 'paused') return 'warning'
-  return 'green-darken-4'
+  return 'success'
 })
 const showTimer = computed(
   () => phase.value === 'rounds' && !settingUpIndividual.value && Boolean(round.value && question.value),
@@ -918,10 +918,10 @@ function finishBeer() {
 }
 
 .scoresheet-round-row td {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(var(--v-theme-on-surface), 0.04);
 }
 
 .scoresheet-total-row td {
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(var(--v-theme-on-surface), 0.02);
 }
 </style>

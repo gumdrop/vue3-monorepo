@@ -2,7 +2,7 @@
   <v-row v-if="!seasonId" justify="center" class="mt-12">
     <v-col cols="12" class="text-center">
       <v-progress-circular indeterminate color="primary" size="64"></v-progress-circular>
-      <div class="mt-4 text-grey">Loading application context...</div>
+      <div class="mt-4 text-medium-emphasis">Loading application context...</div>
     </v-col>
   </v-row>
 
