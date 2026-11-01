@@ -105,6 +105,30 @@ class FixtureIndexDAO extends DAO<FixtureIndex> {
       .map((fixture) => fixtureDAO.getByPath(fixture.fixturePath))
   }
 
+  async teamUpcomingFixtureDocuments(teamId: string, seasonId: string, take?: number) {
+    if (!(await fixtureIndexStatusDAO.isComplete(seasonId))) return undefined
+
+    return (
+      await this.entities(
+        withOptionalLimit(
+          query(
+            this.collection(),
+            where('seasonId', '==', seasonId),
+            where('firstClass', '==', true),
+            where('teamIds', 'array-contains', teamId),
+            where('fixtureSetDate', '>=', currentLocalDate().toString()),
+            orderBy('fixtureSetDate', 'asc'),
+          ),
+          take,
+        ),
+      )
+    )
+      .flatMap((entry) => entry.fixtures)
+      .filter((fixture) => fixture.homeTeamId === teamId || fixture.awayTeamId === teamId)
+      .slice(0, take)
+      .map((fixture) => fixtureDAO.getByPath(fixture.fixturePath))
+  }
+
   private seasonQuery(seasonId: string, today: string, take?: number) {
     return withOptionalLimit(
       query(

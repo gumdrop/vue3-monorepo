@@ -95,9 +95,18 @@ export const useFixture = () => {
   const teamFixtures = async (teamId: string, take?: number) => {
     const appContext = await getAppContext()
 
+    const seasonId = `${appContext?.currentSeason.id}`
+
+    const fixtureIndexFixtures = await FixtureIndexDAO.teamUpcomingFixtureDocuments(
+      teamId,
+      seasonId,
+      take,
+    )
+    if (fixtureIndexFixtures) return fixtureIndexFixtures
+
     const { activeFixtures } = useFixtures()
 
-    return teamFixtureSet(teamId, `${appContext?.currentSeason.id}`, activeFixtures, take)
+    return teamFixtureSet(teamId, seasonId, activeFixtures, take)
   }
 
   const teamResults = async (teamId: string, seasonId: string, take?: number) => {

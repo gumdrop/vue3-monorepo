@@ -23,6 +23,7 @@ const mocks = vi.hoisted(() => ({
   },
   fixtureIndexDAO: {
     teamFixtureDocuments: vi.fn(),
+    teamUpcomingFixtureDocuments: vi.fn(),
   },
 }))
 
@@ -71,6 +72,7 @@ describe('FixtureService', () => {
     mocks.fixtureDAO.subCollection.mockImplementation((path: string) => `${path}/fixture`)
     mocks.fixtureDAO.getByPath.mockImplementation((path: string) => ({ id: path, path }))
     mocks.fixtureIndexDAO.teamFixtureDocuments.mockResolvedValue(undefined)
+    mocks.fixtureIndexDAO.teamUpcomingFixtureDocuments.mockResolvedValue(undefined)
   })
 
   it('flattens fixture groups into their child fixtures', async () => {
@@ -104,8 +106,36 @@ describe('FixtureService', () => {
         path: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
       },
     ])
+    expect(mocks.fixtureIndexDAO.teamUpcomingFixtureDocuments).toHaveBeenCalledWith(
+      'alpha',
+      'season-1',
+      1,
+    )
     expect(mocks.fixturesService.activeFixtures).toHaveBeenCalledWith('season-1')
     expect(mocks.fixturesDAO.entityList).toHaveBeenCalledWith(['active-doc'])
+  })
+
+  it('returns team fixtures from the fixture index when the season has been rebuilt', async () => {
+    mocks.fixtureIndexDAO.teamUpcomingFixtureDocuments.mockResolvedValue([
+      {
+        id: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+        path: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+      },
+    ])
+
+    await expect(useFixture().teamFixtures('alpha', 1)).resolves.toEqual([
+      {
+        id: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+        path: 'season/season-1/competition/league/fixtures/week-1/fixture/fixture-1',
+      },
+    ])
+
+    expect(mocks.fixtureIndexDAO.teamUpcomingFixtureDocuments).toHaveBeenCalledWith(
+      'alpha',
+      'season-1',
+      1,
+    )
+    expect(mocks.fixturesService.activeFixtures).not.toHaveBeenCalled()
   })
 
   it('returns spent fixtures for a team in the requested season', async () => {
