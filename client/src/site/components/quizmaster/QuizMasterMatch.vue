@@ -81,7 +81,7 @@
           <p class="question-text mb-1">
             <strong>{{ question.number }}.</strong> <span v-html="questionHtml" />
           </p>
-          <p class="text-subtitle-1">
+          <p class="text-subtitle-1 for-field">
             For
             <strong v-if="subject">{{ contestantName }}</strong>
             <strong v-else>{{ targetName }}</strong>
@@ -92,7 +92,7 @@
             <strong>Answer:</strong> <span class="answer-text" v-html="answerHtml" />
           </v-alert>
           <v-alert v-else type="info" density="compact" class="mt-2" variant="tonal">
-            <em>Answer hidden — press the timer to reveal.</em>
+            <em>Answer hidden — start the timer to reveal.</em>
           </v-alert>
 
           <div class="d-flex flex-wrap ga-2 mt-4">
@@ -475,10 +475,11 @@
     class="timer-fab"
     :class="{ 'timer-done': timerState === 'done' }"
     :color="timerColor"
+    elevation="3"
     @click="toggleTimer"
   >
     <span class="timer-fab-content">
-      <span class="timer-fab-number">{{ timerLabel }}</span>
+      <span class="timer-fab-number">{{ timerLabel }}s</span>
       <span class="timer-fab-caption">{{ timerCaption }}</span>
     </span>
   </v-btn>
@@ -648,7 +649,7 @@ const timerCaption = computed(() => {
   if (timerState.value === 'idle') return 'Start'
   if (timerState.value === 'paused') return 'Paused'
   if (timerState.value === 'done') return 'Time'
-  return 'sec'
+  return ''
 })
 const timerColor = computed(() => {
   if (timerState.value === 'done') return 'error'
@@ -827,6 +828,7 @@ function finishBeer() {
 </script>
 <style scoped>
 .match-header-title {
+  position: relative;
   padding-right: 100px;
 }
 
@@ -840,11 +842,16 @@ function finishBeer() {
 .match-score {
   font-size: 1.5rem;
   line-height: 1.3;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .timer-fab {
   position: absolute;
-  top: 0;
+  top: 12px;
   right: 16px;
   width: 76px !important;
   height: 76px !important;
@@ -868,11 +875,18 @@ function finishBeer() {
     font-size: 1.25rem;
     line-height: 1.3;
     padding-right: 88px;
+    position: static;
+    left: auto;
+    transform: none;
   }
 }
 
 .quiz-match-wrap {
   position: relative;
+}
+
+.for-field {
+  font-size: 1.15rem;
 }
 
 .question-text {

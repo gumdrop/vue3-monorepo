@@ -56,8 +56,8 @@
           v-model="homeIsAFirstHalf"
           label="Which team is the A team for the first half?"
         >
-          <v-radio :value="true" label="Home" />
-          <v-radio :value="false" label="Away" />
+          <v-radio :value="true" :label="store.fixture?.homeName ?? 'Home'" />
+          <v-radio :value="false" :label="store.fixture?.awayName ?? 'Away'" />
         </v-radio-group>
 
         <v-row>
@@ -139,7 +139,7 @@ const emit = defineEmits<{ done: []; resume: [] }>()
 const store = useQuizmasterStore()
 const password = ref('')
 const localFile = ref<File | null>(null)
-const homeIsAFirstHalf = ref(true)
+const homeIsAFirstHalf = ref<boolean>()
 const homePlayers = ref<string[]>(['', '', '', ''])
 const awayPlayers = ref<string[]>(['', '', '', ''])
 const homeMemberNames = ref<string[]>([])
@@ -165,7 +165,11 @@ const homePlayerCount = computed(() => homePlayers.value.filter((p) => (p ?? '')
 const awayPlayerCount = computed(() => awayPlayers.value.filter((p) => (p ?? '').trim()).length)
 
 const canContinue = computed(
-  () => Boolean(store.fixture) && homePlayerCount.value >= 3 && awayPlayerCount.value >= 3,
+  () =>
+    Boolean(store.fixture) &&
+    homeIsAFirstHalf.value !== undefined &&
+    homePlayerCount.value >= 3 &&
+    awayPlayerCount.value >= 3,
 )
 
 watch(
@@ -269,7 +273,10 @@ async function continueToReview() {
   const fixture = store.fixture
   if (!fixture) return
 
-  store.homeIsAFirstHalf = homeIsAFirstHalf.value
+  const firstHalfIsHome = homeIsAFirstHalf.value
+  if (firstHalfIsHome === undefined) return
+
+  store.homeIsAFirstHalf = firstHalfIsHome
   const home = homePlayers.value.map((p) => (p ?? '').trim()).filter(Boolean)
   const away = awayPlayers.value.map((p) => (p ?? '').trim()).filter(Boolean)
 
