@@ -126,8 +126,8 @@ At the start of each individual round, before any question in that round is answ
 **Verify:** Each team's joker category is captured before the first question of the round and is immutable for the rest of that round.
 
 #### FR-3.5: Designate the A team for the first half
-At match start the QM shall designate which team is the "A" team for the first half, defaulting to home = A. The designation swaps automatically for the second half (rounds 6–10).
-**Verify:** The team shown as the A team in rounds 1–5 matches the QM's designation, and the opposite team is shown as A in rounds 6–10.
+At match start the QM shall designate which team is the "A" team for the first half. The designation is empty until the QM actively makes it, and the QM cannot proceed until it has been made. The designation swaps automatically for the second half (rounds 6–10).
+**Verify:** The A-team selection starts unset; the team shown as the A team in rounds 1–5 matches the QM's designation, and the opposite team is shown as A in rounds 6–10.
 
 ### Architectural Requirements
 

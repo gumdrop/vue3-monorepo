@@ -1,6 +1,6 @@
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { computed, defineComponent, h, nextTick } from 'vue'
+import { computed, defineComponent, h, inject, nextTick, provide, type InjectionKey } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useQuizmasterStore } from '@/stores/quizmaster'
 import { siteComponentStubs } from '../../__tests__/componentStubs'
@@ -79,9 +79,14 @@ const fixture = (withResult: boolean) => ({
   ...(withResult ? { result: { homeScore: 10, awayScore: 8 } } : {}),
 })
 
+const radioGroupSelectKey: InjectionKey<(value: string | number | boolean) => void> =
+  Symbol('radio-group-select')
+
 const VRadioGroupStub = defineComponent({
-  props: { label: String },
-  setup(_, { slots }) {
+  props: { label: String, modelValue: [String, Boolean, Number] },
+  emits: ['update:modelValue'],
+  setup(_, { slots, emit }) {
+    provide(radioGroupSelectKey, (value) => emit('update:modelValue', value))
     return () => h('div', { 'data-radio-group': 'true' }, slots.default?.())
   },
 })
@@ -89,7 +94,17 @@ const VRadioGroupStub = defineComponent({
 const VRadioStub = defineComponent({
   props: { label: String, value: [String, Boolean, Number] },
   setup(props) {
-    return () => h('div', { 'data-radio': 'true' }, props.label)
+    const select = inject(radioGroupSelectKey, undefined)
+    return () =>
+      h(
+        'div',
+        {
+          'data-radio': 'true',
+          'data-value': String(props.value),
+          onClick: () => select?.(props.value),
+        },
+        props.label,
+      )
   },
 })
 
@@ -189,6 +204,37 @@ describe('QuizMasterSetup', () => {
     const wrapper = await mountSetup()
 
     expect(wrapper.text()).not.toContain('This fixture already has a result')
+  })
+
+  it('requires the A-team selection before reviewing', async () => {
+    mocks.fixtureDAO.getDataByPath.mockResolvedValue(fixture(false))
+
+    const wrapper = await mountSetup()
+    useQuizmasterStore().quiz = quizPaper()
+    await nextTick()
+
+    const playerInputs = wrapper.findAll('input[aria-label^="Player"]')
+    await playerInputs[0].setValue('Alice')
+    await playerInputs[1].setValue('Bob')
+    await playerInputs[2].setValue('Carol')
+    await playerInputs[4].setValue('Dave')
+    await playerInputs[5].setValue('Eve')
+    await playerInputs[6].setValue('Frank')
+
+    const reviewButton = wrapper
+      .findAll('button')
+      .find((candidate) => candidate.text().includes('Review questions'))
+    expect(reviewButton, 'Review questions button').toBeDefined()
+    expect(reviewButton!.attributes('disabled')).toBeDefined()
+
+    const homeRadio = wrapper
+      .findAll('[data-radio="true"]')
+      .find((candidate) => candidate.attributes('data-value') === 'true')
+    expect(homeRadio, 'Home A-team radio').toBeDefined()
+    await homeRadio!.trigger('click')
+    await nextTick()
+
+    expect(reviewButton!.attributes('disabled')).toBeUndefined()
   })
 
   it('does not offer retired team members when selecting players', async () => {
@@ -308,6 +354,12 @@ describe('QuizMasterSetup', () => {
     await playerInputs[4].setValue('New Away Player')
     await playerInputs[5].setValue('Second Away Player')
     await playerInputs[6].setValue('Third Away Player')
+
+    const homeRadio = wrapper
+      .findAll('[data-radio="true"]')
+      .find((candidate) => candidate.attributes('data-value') === 'true')
+    expect(homeRadio, 'Home A-team radio').toBeDefined()
+    await homeRadio!.trigger('click')
 
     const reviewButton = wrapper
       .findAll('button')

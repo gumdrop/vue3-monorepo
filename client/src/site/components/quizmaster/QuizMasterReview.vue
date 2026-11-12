@@ -15,7 +15,7 @@
           <v-expansion-panel-text>
             <v-list density="compact">
               <v-list-item v-for="(question, qIndex) in round.questions" :key="qIndex">
-                <v-list-item-title>
+                <v-list-item-title class="text-wrap">
                   {{ question.number }}. {{ question.question }}
                 </v-list-item-title>
                 <v-list-item-subtitle>
