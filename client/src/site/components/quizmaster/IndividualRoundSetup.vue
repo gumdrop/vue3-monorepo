@@ -1,8 +1,11 @@
 <template>
-  <v-card class="mt-4">
-    <v-card-title>Individual round — assign contestants and jokers</v-card-title>
+  <v-card class="mt-4 individual-card" variant="outlined" border>
+    <v-card-title class="d-flex align-center ga-2 individual-title">
+      <v-icon icon="mdi-account-group-outline" color="primary" />
+      Individual round — assign contestants and jokers
+    </v-card-title>
     <v-card-text>
-      <v-table v-if="round.subjects">
+      <v-table v-if="round.subjects" class="individual-table">
         <thead>
           <tr>
             <th>Category</th>
@@ -12,7 +15,7 @@
         </thead>
         <tbody>
           <tr v-for="(subject, subjectIndex) in round.subjects" :key="subject">
-            <td>{{ subject }}</td>
+            <td><span class="subject-badge">{{ subject }}</span></td>
             <td>
               <v-select
                 v-model="homeAssign[subject]"
@@ -35,7 +38,12 @@
         </tbody>
       </v-table>
 
-      <v-row class="mt-4">
+      <div class="joker-heading mt-4">
+        <v-icon icon="mdi-star-outline" size="16" color="warning" />
+        Joker categories (double points)
+      </div>
+
+      <v-row>
         <v-col cols="12" sm="6">
           <v-select v-model="homeJoker" :items="jokerOptions" :label="`${homeName} joker category`" />
         </v-col>
@@ -44,8 +52,15 @@
         </v-col>
       </v-row>
 
-      <div class="d-flex justify-end">
-        <v-btn color="primary" :disabled="!assignmentsComplete" @click="save">Start round</v-btn>
+      <div class="d-flex justify-end mt-2">
+        <v-btn
+          color="primary"
+          prepend-icon="mdi-play"
+          :disabled="!assignmentsComplete"
+          @click="save"
+        >
+          Start round
+        </v-btn>
       </div>
     </v-card-text>
   </v-card>
@@ -113,3 +128,36 @@ function save() {
   emit('saved')
 }
 </script>
+<style scoped>
+.individual-card {
+  border-color: rgba(var(--v-theme-primary), 0.25) !important;
+}
+
+.individual-title {
+  font-size: 1.05rem;
+}
+
+.subject-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.joker-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: rgba(var(--v-theme-on-surface), 0.75);
+}
+
+@media (max-width: 600px) {
+  .individual-title {
+    font-size: 0.95rem;
+  }
+}
+</style>

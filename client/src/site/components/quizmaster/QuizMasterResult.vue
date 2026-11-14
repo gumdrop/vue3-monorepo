@@ -1,19 +1,36 @@
 <template>
-  <v-card class="mt-4">
-    <v-card-title>Submit result</v-card-title>
+  <v-card class="mt-4 result-card">
+    <v-card-title class="d-flex align-center ga-2">
+      <v-icon icon="mdi-flag-checkered" color="primary" />
+      Submit result
+    </v-card-title>
     <v-card-text>
-      <div class="score-line text-h5 mb-2">
-        <ResponsiveTeamName v-if="homeTeam" :team="homeTeam" />
-        <template v-else>{{ teamNames.home }}</template>
-        {{ displayScore.home }} — {{ displayScore.away }}
-        <ResponsiveTeamName v-if="awayTeam" :team="awayTeam" />
-        <template v-else>{{ teamNames.away }}</template>
+      <div class="result-scoreboard">
+        <div class="result-team">
+          <ResponsiveTeamName v-if="homeTeam" :team="homeTeam" />
+          <template v-else>{{ teamNames.home }}</template>
+        </div>
+        <div class="result-score score-display">
+          {{ displayScore.home }} — {{ displayScore.away }}
+        </div>
+        <div class="result-team">
+          <ResponsiveTeamName v-if="awayTeam" :team="awayTeam" />
+          <template v-else>{{ teamNames.away }}</template>
+        </div>
       </div>
-      <div class="text-subtitle-1 text-medium-emphasis mb-4">
+      <div class="result-beer">
+        <v-icon icon="mdi-glass-mug-variant" size="18" class="mr-1" />
         Beer round: {{ displayBeer.home }} — {{ displayBeer.away }}
       </div>
 
-      <v-btn color="primary" :loading="generating" :disabled="store.submitted" @click="generate">
+      <v-btn
+        color="primary"
+        size="large"
+        prepend-icon="mdi-file-document-outline"
+        :loading="generating"
+        :disabled="store.submitted"
+        @click="generate"
+      >
         Generate match report
       </v-btn>
 
@@ -25,6 +42,8 @@
       <v-btn
         v-if="store.report"
         color="success"
+        size="large"
+        prepend-icon="mdi-check-bold"
         class="mt-4"
         :loading="store.submitting"
         :disabled="store.submitted"
@@ -41,7 +60,14 @@
       </v-alert>
 
       <div class="mt-4">
-        <v-btn variant="text" :disabled="store.submitted" @click="emit('back')">Back</v-btn>
+        <v-btn
+          variant="text"
+          prepend-icon="mdi-arrow-left"
+          :disabled="store.submitted"
+          @click="emit('back')"
+        >
+          Back
+        </v-btn>
       </div>
     </v-card-text>
   </v-card>
@@ -78,14 +104,55 @@ async function submit() {
 }
 </script>
 <style scoped>
-.score-line {
+.result-card {
+  max-width: 880px;
+}
+
+.result-scoreboard {
   display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0.5ch;
+  margin-bottom: 10px;
+}
+
+.result-team {
+  font-weight: 600;
+  font-size: 1.05rem;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.result-score {
+  font-size: 2.5rem;
+  line-height: 1;
+  font-weight: 700;
+  padding: 8px 24px;
+  border-radius: 16px;
+  background: rgba(var(--v-theme-primary), 0.08);
+  color: rgb(var(--v-theme-primary));
+}
+
+.result-beer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  font-size: 0.95rem;
+  margin-bottom: 24px;
 }
 
 .report-text {
   white-space: pre-wrap;
+}
+
+@media (max-width: 600px) {
+  .result-score {
+    font-size: 1.8rem;
+    padding: 6px 16px;
+  }
 }
 </style>

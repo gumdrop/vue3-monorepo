@@ -1,18 +1,33 @@
 <template>
   <div class="quiz-match-wrap mt-4">
   <v-card>
-    <v-card-title class="match-header-title d-flex justify-space-between align-center">
-      <div class="d-flex align-center ga-2">
-        <span>Match</span>
-        <v-btn size="small" variant="tonal" @click="scoresheetOpen = true">Scoresheet</v-btn>
+    <v-card-title class="match-header">
+      <div class="match-topbar">
+        <div class="match-topbar-left">
+          <span class="match-eyebrow">Live match</span>
+          <v-btn
+            size="small"
+            variant="tonal"
+            prepend-icon="mdi-table-large"
+            @click="scoresheetOpen = true"
+          >
+            Scoresheet
+          </v-btn>
+        </div>
       </div>
-      <span class="match-score score-line">
-        <ResponsiveTeamName v-if="homeTeam" :team="homeTeam" />
-        <template v-else>{{ homeName }}</template>
-        {{ store.score.home }} — {{ store.score.away }}
-        <ResponsiveTeamName v-if="awayTeam" :team="awayTeam" />
-        <template v-else>{{ awayName }}</template>
-      </span>
+      <div class="match-scoreboard">
+        <span class="match-team">
+          <ResponsiveTeamName v-if="homeTeam" :team="homeTeam" />
+          <template v-else>{{ homeName }}</template>
+        </span>
+        <span class="match-score-value score-display">
+          {{ store.score.home }} — {{ store.score.away }}
+        </span>
+        <span class="match-team">
+          <ResponsiveTeamName v-if="awayTeam" :team="awayTeam" />
+          <template v-else>{{ awayName }}</template>
+        </span>
+      </div>
     </v-card-title>
 
     <v-card-text>
@@ -69,9 +84,9 @@
             </v-expansion-panel>
           </v-expansion-panels>
 
-          <div class="text-subtitle-1 text-medium-emphasis mb-2">
-            {{ round.round }}
-            <span v-if="subject"> · {{ subject }}</span>
+          <div class="question-meta">
+            <span class="question-round">{{ round.round }}</span>
+            <span v-if="subject" class="question-subject">{{ subject }}</span>
           </div>
 
           <v-alert v-if="spare" type="warning" density="compact" class="mb-2">
@@ -95,10 +110,13 @@
             <em>Answer hidden — start the timer to reveal.</em>
           </v-alert>
 
-          <div class="d-flex flex-wrap ga-2 mt-4">
+          <div class="action-row">
             <template v-if="!effectivePassedOver">
               <v-btn
                 color="success"
+                size="large"
+                prepend-icon="mdi-check-bold"
+                class="action-btn"
                 :disabled="outcomeButtonsDisabled"
                 @click="record('correct')"
               >
@@ -106,6 +124,9 @@
               </v-btn>
               <v-btn
                 color="warning"
+                size="large"
+                prepend-icon="mdi-swap-horizontal-bold"
+                class="action-btn"
                 :disabled="outcomeButtonsDisabled"
                 @click="passOver"
               >
@@ -114,6 +135,9 @@
               <v-btn
                 v-if="!spare"
                 variant="tonal"
+                size="large"
+                prepend-icon="mdi-refresh"
+                class="action-btn"
                 :disabled="outcomeButtonsDisabled"
                 @click="invokeSpare"
               >
@@ -123,6 +147,9 @@
             <template v-else>
               <v-btn
                 color="success"
+                size="large"
+                prepend-icon="mdi-check-bold"
+                class="action-btn"
                 :disabled="outcomeButtonsDisabled"
                 @click="record('bonus')"
               >
@@ -130,6 +157,9 @@
               </v-btn>
               <v-btn
                 color="error"
+                size="large"
+                prepend-icon="mdi-close-thick"
+                class="action-btn"
                 :disabled="outcomeButtonsDisabled"
                 @click="record('unanswered')"
               >
@@ -138,10 +168,18 @@
             </template>
           </div>
 
-          <div class="d-flex flex-wrap ga-2 mt-4">
-            <v-btn v-if="outcome" variant="text" @click="undo">Undo</v-btn>
+          <div class="question-nav">
+            <v-btn v-if="outcome" variant="text" prepend-icon="mdi-undo" @click="undo">Undo</v-btn>
             <v-spacer />
-            <v-btn color="primary" :disabled="!canGoBack" @click="back">Back</v-btn>
+            <v-btn
+              color="primary"
+              variant="tonal"
+              prepend-icon="mdi-arrow-left"
+              :disabled="!canGoBack"
+              @click="back"
+            >
+              Back
+            </v-btn>
           </div>
         </template>
 
@@ -403,7 +441,7 @@
     <v-card>
       <v-card-title class="d-flex justify-space-between align-center">
         <span>Scoresheet</span>
-        <v-btn icon variant="text" @click="scoresheetOpen = false">✕</v-btn>
+        <v-btn icon="mdi-close" variant="text" @click="scoresheetOpen = false" />
       </v-card-title>
       <v-card-text>
         <div class="score-line text-h6 mb-4">
@@ -475,7 +513,8 @@
     class="timer-fab"
     :class="{ 'timer-done': timerState === 'done' }"
     :color="timerColor"
-    elevation="3"
+    :style="{ '--timer-progress': `${timerProgress}%` }"
+    elevation="4"
     @click="toggleTimer"
   >
     <span class="timer-fab-content">
@@ -655,6 +694,10 @@ const timerColor = computed(() => {
   if (timerState.value === 'done') return 'error'
   if (timerState.value === 'paused') return 'warning'
   return 'success'
+})
+const timerProgress = computed(() => {
+  if (timerState.value === 'idle') return 100
+  return Math.max(0, Math.min(100, Math.round((remaining.value / timerDuration.value) * 100)))
 })
 const showTimer = computed(
   () => phase.value === 'rounds' && !settingUpIndividual.value && Boolean(round.value && question.value),
@@ -836,9 +879,66 @@ function finishBeer() {
 }
 </script>
 <style scoped>
-.match-header-title {
+.quiz-match-wrap {
   position: relative;
-  padding-right: 100px;
+}
+
+/* ---- Match header / scoreboard ---- */
+.match-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(var(--v-theme-on-surface), 0.08);
+}
+
+.match-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 96px; /* reserve room for the floating timer */
+}
+
+.match-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.match-eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgb(var(--v-theme-primary));
+}
+
+.match-scoreboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.match-team {
+  font-weight: 600;
+  font-size: 1.05rem;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-score-value {
+  font-size: 2.5rem;
+  line-height: 1;
+  font-weight: 700;
+  padding: 6px 20px;
+  border-radius: 16px;
+  background: rgba(var(--v-theme-primary), 0.08);
+  color: rgb(var(--v-theme-primary));
+  letter-spacing: 0.02em;
 }
 
 .score-line {
@@ -848,66 +948,109 @@ function finishBeer() {
   gap: 0.5ch;
 }
 
-.match-score {
-  font-size: 1.5rem;
-  line-height: 1.3;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  flex-wrap: nowrap;
-  white-space: nowrap;
+/* ---- Question area ---- */
+.question-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
-.timer-fab {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  width: 76px !important;
-  height: 76px !important;
-  min-width: 76px !important;
-  min-height: 76px !important;
-  padding: 0 !important;
-  border-radius: 50% !important;
-  z-index: 20;
+.question-round {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
-@media (max-width: 600px) {
-  .match-header-title {
-    flex-direction: column;
-    align-items: stretch;
-    justify-content: flex-start;
-    gap: 8px;
-    padding-right: 16px;
-  }
-
-  .match-score {
-    font-size: 1.25rem;
-    line-height: 1.3;
-    padding-right: 88px;
-    position: static;
-    left: auto;
-    transform: none;
-  }
-}
-
-.quiz-match-wrap {
-  position: relative;
+.question-subject {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(var(--v-theme-on-surface), 0.08);
+  color: rgba(var(--v-theme-on-surface), 0.85);
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .for-field {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
 }
 
 .question-text {
-  font-size: 1.6rem;
-  line-height: 1.35;
+  font-size: 1.75rem;
+  line-height: 1.4;
+  font-weight: 500;
+  margin-top: 4px;
 }
 
 .answer-text {
-  font-size: 1.4rem;
+  font-size: 1.45rem;
+}
+
+/* ---- Actions ---- */
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.action-btn {
+  flex: 1 1 auto;
+  min-width: 160px;
+}
+
+.question-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+/* ---- Timer ---- */
+.timer-fab {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 84px !important;
+  height: 84px !important;
+  min-width: 84px !important;
+  min-height: 84px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  z-index: 20;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+}
+
+.timer-fab::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    currentColor calc(var(--timer-progress, 100%)),
+    rgba(var(--v-theme-on-surface), 0.28) 0
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 5px),
+    #000 calc(100% - 4px)
+  );
+  mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+  pointer-events: none;
 }
 
 .timer-fab-content {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -915,15 +1058,16 @@ function finishBeer() {
 }
 
 .timer-fab-number {
-  font-size: 1.7rem;
+  font-size: 1.85rem;
   font-weight: 700;
 }
 
 .timer-fab-caption {
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  opacity: 0.85;
+  letter-spacing: 0.08em;
+  opacity: 0.9;
+  margin-top: 2px;
 }
 
 @keyframes timer-flash {
@@ -946,5 +1090,85 @@ function finishBeer() {
 
 .scoresheet-total-row td {
   background: rgba(var(--v-theme-on-surface), 0.02);
+}
+
+/* ---- Tablet (sm: 600–960px) ---- */
+@media (max-width: 960px) {
+  .match-topbar {
+    padding-right: 84px;
+  }
+
+  .match-score-value {
+    font-size: 2rem;
+  }
+
+  .question-text {
+    font-size: 1.5rem;
+  }
+
+  .answer-text {
+    font-size: 1.3rem;
+  }
+
+  .action-btn {
+    min-width: calc(50% - 6px);
+  }
+
+  .timer-fab {
+    width: 72px !important;
+    height: 72px !important;
+    min-width: 72px !important;
+    min-height: 72px !important;
+    top: 12px;
+    right: 12px;
+  }
+
+  .timer-fab-number {
+    font-size: 1.6rem;
+  }
+}
+
+/* ---- Phone (<600px) ---- */
+@media (max-width: 600px) {
+  .match-topbar {
+    padding-right: 74px;
+  }
+
+  .match-scoreboard {
+    gap: 10px;
+  }
+
+  .match-team {
+    font-size: 0.95rem;
+    max-width: 120px;
+  }
+
+  .match-score-value {
+    font-size: 1.6rem;
+    padding: 4px 14px;
+  }
+
+  .question-text {
+    font-size: 1.3rem;
+  }
+
+  .answer-text {
+    font-size: 1.15rem;
+  }
+
+  .action-btn {
+    min-width: 100%;
+  }
+
+  .timer-fab {
+    width: 64px !important;
+    height: 64px !important;
+    min-width: 64px !important;
+    min-height: 64px !important;
+  }
+
+  .timer-fab-number {
+    font-size: 1.4rem;
+  }
 }
 </style>
