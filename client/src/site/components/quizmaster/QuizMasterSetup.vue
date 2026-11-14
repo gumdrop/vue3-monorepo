@@ -1,12 +1,21 @@
 <template>
-  <v-card class="mt-4">
-    <v-card-title>Match setup</v-card-title>
+  <v-card class="mt-4 setup-card">
+    <v-card-title class="d-flex align-center ga-2">
+      <v-icon icon="mdi-tune-variant" color="primary" />
+      Match setup
+    </v-card-title>
     <v-card-text>
-      <v-alert v-if="store.fixture" type="info" density="compact" class="mb-4">
+      <v-alert
+        v-if="store.fixture"
+        type="info"
+        variant="tonal"
+        icon="mdi-calendar-star"
+        class="mb-4"
+      >
         <strong>Fixture:</strong> {{ fixtureLabel }} — {{ store.fixture.homeName }} (home) vs
         {{ store.fixture.awayName }} (away)
       </v-alert>
-      <v-alert v-else type="warning" density="compact" class="mb-4">
+      <v-alert v-else type="warning" variant="tonal" icon="mdi-alert-outline" class="mb-4">
         No fixture found for your team.
       </v-alert>
       <v-alert v-if="fixtureHasResult" type="error" density="compact" class="mb-4">
@@ -16,6 +25,10 @@
         A quiz is already in progress for this fixture. Re-enter the quiz password to resume where
         you left off.
       </v-alert>
+
+      <div class="setup-section-title">
+        <span class="setup-section-index">1</span> Unlock the quiz
+      </div>
 
       <v-text-field
         v-model="password"
@@ -35,9 +48,10 @@
         />
       </div>
 
-      <div class="d-flex ga-2 mb-4">
+      <div class="d-flex ga-2 mb-4 setup-acquire-row">
         <v-btn
           color="primary"
+          prepend-icon="mdi-lock-open-variant-outline"
           :loading="store.acquiring"
           :disabled="!store.fixture || !password || fixtureHasResult"
           @click="acquire"
@@ -52,6 +66,10 @@
       <template v-if="store.quiz">
         <v-divider class="my-4" />
 
+        <div class="setup-section-title">
+          <span class="setup-section-index">2</span> Choose teams &amp; players
+        </div>
+
         <v-radio-group
           v-model="homeIsAFirstHalf"
           label="Which team is the A team for the first half?"
@@ -62,8 +80,10 @@
 
         <v-row>
           <v-col cols="12" sm="6">
-            <div class="text-subtitle-2 font-weight-medium mb-2">
-              {{ store.fixture?.homeName ?? 'Home' }} players (3–4)
+            <div class="team-heading">
+              <span class="team-heading-dot team-heading-dot--home"></span>
+              {{ store.fixture?.homeName ?? 'Home' }} players
+              <span class="text-medium-emphasis">(3–4)</span>
             </div>
             <v-combobox
               v-for="index in 4"
@@ -77,8 +97,10 @@
             />
           </v-col>
           <v-col cols="12" sm="6">
-            <div class="text-subtitle-2 font-weight-medium mb-2">
-              {{ store.fixture?.awayName ?? 'Away' }} players (3–4)
+            <div class="team-heading">
+              <span class="team-heading-dot team-heading-dot--away"></span>
+              {{ store.fixture?.awayName ?? 'Away' }} players
+              <span class="text-medium-emphasis">(3–4)</span>
             </div>
             <v-combobox
               v-for="index in 4"
@@ -108,6 +130,9 @@
 
         <v-btn
           color="primary"
+          block
+          size="large"
+          prepend-icon="mdi-clipboard-text-search-outline"
           :disabled="!canContinue || saving"
           :loading="saving"
           @click="continueToReview"
@@ -328,3 +353,67 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
 }
 </script>
+<style scoped>
+.setup-card {
+  max-width: 880px;
+}
+
+.setup-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+  margin-bottom: 14px;
+}
+
+.setup-section-index {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
+  font-size: 0.85rem;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.setup-acquire-row {
+  align-items: center;
+}
+
+.team-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  margin-bottom: 10px;
+  font-size: 0.95rem;
+}
+
+.team-heading-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.team-heading-dot--home {
+  background: rgb(var(--v-theme-primary));
+}
+
+.team-heading-dot--away {
+  background: rgb(var(--v-theme-secondary));
+}
+
+@media (max-width: 600px) {
+  .setup-card {
+    max-width: none;
+  }
+}
+</style>
