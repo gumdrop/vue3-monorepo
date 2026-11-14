@@ -661,7 +661,12 @@ const showTimer = computed(
 )
 
 const timerStarted = computed(() => timerState.value !== 'idle')
-const outcomeButtonsDisabled = computed(() => Boolean(outcome.value) || !timerStarted.value)
+// Undoing clears the recorded outcome; the QM has already revealed the answer
+// once, so re-enable the action buttons without requiring another timer press.
+const undoAllowsAnswer = ref(false)
+const outcomeButtonsDisabled = computed(
+  () => Boolean(outcome.value) || (!timerStarted.value && !undoAllowsAnswer.value),
+)
 
 function clearTimer() {
   if (timerHandle !== undefined) {
@@ -736,18 +741,22 @@ function passOver() {
 function resetQuestionState() {
   answerRevealed.value = false
   passedOver.value = false
+  undoAllowsAnswer.value = false
   resetTimer()
 }
 
 function undo() {
   store.undo()
   resetQuestionState()
+  // Re-enable the action buttons for this question only.
+  undoAllowsAnswer.value = true
 }
 
 function invokeSpare() {
   if (!store.invokeSpare(roundIndex.value, questionIndex.value)) return
   // A spare is a fresh question: hide the previous answer and restart the timer.
   answerRevealed.value = false
+  undoAllowsAnswer.value = false
   resetTimer()
 }
 
