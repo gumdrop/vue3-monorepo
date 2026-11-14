@@ -169,6 +169,48 @@ describe('QuizMasterMatch', () => {
     expect(wrapper.text()).not.toContain('First question?')
   })
 
+  it('re-enables the action buttons for the question after undo', async () => {
+    const store = useQuizmasterStore()
+    store.fixture = {
+      path: 'season/season-1/competition/league/fixtures/set-1/fixture/f-1',
+      date: '2026-10-13',
+      homeName: 'Home Team',
+      awayName: 'Away Team',
+      homeId: 'home',
+      awayId: 'away',
+    }
+    store.quiz = {
+      rounds: [
+        {
+          round: 'ROUND ONE',
+          questions: [
+            { number: '1A', question: 'First question?', answer: 'First answer' },
+            { number: '1B', question: 'Second question?', answer: 'Second answer' },
+          ],
+        },
+      ],
+    }
+
+    wrapper = mount(QuizMasterMatch, { global: { stubs: siteComponentStubs } })
+
+    await wrapper.find('button.timer-fab').trigger('click')
+    await findButton(wrapper, 'Correct (+2)').trigger('click')
+    expect(wrapper.text()).toContain('Second question?')
+
+    await findButton(wrapper, 'Back').trigger('click')
+    expect(wrapper.text()).toContain('First question?')
+
+    // The recorded question's actions are disabled while its outcome remains.
+    expect(findButton(wrapper, 'Correct (+2)').attributes('disabled')).toBeDefined()
+
+    await findButton(wrapper, 'Undo').trigger('click')
+
+    expect(store.outcomes['0:0']).toBeUndefined()
+    expect(findButton(wrapper, 'Correct (+2)').attributes('disabled')).toBeUndefined()
+    expect(findButton(wrapper, 'Pass Across').attributes('disabled')).toBeUndefined()
+    expect(findButton(wrapper, 'Invoke spare question').attributes('disabled')).toBeUndefined()
+  })
+
   it('shows a Back button that returns to the previous question', async () => {
     const store = useQuizmasterStore()
     store.fixture = {
