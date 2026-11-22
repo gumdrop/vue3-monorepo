@@ -132,12 +132,12 @@
           color="primary"
           block
           size="large"
-          prepend-icon="mdi-clipboard-text-search-outline"
+          prepend-icon="mdi-play"
           :disabled="!canContinue || saving"
           :loading="saving"
-          @click="continueToReview"
+          @click="continueToMatch"
         >
-          Review questions
+          Start match
         </v-btn>
       </template>
     </v-card-text>
@@ -294,7 +294,7 @@ function readFileAsBase64(file: File): Promise<string> {
   })
 }
 
-async function continueToReview() {
+async function continueToMatch() {
   const fixture = store.fixture
   if (!fixture) return
 
