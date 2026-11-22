@@ -151,7 +151,7 @@ const session = () => ({
   beerRoundScore: { home: 0, away: 0 },
   score: { home: 2, away: 0 },
   history: [],
-  step: 3,
+  step: 2,
   matchPosition: { roundIndex: 0, questionIndex: 1, phase: 'rounds' },
   updatedAt: '2026-10-24T00:00:00.000Z',
 })
@@ -206,7 +206,7 @@ describe('QuizMasterSetup', () => {
     expect(wrapper.text()).not.toContain('This fixture already has a result')
   })
 
-  it('requires the A-team selection before reviewing', async () => {
+  it('requires the A-team selection before starting', async () => {
     mocks.fixtureDAO.getDataByPath.mockResolvedValue(fixture(false))
 
     const wrapper = await mountSetup()
@@ -221,11 +221,11 @@ describe('QuizMasterSetup', () => {
     await playerInputs[5].setValue('Eve')
     await playerInputs[6].setValue('Frank')
 
-    const reviewButton = wrapper
+    const startButton = wrapper
       .findAll('button')
-      .find((candidate) => candidate.text().includes('Review questions'))
-    expect(reviewButton, 'Review questions button').toBeDefined()
-    expect(reviewButton!.attributes('disabled')).toBeDefined()
+      .find((candidate) => candidate.text().includes('Start match'))
+    expect(startButton, 'Start match button').toBeDefined()
+    expect(startButton!.attributes('disabled')).toBeDefined()
 
     const homeRadio = wrapper
       .findAll('[data-radio="true"]')
@@ -234,7 +234,7 @@ describe('QuizMasterSetup', () => {
     await homeRadio!.trigger('click')
     await nextTick()
 
-    expect(reviewButton!.attributes('disabled')).toBeUndefined()
+    expect(startButton!.attributes('disabled')).toBeUndefined()
   })
 
   it('does not offer retired team members when selecting players', async () => {
@@ -294,7 +294,7 @@ describe('QuizMasterSetup', () => {
     expect(store.homePlayers).toEqual(['Alice', 'Bob', 'Carol'])
     expect(store.awayPlayers).toEqual(['Dave', 'Eve', 'Frank'])
     expect(store.score).toEqual({ home: 2, away: 0 })
-    expect(store.resumeStep).toBe(3)
+    expect(store.resumeStep).toBe(2)
     expect(store.resuming).toBe(true)
   })
 
@@ -361,11 +361,11 @@ describe('QuizMasterSetup', () => {
     expect(homeRadio, 'Home A-team radio').toBeDefined()
     await homeRadio!.trigger('click')
 
-    const reviewButton = wrapper
+    const startButton = wrapper
       .findAll('button')
-      .find((candidate) => candidate.text().includes('Review questions'))
-    expect(reviewButton, 'Review questions button').toBeDefined()
-    await reviewButton!.trigger('click')
+      .find((candidate) => candidate.text().includes('Start match'))
+    expect(startButton, 'Start match button').toBeDefined()
+    await startButton!.trigger('click')
     await flushPromises()
 
     expect(mocks.userDAO.save).toHaveBeenCalledTimes(5)

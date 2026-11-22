@@ -24,7 +24,6 @@ vi.mock('@/stores/quizmaster', () => ({
 }))
 
 vi.mock('../QuizMasterSetup.vue', () => ({ default: { render: () => null } }))
-vi.mock('../QuizMasterReview.vue', () => ({ default: { render: () => null } }))
 vi.mock('../QuizMasterMatch.vue', () => ({ default: { render: () => null } }))
 vi.mock('../QuizMasterResult.vue', () => ({ default: { render: () => null } }))
 

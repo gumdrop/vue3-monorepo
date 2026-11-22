@@ -116,7 +116,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
   const submittedScore = ref<Score>()
   const submittedBeerRoundScore = ref<{ home: number; away: number }>()
 
-  const resumeStep = ref<2 | 3 | 4>(2)
+  const resumeStep = ref<2 | 3>(2)
   const resuming = ref(false)
   const matchPosition = ref<MatchPosition>({ roundIndex: 0, questionIndex: 0, phase: 'rounds' })
 
@@ -385,7 +385,7 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
     return true
   }
 
-  function setResumeStep(next: 2 | 3 | 4) {
+  function setResumeStep(next: 2 | 3) {
     resumeStep.value = next
     void persistSession()
   }

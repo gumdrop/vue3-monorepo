@@ -37,9 +37,8 @@
       </v-card>
 
       <QuizMasterSetup v-if="step === 1" @done="goTo(2)" @resume="onResume" />
-      <QuizMasterReview v-else-if="step === 2" @back="goTo(1)" @start="goTo(3)" />
-      <QuizMasterMatch v-else-if="step === 3" @back="goTo(2)" @done="goTo(4)" />
-      <QuizMasterResult v-else @back="goTo(3)" />
+      <QuizMasterMatch v-else-if="step === 2" @done="goTo(3)" />
+      <QuizMasterResult v-else @back="goTo(2)" />
     </template>
 
     <v-row v-else class="justify-center mt-8 align-center">
@@ -53,7 +52,6 @@ import { computed, ref } from 'vue'
 import { useSideMenuStore, useUserStore } from '@/stores/app'
 import { useQuizmasterStore } from '@/stores/quizmaster'
 import QuizMasterSetup from './QuizMasterSetup.vue'
-import QuizMasterReview from './QuizMasterReview.vue'
 import QuizMasterMatch from './QuizMasterMatch.vue'
 import QuizMasterResult from './QuizMasterResult.vue'
 
@@ -63,7 +61,6 @@ const user = computed(() => useUserStore().user)
 
 const steps = [
   { title: 'Setup' },
-  { title: 'Review' },
   { title: 'Match' },
   { title: 'Result' },
 ]
@@ -72,7 +69,7 @@ const steps = [
 // menu the same way the home page does.
 useSideMenuStore().setSidemenu(false)
 
-function goTo(next: 1 | 2 | 3 | 4) {
+function goTo(next: 1 | 2 | 3) {
   step.value = next
   if (next !== 1) {
     store.setResumeStep(next)
