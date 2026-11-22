@@ -107,6 +107,31 @@ describe('QuizMasterMatch', () => {
     expect(wrapper.text()).toContain('Running total: Home Team 2 — 0 Away Team')
   })
 
+  it('flags the joker only on the owning team question in individual rounds', () => {
+    const store = useQuizmasterStore()
+    store.quiz = {
+      rounds: [
+        {
+          round: 'ROUND THREE - INDIVIDUAL',
+          subjects: ['History', 'Geography'],
+          questions: [
+            { number: '1A', question: 'History A?', answer: 'A' },
+            { number: '1B', question: 'History B?', answer: 'B' },
+            { number: '2A', question: 'Geography A?', answer: 'C' },
+            { number: '2B', question: 'Geography B?', answer: 'D' },
+          ],
+        },
+      ],
+    }
+    store.jokers = { 0: { home: 'History', away: 'Geography' } }
+
+    const entries = store.scoresheet[0].entries
+    expect(entries[0].joker).toBe('home') // 1A: home owns History
+    expect(entries[1].joker).toBeUndefined() // 1B: away owns History, but away jokers Geography
+    expect(entries[2].joker).toBeUndefined() // 2A: home owns Geography, but home jokers History
+    expect(entries[3].joker).toBe('away') // 2B: away owns Geography
+  })
+
   it('shows Spare Question with Correct and Pass Across, disabled until the timer starts', async () => {
     wrapper = mountMatch()
 
