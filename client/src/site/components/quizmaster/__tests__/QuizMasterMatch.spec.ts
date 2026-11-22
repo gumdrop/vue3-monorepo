@@ -107,18 +107,18 @@ describe('QuizMasterMatch', () => {
     expect(wrapper.text()).toContain('Running total: Home Team 2 — 0 Away Team')
   })
 
-  it('shows Invoke spare question with Correct and Pass Across, disabled until the timer starts', async () => {
+  it('shows Spare Question with Correct and Pass Across, disabled until the timer starts', async () => {
     wrapper = mountMatch()
 
     expect(findButton(wrapper, 'Correct').exists()).toBe(true)
     expect(findButton(wrapper, 'Pass Across').exists()).toBe(true)
 
-    const invokeSpare = findButton(wrapper, 'Invoke spare question')
+    const invokeSpare = findButton(wrapper, 'Spare Question')
     expect(invokeSpare.attributes('disabled')).toBeDefined()
 
     await wrapper.find('button.timer-fab').trigger('click')
 
-    expect(findButton(wrapper, 'Invoke spare question').attributes('disabled')).toBeUndefined()
+    expect(findButton(wrapper, 'Spare Question').attributes('disabled')).toBeUndefined()
   })
 
   it('flashes the timer button until the timer is started', async () => {
@@ -256,7 +256,7 @@ describe('QuizMasterMatch', () => {
     expect(store.outcomes['0:0']).toBeUndefined()
     expect(findButton(wrapper, 'Correct (+2)').attributes('disabled')).toBeUndefined()
     expect(findButton(wrapper, 'Pass Across').attributes('disabled')).toBeUndefined()
-    expect(findButton(wrapper, 'Invoke spare question').attributes('disabled')).toBeUndefined()
+    expect(findButton(wrapper, 'Spare Question').attributes('disabled')).toBeUndefined()
   })
 
   it('shows a Back button that returns to the previous question', async () => {
@@ -315,7 +315,7 @@ describe('QuizMasterMatch', () => {
     const store = useQuizmasterStore()
 
     await wrapper.find('button.timer-fab').trigger('click')
-    await findButton(wrapper, 'Invoke spare question').trigger('click')
+    await findButton(wrapper, 'Spare Question').trigger('click')
 
     expect(store.spares['0:0']).toEqual({
       number: '1A',
@@ -327,7 +327,7 @@ describe('QuizMasterMatch', () => {
     expect(wrapper.text()).toContain('Original question replaced with spare')
     expect(wrapper.text()).toContain('Spare question?')
     expect(
-      wrapper.findAll('button').some((button) => button.text().includes('Invoke spare question')),
+      wrapper.findAll('button').some((button) => button.text().includes('Spare Question')),
     ).toBe(false)
 
     // The timer is reset back to its idle state.

@@ -141,7 +141,7 @@
                 :disabled="outcomeButtonsDisabled"
                 @click="invokeSpare"
               >
-                Invoke spare question
+                Spare Question
               </v-btn>
             </template>
             <template v-else>
