@@ -4,8 +4,8 @@ import configure from '../MaintainEndpoints'
 import { regenerateCompetitionRoundup, regenerateFixtureSetResultsSummary } from '../TaskFunctions'
 import { calculateStats } from '../StatisticsUtils'
 import { recalculateSeasonStatisticsAggregation } from '../SeasonStatisticsAggregationUtils'
-import { rebuildSeasonFixtureIndex } from '../FixtureIndexUtils'
-import { load } from '../../storage/Storage'
+import { rebuildSeasonFixtureIndex, upsertFixtureIndexForFixtureSet } from '../FixtureIndexUtils'
+import { list, load } from '../../storage/Storage'
 
 vi.mock('../TaskFunctions', () => ({
   regenerateCompetitionRoundup: vi.fn().mockResolvedValue({
@@ -42,10 +42,15 @@ vi.mock('../FixtureIndexUtils', () => ({
     rebuiltAt: '2026-06-08T09:00:00.000Z',
     fixtureSetCount: 12,
   }),
+  upsertFixtureIndexForFixtureSet: vi.fn().mockResolvedValue({
+    id: encodeURIComponent('season/season-1/competition/league/fixtures/week-1'),
+    path: `fixtureindex/${encodeURIComponent('season/season-1/competition/league/fixtures/week-1')}`,
+  }),
 }))
 
 vi.mock('../../storage/Storage', () => ({
   entityPath: vi.fn((type: string, id: string) => `${type}/${id}`),
+  list: vi.fn().mockResolvedValue([]),
   load: vi.fn().mockResolvedValue({
     id: 'season-1',
     path: 'season/season-1',
@@ -170,6 +175,51 @@ describe('MaintainEndpoints', () => {
       path: 'season/season-1',
     })
     expect(response.json).toHaveBeenCalledWith({ seasonId: 'season-1', fixtureSetCount: 12 })
+  })
+
+  it('routes fixture index upsert to the fixture index helper', async () => {
+    vi.mocked(load).mockImplementationOnce(async () => ({
+      id: 'week-1',
+      path: 'season/season-1/competition/league/fixtures/week-1',
+      date: '2026-05-31',
+      start: '19:30',
+    }) as never)
+    const { app, routes } = createApp()
+    configure(app)
+
+    const response = {
+      json: vi.fn(),
+      status: vi.fn().mockReturnThis(),
+      send: vi.fn(),
+    } as unknown as Response
+
+    routes.get('POST /rest/maintain/fixture-set/fixture-index/upsert')?.(
+      {
+        body: {
+          fixtureSetPath: 'season/season-1/competition/league/fixtures/week-1',
+        },
+      } as Request,
+      response,
+    )
+    await flushPromises()
+
+    expect(load).toHaveBeenCalledWith('season/season-1/competition/league/fixtures/week-1')
+    expect(list).toHaveBeenCalledWith(
+      'fixture',
+      'season/season-1/competition/league/fixtures/week-1',
+    )
+    expect(upsertFixtureIndexForFixtureSet).toHaveBeenCalledWith(
+      {
+        id: 'week-1',
+        path: 'season/season-1/competition/league/fixtures/week-1',
+        date: '2026-05-31',
+        start: '19:30',
+      },
+      [],
+    )
+    expect(response.json).toHaveBeenCalledWith({
+      fixtureSetPath: 'season/season-1/competition/league/fixtures/week-1',
+    })
   })
 
   it('routes AI summary regeneration to the task function', async () => {

@@ -1,10 +1,10 @@
-import { Season, Text } from '@quizleague/shared'
+import { Fixture, Fixtures, Season, Text } from '@quizleague/shared'
 import { Application, Request, Response } from 'express'
-import { entityPath, load } from '../storage/Storage'
+import { entityPath, list, load } from '../storage/Storage'
 import { regenerateCompetitionRoundup, regenerateFixtureSetResultsSummary } from './TaskFunctions'
 import { calculateStats } from './StatisticsUtils'
 import { recalculateSeasonStatisticsAggregation } from './SeasonStatisticsAggregationUtils'
-import { rebuildSeasonFixtureIndex } from './FixtureIndexUtils'
+import { rebuildSeasonFixtureIndex, upsertFixtureIndexForFixtureSet } from './FixtureIndexUtils'
 import { param, send } from './util'
 
 const root = '/rest/maintain'
@@ -17,6 +17,7 @@ export default function configureMaintain(app: Application) {
       recalculateSeasonStatisticsAggregationEndpoint,
     )
     .post(`${root}/season/:seasonId/fixture-index/rebuild`, rebuildFixtureIndex)
+    .post(`${root}/fixture-set/fixture-index/upsert`, upsertFixtureSetIndex)
     .post(`${root}/fixtures/results-summary/regenerate`, regenerateResultsSummary)
     .post(`${root}/competition/roundup/regenerate`, regenerateRoundup)
 }
@@ -49,6 +50,26 @@ async function recalculateStatisticsAggregation(seasonId: string) {
 
 function rebuildFixtureIndex(req: Request, res: Response) {
   return send(rebuildSeasonFixtureIndexEndpoint(param('seasonId', req)), res)
+}
+
+function upsertFixtureSetIndex(req: Request, res: Response) {
+  return send(upsertFixtureSetIndexCommand(parseBody<UpsertFixtureSetIndexCommand>(req)), res)
+}
+
+interface UpsertFixtureSetIndexCommand {
+  fixtureSetPath: string
+}
+
+async function upsertFixtureSetIndexCommand(command: UpsertFixtureSetIndexCommand) {
+  const fixtureSet = await load<Fixtures>(command.fixtureSetPath)
+  if (!fixtureSet) {
+    throw new Error(`Fixture set not found: ${command.fixtureSetPath}`)
+  }
+
+  const fixtures = await list<Fixture>('fixture', fixtureSet.path)
+  await upsertFixtureIndexForFixtureSet(fixtureSet, fixtures)
+
+  return { fixtureSetPath: fixtureSet.path }
 }
 
 async function rebuildSeasonFixtureIndexEndpoint(seasonId: string) {
