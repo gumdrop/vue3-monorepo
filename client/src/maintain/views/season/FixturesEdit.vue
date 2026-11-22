@@ -300,6 +300,7 @@ const createResult = async () => {
   fixtureToEdit.value.result = { homeScore: 0, awayScore: 0, note: '' }
   const toSave = toFixtureEntity(fixtureToEdit.value)
   await fixtureDAO.save(toSave)
+  void refreshFixtureIndex()
   const idx = fixtureList.value.findIndex((f) => f.id === toSave.id)
   if (idx >= 0) {
     fixtureList.value[idx] = { ...toSave }
@@ -349,6 +350,7 @@ const saveFixture = async () => {
   }
   const toSave = toFixtureEntity(fixtureToEdit.value)
   await fixtureDAO.save(toSave)
+  void refreshFixtureIndex()
   // update local list
   const idx = fixtureList.value.findIndex((f) => f.id === toSave.id)
   if (idx >= 0) {
@@ -374,6 +376,7 @@ const save = async () => {
       } as Fixtures
     }
     await FixturesDAO.save(fixtures.value)
+    void refreshFixtureIndex()
     back()
   }
 }
@@ -457,7 +460,20 @@ const isTextReference = (value: unknown): value is { id: string; path: string } 
 const removeFixture = async (fix: Fixture) => {
   if (confirm('Are you sure?')) {
     await fixtureDAO.remove(fix.path)
+    void refreshFixtureIndex()
     fixtureList.value = fixtureList.value.filter((f) => f.id !== fix.id)
+  }
+}
+
+const refreshFixtureIndex = async () => {
+  if (!fixtures.value?.path || fixtures.value.path.endsWith('/fixtures')) return
+
+  try {
+    await axios.post('/rest/maintain/fixture-set/fixture-index/upsert', {
+      fixtureSetPath: fixtures.value.path,
+    })
+  } catch {
+    // The fixture index is a read model; a failure here should not block editing.
   }
 }
 </script>

@@ -256,6 +256,21 @@ describe('FixturesEdit', () => {
     expect(wrapper.findAll('[data-test="fixture-list-item"]')).toHaveLength(1)
   })
 
+  it('refreshes the fixture index after saving a fixture', async () => {
+    const wrapper = await mountFixturesEdit()
+
+    await wrapper.find('[data-test="add-fixture-button"]').trigger('click')
+    await wrapper.find<HTMLSelectElement>('[data-test="home-team-select"]').setValue('team/alpha')
+    await wrapper.find<HTMLSelectElement>('[data-test="away-team-select"]').setValue('team/bravo')
+    await wrapper.find('[data-test="save-fixture-button"]').trigger('click')
+    await flushPromises()
+
+    expect(mocks.axiosPost).toHaveBeenCalledWith(
+      '/rest/maintain/fixture-set/fixture-index/upsert',
+      { fixtureSetPath: 'season/season-1/competition/competition-1/fixtures/fixture-set-1' },
+    )
+  })
+
   it('shows only unallocated teams plus the current fixture team in fixture team dropdowns', async () => {
     mocks.fixtureDAO.entities.mockResolvedValue([
       fixture('fixture-1', 'alpha', 'bravo'),
