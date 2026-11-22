@@ -271,8 +271,8 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
         const outcome = outcomes.value[key]
         const category = individual ? subjectFor(roundIndex, question) : undefined
         const joker = scoringJoker(owner, roundIndex, question)
-        const homeJoker = category ? jokers.value[roundIndex]?.home === category : false
-        const awayJoker = category ? jokers.value[roundIndex]?.away === category : false
+        const homeJoker = category ? owner === 'home' && jokers.value[roundIndex]?.home === category : false
+        const awayJoker = category ? owner === 'away' && jokers.value[roundIndex]?.away === category : false
 
         return {
           number: question.number,
@@ -548,8 +548,8 @@ export const useQuizmasterStore = defineStore('quizmaster', () => {
             : owner === 'home'
               ? selectedFixture.homeName
               : selectedFixture.awayName
-          const homeJoker = category ? jokers.value[roundIndex]?.home === category : false
-          const awayJoker = category ? jokers.value[roundIndex]?.away === category : false
+          const homeJoker = category ? owner === 'home' && jokers.value[roundIndex]?.home === category : false
+          const awayJoker = category ? owner === 'away' && jokers.value[roundIndex]?.away === category : false
 
           return {
             number: question.number,
