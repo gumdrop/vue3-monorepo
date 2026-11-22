@@ -236,20 +236,12 @@ async function generateDeepSeekSummary(
   return text ? { text, model } : undefined
 }
 
-const givenName = (name: string): string => name.trim().split(/\s+/)[0] ?? ''
-
 const matchReportQuestionLine = (q: QuizReportCommand['rounds'][number]['questions'][number]) => {
-  // Individual-round contestants are only named when they answered their own
-  // question correctly, and then by given name (first name) only. Team-round
-  // contestants are team names, so they are kept intact.
+  // Individual-round contestants are intentionally omitted from the report:
+  // the report covers individual-round performances without naming the
+  // contestants. Team-round contestants are team names, so they are kept.
   const individual = q.category !== undefined
-  const displayName =
-    individual && q.outcome !== 'correct'
-      ? undefined
-      : q.contestant && individual
-        ? givenName(q.contestant)
-        : q.contestant
-  const contestant = displayName ? ` — asked to ${displayName}` : ''
+  const contestant = !individual && q.contestant ? ` — asked to ${q.contestant}` : ''
   const category = q.category ? ` [${q.category}]` : ''
   const joker = q.joker ? ` (joker for ${q.joker})` : ''
   return `    ${q.number}: ${q.outcome}${category}${joker}${contestant}`
@@ -283,8 +275,9 @@ const buildMatchReportPrompt = (input: QuizReportCommand) => {
 
   return `You write a match report for the Chiltern Quiz League.
 
-Write a concise, engaging Markdown report of this match using only the recorded data below.
-Mention the final score, notable correct answers and bonus conversions, individual-round performances, and joker categories.
+Write a punchy, journalistic Markdown report of this match, telling the story of how it was won using only the recorded data below.
+Open with a lively lead paragraph that captures the outcome and the character of the match, then unfold the key moments in vivid but accurate prose: notable correct answers and bonus conversions, individual-round performances, and joker categories.
+Vary sentence rhythm and avoid a dry, scorecard-style list; prefer concrete, active language and let the final score and turning points emerge naturally from the narrative.
 
 Outcome meanings (recorded per question):
 - "correct": the side asked answered correctly (2 points to them).
@@ -292,6 +285,8 @@ Outcome meanings (recorded per question):
 - "unanswered": neither side answered correctly.
 
 A "(joker for home/away/both)" marker on a category only means that category carried doubled points for that side — it is not itself an outcome. Do not describe a joker category as "converted" or "decisive" unless the recorded outcome actually shows a "bonus".
+
+Do not name the individual-round contestants — describe their performances by team and category only.
 
 Describe the match strictly from the recorded outcomes. Do not invent drama: if every question in a round was answered "correct" by the side asked, say so plainly rather than calling the round decisive or a clean sweep. Only describe a round or category as decisive when the outcomes actually show bonus conversions or wrong answers.
 
