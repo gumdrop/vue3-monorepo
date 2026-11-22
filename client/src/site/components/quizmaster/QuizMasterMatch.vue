@@ -360,7 +360,7 @@
               <v-expansion-panel-text>
                 <v-list density="compact">
                   <v-list-item v-for="(q, i) in store.sparesRound.questions" :key="i">
-                    <v-list-item-title>{{ q.number }}. {{ q.question }}</v-list-item-title>
+                    <v-list-item-title class="text-wrap">{{ q.number }}. {{ q.question }}</v-list-item-title>
                     <v-list-item-subtitle>
                       Answer: <span v-html="underlineHtml(q.answer)" />
                     </v-list-item-subtitle>
@@ -381,7 +381,7 @@
             <v-expansion-panel-text>
               <v-list density="compact">
                 <v-list-item v-for="(q, i) in store.beerRound?.questions ?? []" :key="i">
-                  <v-list-item-title>{{ q.number }}. {{ q.question }}</v-list-item-title>
+                  <v-list-item-title class="text-wrap">{{ q.number }}. {{ q.question }}</v-list-item-title>
                   <v-list-item-subtitle>
                     Answer: <span v-html="underlineHtml(q.answer)" />
                   </v-list-item-subtitle>
@@ -511,7 +511,7 @@
   <v-btn
     v-if="showTimer"
     class="timer-fab"
-    :class="{ 'timer-done': timerState === 'done' }"
+    :class="{ 'timer-done': timerState === 'done', 'timer-prompt': timerPrompt }"
     :color="timerColor"
     :style="{ '--timer-progress': `${timerProgress}%` }"
     elevation="4"
@@ -525,7 +525,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, onUnmounted, ref } from 'vue'
+import { computed, onUnmounted, ref, watch } from 'vue'
 import type { QuizQuestionOutcome } from '@quizleague/shared'
 import { isIndividualRound } from '@/services/QuizScoring'
 import { useQuizmasterStore, type ScoresheetEntry } from '@/stores/quizmaster'
@@ -704,6 +704,13 @@ const showTimer = computed(
 )
 
 const timerStarted = computed(() => timerState.value !== 'idle')
+// The timer button flashes while a freshly displayed question is still waiting
+// for its timer to be started, and stops once the button has been clicked.
+const timerWasStarted = ref(false)
+const timerPrompt = computed(() => timerState.value === 'idle' && !timerWasStarted.value)
+watch(key, () => {
+  timerWasStarted.value = false
+})
 // Undoing clears the recorded outcome; the QM has already revealed the answer
 // once, so re-enable the action buttons without requiring another timer press.
 const undoAllowsAnswer = ref(false)
@@ -730,6 +737,7 @@ function tick() {
 
 function startTimer() {
   clearTimer()
+  timerWasStarted.value = true
   answerRevealed.value = true
   remaining.value = timerDuration.value
   timerState.value = 'running'
@@ -800,6 +808,7 @@ function invokeSpare() {
   // A spare is a fresh question: hide the previous answer and restart the timer.
   answerRevealed.value = false
   undoAllowsAnswer.value = false
+  timerWasStarted.value = false
   resetTimer()
 }
 
@@ -1082,6 +1091,10 @@ function finishBeer() {
 
 .timer-done {
   animation: timer-flash 0.6s ease-in-out infinite;
+}
+
+.timer-prompt {
+  animation: timer-flash 1.6s ease-in-out infinite;
 }
 
 .scoresheet-round-row td {

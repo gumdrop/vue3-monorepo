@@ -121,6 +121,54 @@ describe('QuizMasterMatch', () => {
     expect(findButton(wrapper, 'Invoke spare question').attributes('disabled')).toBeUndefined()
   })
 
+  it('flashes the timer button until the timer is started', async () => {
+    wrapper = mountMatch()
+
+    const timerFab = () => wrapper.find('button.timer-fab')
+    expect(timerFab().classes()).toContain('timer-prompt')
+
+    await timerFab().trigger('click')
+
+    expect(timerFab().classes()).not.toContain('timer-prompt')
+  })
+
+  it('re-triggers the timer flash when the next question is displayed', async () => {
+    const store = useQuizmasterStore()
+    store.fixture = {
+      path: 'season/season-1/competition/league/fixtures/set-1/fixture/f-1',
+      date: '2026-10-13',
+      homeName: 'Home Team',
+      awayName: 'Away Team',
+      homeId: 'home',
+      awayId: 'away',
+    }
+    store.quiz = {
+      rounds: [
+        {
+          round: 'ROUND ONE',
+          questions: [
+            { number: '1A', question: 'First question?', answer: 'First answer' },
+            { number: '1B', question: 'Second question?', answer: 'Second answer' },
+          ],
+        },
+      ],
+    }
+
+    wrapper = mount(QuizMasterMatch, { global: { stubs: siteComponentStubs } })
+
+    const timerFab = () => wrapper.find('button.timer-fab')
+    expect(timerFab().classes()).toContain('timer-prompt')
+
+    await timerFab().trigger('click')
+    expect(timerFab().classes()).not.toContain('timer-prompt')
+
+    await findButton(wrapper, 'Correct (+2)').trigger('click')
+    await nextTick()
+
+    expect(wrapper.text()).toContain('Second question?')
+    expect(timerFab().classes()).toContain('timer-prompt')
+  })
+
   it('hides the answer while the timer is paused and reveals it again on resume', async () => {
     wrapper = mountMatch()
 
